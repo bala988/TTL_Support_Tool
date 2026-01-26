@@ -1,0 +1,3 @@
+/* Intentionally left minimal.
+   Global layout and spacing are controlled via Tailwind utility classes
+   in components instead of App-wide constraints here. */
