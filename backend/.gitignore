@@ -8,7 +8,7 @@ node_modules/
 
 # Google Drive Credentials (NEVER COMMIT!)
 credentials/
-*.json
+package-lock.json
 
 # Uploads
 uploads/*
