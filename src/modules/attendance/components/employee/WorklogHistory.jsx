@@ -105,6 +105,8 @@ const WorklogHistory = ({ refreshTrigger }) => {
                 <th className="text-left p-3 text-sm font-semibold text-dark-700">Date</th>
                 <th className="text-left p-3 text-sm font-semibold text-dark-700">Time</th>
                 <th className="text-left p-3 text-sm font-semibold text-dark-700">Duration</th>
+                <th className="text-left p-3 text-sm font-semibold text-dark-700">Customer</th>
+                <th className="text-left p-3 text-sm font-semibold text-dark-700">Ticket</th>
                 <th className="text-left p-3 text-sm font-semibold text-dark-700">Activity</th>
               </tr>
             </thead>
@@ -124,6 +126,12 @@ const WorklogHistory = ({ refreshTrigger }) => {
                   </td>
                   <td className="p-3 text-sm font-semibold text-primary-600">
                     {Math.floor(log.durationMinutes / 60)}h {log.durationMinutes % 60}m
+                  </td>
+                  <td className="p-3 text-sm text-dark-700">
+                    {log.customerName || '-'}
+                  </td>
+                  <td className="p-3 text-sm text-dark-700 font-mono">
+                    {log.ticketId || '-'}
                   </td>
                   <td className="p-3 text-sm text-dark-700 max-w-md">
                     {log.activity}

@@ -1,6 +1,6 @@
 const generateCSV = (worklogs) => {
   // CSV Header
-  const headers = ['Date', 'From Time', 'To Time', 'Duration (min)', 'Activity'];
+  const headers = ['Date', 'From Time', 'To Time', 'Duration (min)', 'Activity', 'Customer Name', 'Ticket ID'];
   
   // CSV Rows
   const rows = worklogs.map((log) => [
@@ -10,6 +10,8 @@ const generateCSV = (worklogs) => {
     log.durationMinutes,
     // Escape quotes in activity and wrap in quotes
     `"${log.activity.replace(/"/g, '""')}"`,
+    log.customerName ? `"${log.customerName.replace(/"/g, '""')}"` : '',
+    log.ticketId ? `"${log.ticketId.replace(/"/g, '""')}"` : '',
   ]);
   
   // Combine header and rows

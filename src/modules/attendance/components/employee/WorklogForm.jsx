@@ -15,6 +15,8 @@ const worklogSchema = z.object({
   fromTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format'),
   toTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format'),
   activity: z.string().min(5, 'Activity description must be at least 5 characters'),
+  customerName: z.string().optional(),
+  ticketId: z.string().optional(),
 });
 
 // Generate time options in 15-minute intervals from 00:00 to 23:45
@@ -49,6 +51,8 @@ const WorklogForm = ({ onWorklogCreated }) => {
       fromTime: '',
       toTime: '',
       activity: '',
+      customerName: '',
+      ticketId: '',
     },
   });
 
@@ -75,6 +79,8 @@ const WorklogForm = ({ onWorklogCreated }) => {
         fromTime: '',
         toTime: '',
         activity: '',
+        customerName: '',
+        ticketId: '',
       });
       setSelectedDate(new Date());
       if (onWorklogCreated) {
@@ -183,6 +189,30 @@ const WorklogForm = ({ onWorklogCreated }) => {
             {errors.toTime && (
               <p className="mt-1 text-sm text-red-600 font-medium">{errors.toTime.message}</p>
             )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Customer Name */}
+          <div>
+            <label className="label-premium">Customer Name <span className="text-gray-400 font-normal">(Optional)</span></label>
+            <input
+              type="text"
+              {...register('customerName')}
+              placeholder="e.g. Acme Corp"
+              className="input-premium w-full"
+            />
+          </div>
+
+          {/* Ticket ID */}
+          <div>
+            <label className="label-premium">Ticket ID <span className="text-gray-400 font-normal">(Optional)</span></label>
+            <input
+              type="text"
+              {...register('ticketId')}
+              placeholder="e.g. TKT-1234"
+              className="input-premium w-full"
+            />
           </div>
         </div>
 

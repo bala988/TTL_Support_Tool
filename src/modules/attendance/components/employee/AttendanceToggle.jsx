@@ -66,14 +66,14 @@ const AttendanceToggle = ({ onAttendanceMarked }) => {
     <Card className={isPresent ? 'bg-green-50 border-2 border-green-200' : ''}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isPresent ? 'bg-green-500' : 'bg-dark-200'}`}>
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isPresent ? 'bg-green-500' : 'bg-red-100'}`}>
             {isPresent ? (
               <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             ) : (
-              <svg className="w-7 h-7 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg className="w-7 h-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             )}
           </div>
@@ -82,7 +82,7 @@ const AttendanceToggle = ({ onAttendanceMarked }) => {
               {isPresent ? 'Attendance Marked' : 'Mark Attendance'}
             </h3>
             <p className="text-sm text-dark-600">
-              {isPresent ? 'You are marked present for today' : 'Click to mark yourself present today'}
+              {isPresent ? 'You are marked present for today' : 'Current Status: Absent (Mark to change)'}
             </p>
           </div>
         </div>

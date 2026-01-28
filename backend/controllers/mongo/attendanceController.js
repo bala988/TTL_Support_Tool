@@ -14,6 +14,8 @@ const worklogSchema = z.object({
   fromTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'From time must be in HH:mm format'),
   toTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'To time must be in HH:mm format'),
   activity: z.string().min(5, 'Activity description must be at least 5 characters'),
+  customerName: z.string().optional().nullable(),
+  ticketId: z.string().optional().nullable(),
 });
 
 // @desc    Mark attendance as present
@@ -130,6 +132,8 @@ export const createWorklog = async (req, res, next) => {
       fromTime: validatedData.fromTime,
       toTime: validatedData.toTime,
       activity: validatedData.activity,
+      customerName: validatedData.customerName || null,
+      ticketId: validatedData.ticketId || null,
     });
     
     res.status(201).json({

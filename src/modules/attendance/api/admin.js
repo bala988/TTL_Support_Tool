@@ -38,4 +38,11 @@ export const adminAPI = {
     });
     return response.data;
   },
+  // Export global attendance CSV
+  exportGlobalAttendanceCSV: async (from, to) => {
+    const response = await axios.get(`/admin/attendance/export?from=${from}&to=${to}`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };

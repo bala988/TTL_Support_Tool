@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import toast from 'react-hot-toast';
 import { adminAPI } from '../api/admin';
 import { useAuth } from '../hooks/useAuth';
@@ -17,6 +17,10 @@ const AdminDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
+  // Date range for report
+  const [startDate, setStartDate] = useState(format(subDays(new Date(), 1), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     loadEmployees();
@@ -61,6 +65,36 @@ const AdminDashboard = () => {
 
   const handleViewEmployee = (employeeId) => {
     navigate(`/attendance/admin/employees/${employeeId}`);
+  };
+
+  const handleDownloadReport = async () => {
+    if (!startDate || !endDate) {
+      toast.error('Please select both start and end dates');
+      return;
+    }
+    
+    setIsDownloading(true);
+    const toastId = toast.loading('Generating and uploading report...');
+    
+    try {
+      const data = await adminAPI.exportGlobalAttendanceCSV(startDate, endDate);
+      
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `attendance_report_${startDate}_to_${endDate}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      toast.success('Report downloaded and uploaded to Drive!', { id: toastId });
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast.error('Failed to download report', { id: toastId });
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -124,6 +158,58 @@ const AdminDashboard = () => {
             </div>
           </Card>
         </div>
+
+        {/* Attendance Report Section */}
+        <Card className="mb-8 border-l-4 border-l-primary-500">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-dark-900">Attendance Report</h2>
+              <p className="text-dark-600 text-sm">Download global attendance report (CSV) and auto-upload to Drive</p>
+            </div>
+            
+            <div className="flex flex-wrap items-end gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-dark-500 uppercase tracking-wider mb-1">From Date</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="input-premium py-2"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-xs font-semibold text-dark-500 uppercase tracking-wider mb-1">To Date</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="input-premium py-2"
+                />
+              </div>
+              
+              <Button 
+                onClick={handleDownloadReport} 
+                className="bg-primary-600 text-white shadow-lg hover:bg-primary-700"
+                disabled={isDownloading}
+              >
+                {isDownloading ? (
+                   <>
+                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+                     Processing...
+                   </>
+                ) : (
+                   <>
+                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                     </svg>
+                     Download Report
+                   </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </Card>
 
         {/* Employee Table */}
         <Card>

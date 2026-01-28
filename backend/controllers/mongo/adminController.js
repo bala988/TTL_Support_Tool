@@ -234,3 +234,100 @@ export const exportEmployeeCSV = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Export global attendance as CSV
+// @route   GET /api/admin/attendance/export?from=YYYY-MM-DD&to=YYYY-MM-DD
+// @access  Private (Admin)
+export const exportGlobalAttendanceCSV = async (req, res, next) => {
+  try {
+    const { from, to } = req.query;
+    
+    if (!from || !/^\d{4}-\d{2}-\d{2}$/.test(from)) {
+      return res.status(400).json({
+        success: false,
+        message: 'From date must be in YYYY-MM-DD format',
+      });
+    }
+    
+    if (!to || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+      return res.status(400).json({
+        success: false,
+        message: 'To date must be in YYYY-MM-DD format',
+      });
+    }
+    
+    // 1. Get all employees
+    const employees = await User.find({ role: 'employee' }).sort({ employeeId: 1 }).select('fullName employeeId email');
+    
+    // 2. Get all attendance records in range
+    const attendanceRecords = await Attendance.find({
+      date: { $gte: from, $lte: to }
+    });
+    
+    // Create a map for quick lookup: "date_userId" -> status
+    const attendanceMap = new Set();
+    attendanceRecords.forEach(record => {
+      attendanceMap.add(`${record.date}_${record.userId.toString()}`);
+    });
+    
+    // 3. Generate dates in range
+    const dates = [];
+    const currentDate = new Date(from);
+    const endDate = new Date(to);
+    
+    while (currentDate <= endDate) {
+      dates.push(currentDate.toISOString().split('T')[0]);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    // 4. Build CSV Data
+    // Header: Date | Employee ID | Full Name | Email | Status
+    const csvRows = [];
+    csvRows.push(['Date', 'Employee ID', 'Full Name', 'Email', 'Status'].join(','));
+    
+    dates.forEach(date => {
+        employees.forEach(emp => {
+            const hasAttendance = attendanceMap.has(`${date}_${emp._id.toString()}`);
+            const status = hasAttendance ? 'Present' : 'Absent';
+            
+            // CSV Safe strings (handle commas)
+            const safeName = `"${emp.fullName.replace(/"/g, '""')}"`;
+            const safeEmail = `"${emp.email.replace(/"/g, '""')}"`;
+            const safeId = `"${emp.employeeId.replace(/"/g, '""')}"`;
+            
+            csvRows.push([date, safeId, safeName, safeEmail, status].join(','));
+        });
+    });
+    
+    const csvContent = csvRows.join('\n');
+    const filename = `attendance_report_${from}_to_${to}.csv`;
+    
+    // 5. Upload to Google Drive
+    try {
+        const { uploadCSVToDrive, isGoogleDriveConfigured } = await import('../../services/googleDriveService.js');
+        if (isGoogleDriveConfigured()) {
+            const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID_ATTENDANCE || process.env.GOOGLE_DRIVE_FOLDER_ID; // Use specific attendance folder
+            
+            uploadCSVToDrive(csvContent, filename, folderId)
+                 .then(result => {
+                    if (result.success) {
+                        console.log(`✅ Global Attendance CSV uploaded: ${filename}`);
+                    } else {
+                        console.error(`❌ Global CSV Upload Failed: ${result.error}`);
+                    }
+                 })
+                 .catch(err => console.error('❌ Async upload error:', err));
+        }
+    } catch (err) {
+        console.warn('Google Drive service optional dependency issue:', err.message);
+    }
+    
+    // 6. Send Response
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.status(200).send(csvContent);
+    
+  } catch (error) {
+    next(error);
+  }
+};

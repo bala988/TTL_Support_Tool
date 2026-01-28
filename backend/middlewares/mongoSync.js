@@ -17,10 +17,21 @@ export const syncMongoUser = async (req, res, next) => {
       mongoUser = await User.create({
         fullName: req.user.name || 'User',
         email: req.user.email,
-        employeeId: req.user.email.split('@')[0].toUpperCase(), // Fallback ID
+        employeeId: req.user.id ? `EMP-${req.user.id}` : req.user.email.split('@')[0].toUpperCase(),
         passwordHash: 'MERGED_USER', // Placeholder
         role: role,
       });
+    } else {
+      // Sync Employee ID if it doesn't match (e.g. legacy users or username-based IDs)
+      if (req.user.id) {
+        const expectedId = `EMP-${req.user.id}`;
+        if (mongoUser.employeeId !== expectedId) {
+          mongoUser.employeeId = expectedId;
+          // Also sync name if changed
+          if (req.user.name) mongoUser.fullName = req.user.name;
+          await mongoUser.save();
+        }
+      }
     }
 
     req.mongoUser = mongoUser;

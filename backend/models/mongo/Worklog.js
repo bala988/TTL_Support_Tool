@@ -27,6 +27,16 @@ const worklogSchema = new mongoose.Schema(
       trim: true,
       minlength: [5, 'Activity description must be at least 5 characters'],
     },
+    customerName: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    ticketId: {
+      type: String,
+      default: null,
+      trim: true,
+    },
     durationMinutes: {
       type: Number,
     },
