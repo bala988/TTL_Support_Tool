@@ -219,17 +219,17 @@ export const updateOpportunity = async (req, res) => {
 
         const stage2Fields = [
           'tech_solution_mapping', 'collect_use_cases', 'align_oem', 'oem_account_manager', 
-          'oem_contact_email', 'top_presentation_doc', 'handoff_presales', 'cust_req_discovery', 
-          'flp_upload', 'oem_presentation_upload', 'tech_success_doc', 'poc_use_case_doc', 
-          'use_case_signoff', 'oem_approval'
+          'oem_contact_email', 'tqd_presentation_yn', 'tqd_presentation_upload', 'handoff_presales', 
+          'cust_req_discovery', 'flp_yn', 'flp_upload', 'oem_presentation_yn', 'oem_presentation_upload', 
+          'tech_success_doc', 'poc_use_case_doc', 'use_case_signoff', 'oem_approval'
         ];
         await updateStageTable('sales_stage_2', 2, stage2Fields);
 
         const stage3Fields = [
-          'poc_detailed_doc_yn', 'poc_detailed_doc_upload', 'tech_solution_final_upload', 
-          'boq_approval_upload', 'handoff_tech', 'detailed_poc_cases_upload', 'integrations_upload', 
-          'poc_kickoff_date', 'poc_completion_date', 'poc_use_case_doc_final', 'solution_doc_upload', 
-          'boq_version_upload'
+          'poc_detailed_doc_yn', 'poc_detailed_doc_upload', 'tech_solution_final_yn', 'tech_solution_final_upload', 
+          'boq_approval_yn', 'boq_approval_upload', 'handoff_tech', 'detailed_poc_cases_upload', 
+          'integration_solution_yn', 'integrations_upload', 'poc_kickoff_date', 'poc_completion_date', 
+          'poc_use_case_doc_final', 'solution_doc_upload', 'boq_version_yn', 'boq_version_number', 'boq_version_upload'
         ];
         await updateStageTable('sales_stage_3', 3, stage3Fields);
 
@@ -255,9 +255,9 @@ export const updateOpportunity = async (req, res) => {
         await updateStageTable('sales_stage_6', 6, stage6Fields);
 
         const stage7Fields = [
-          'invoice_submission_upload', 'payment_success', 'finance_confirmation', 'submit_project_doc_finance',
-          'project_signoff_approval', 'invoice_submission_followup', 'payment_confirmation_finance', 'thanks_mail_closure',
-          'recognition_internal_mail'
+          'invoice_submission_yn', 'invoice_submission_upload', 'payment_success', 'finance_confirmation', 
+          'submit_project_doc_finance', 'project_signoff_approval', 'invoice_submission_followup', 
+          'payment_confirmation_finance', 'thanks_mail_closure', 'recognition_internal_mail'
         ];
         await updateStageTable('sales_stage_7', 7, stage7Fields);
       }

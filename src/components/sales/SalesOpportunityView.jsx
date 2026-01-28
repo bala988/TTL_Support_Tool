@@ -35,25 +35,32 @@ export default function SalesOpportunityView() {
     stage2: {
       tech_solution_mapping: 'No', collect_use_cases: 'No',
       align_oem: '', oem_account_manager: '', oem_contact_email: '',
-      top_presentation_doc: '', handoff_presales: 'No',
-      cust_req_discovery: '', flp_upload: '', oem_presentation_upload: '',
+      tqd_presentation_yn: 'No', tqd_presentation_upload: '',
+      handoff_presales: 'No',
+      cust_req_discovery: '', 
+      flp_yn: 'No', flp_upload: '', 
+      oem_presentation_yn: 'No', oem_presentation_upload: '',
       tech_success_doc: 'No', poc_use_case_doc: '', use_case_signoff: 'No',
       oem_approval: 'No'
     },
     stage3: {
       poc_detailed_doc_yn: 'No', poc_detailed_doc_upload: '',
-      tech_solution_final_upload: '', boq_approval_upload: '',
-      handoff_tech: 'No', detailed_poc_cases_upload: '', integrations_upload: '',
+      tech_solution_final_yn: 'No', tech_solution_final_upload: '',
+      boq_approval_yn: 'No', boq_approval_upload: '',
+      handoff_tech: 'No', detailed_poc_cases_upload: '', 
+      integration_solution_yn: 'No', integrations_upload: '',
       poc_kickoff_date: '', poc_completion_date: '',
-      poc_use_case_doc_final: '', solution_doc_upload: '', boq_version_upload: ''
+      poc_use_case_doc_final: '', solution_doc_upload: '', 
+      boq_version_yn: 'No', boq_version_number: '', boq_version_upload: ''
     },
     stage4: {
       commercial_closure: 'No', technical_sow_closure: 'No',
       final_po_upload: '', cust_req_doc_review_upload: '',
-      budgetary_quote_upload: '', negotiated_quote_upload: '',
+      budgetary_quote_yn: 'No', budgetary_quote_upload: '',
+      negotiated_quote_yn: 'No', negotiated_quote_upload: '',
       distributor_discount_yn: 'No', distributor_margin_percent: '',
       final_po_payment_terms_yn: 'No', distributor_approved_quote_upload: '',
-      customer_po_upload: '', internal_finance_approval: 'No'
+      customer_po_yn: 'No', customer_po_upload: '', internal_finance_approval: 'No'
     },
     stage5: {
       b2b_ordering: 'No', product_delivery_type: 'No',
@@ -63,15 +70,20 @@ export default function SalesOpportunityView() {
       product_license_delivery_yn: 'No', delivery_confirmation_yn: 'No'
     },
     stage6: {
-      project_plan_tracker_upload: '', project_completion_cert_upload: '',
-      uat_signoff: 'No', project_plan_tech_align: 'No',
-      milestones_tracking_yn: 'No', milestones_timeline: '',
-      tech_implementation_uat_upload: '', admin_training: 'No',
-      handover_signoff_doc: '', uat_completion_doc_yn: 'No',
+      project_plan_tracker_yn: 'No', project_plan_tracker_upload: '',
+      project_completion_cert_yn: 'No', project_completion_cert_upload: '',
+      uat_signoff: 'No', 
+      project_plan_tech_align_yn: 'No', tech_align_engineer_name: '',
+      milestones_tracking_meet: '', milestones_timeline: '',
+      tech_implementation_uat_yn: 'No', tech_implementation_uat_upload: '', 
+      admin_training: 'No',
+      handover_signoff_yn: 'No', handover_signoff_doc: '', 
+      uat_completion_doc_yn: 'No',
       project_signoff: 'No', closure_mail_yn: 'No'
     },
     stage7: {
-      invoice_submission_upload: '', payment_success: 'No',
+      invoice_submission_yn: 'No', invoice_submission_upload: '', 
+      payment_success: 'No',
       finance_confirmation: 'No', submit_project_doc_finance: 'No',
       project_signoff_approval: 'No', invoice_submission_followup: '',
       payment_confirmation_finance: 'No', thanks_mail_closure: 'No',
@@ -186,16 +198,20 @@ export default function SalesOpportunityView() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const payload = {
-      ...header,
-      current_stage: activeStage,
-      stage_status: stageStatus,
-      stage_data: stageData,
-      created_by: localStorage.getItem("userId")
-    };
+  const canAdvance = () => {
+    if (activeStage === 1) return stageData.stage1.go_no_go === 'Yes';
+    if (activeStage === 2) return stageData.stage2.handoff_presales === 'Yes' && stageData.stage2.oem_approval === 'Yes';
+    if (activeStage === 3) return stageData.stage3.handoff_tech === 'Yes';
+    if (activeStage === 4) return stageData.stage4.commercial_closure === 'Yes';
+    if (activeStage === 6) {
+      return stageData.stage6.uat_completion_doc_yn === 'Yes' && 
+             stageData.stage6.project_signoff === 'Yes' && 
+             stageData.stage6.closure_mail_yn === 'Yes';
+    }
+    return true;
+  };
 
+  const saveOpportunity = async (payload, isNextStage = false) => {
     const url = isEditMode 
       ? `http://localhost:5000/api/sales/${id}` 
       : `http://localhost:5000/api/sales`;
@@ -210,7 +226,16 @@ export default function SalesOpportunityView() {
       const data = await res.json();
       
       if (res.ok) {
-        toast.success("Opportunity saved successfully! ✅");
+        if (isNextStage) {
+          toast.success("Stage Completed! Moving to next...");
+          const next = activeStage + 1;
+          setActiveStage(next);
+          setMaxStage(Math.max(maxStage, next));
+          setStageStatus('In Progress');
+        } else {
+          toast.success("Progress saved! (Draft)");
+        }
+        
         if (!isEditMode && data.opportunityId) {
           navigate(`/sales/${data.opportunityId}`);
         }
@@ -219,29 +244,48 @@ export default function SalesOpportunityView() {
       }
     } catch (error) {
       console.error("Save error:", error);
+      toast.error("Network error while saving");
     }
   };
 
-  // Logic to advance stage
-  const canAdvance = () => {
-    if (activeStage === 1) return stageData.stage1.go_no_go === 'Yes';
-    if (activeStage === 2) return stageData.stage2.oem_approval === 'Yes';
-    if (activeStage === 3) return stageData.stage3.handoff_tech === 'Yes'; // or other criteria
-    if (activeStage === 4) return stageData.stage4.commercial_closure === 'Yes';
-    // ... basic checks for now
-    return true;
+  const handleSaveDraft = (e) => {
+    e?.preventDefault();
+    const payload = {
+      ...header,
+      stage_status: 'In Progress',
+      stage_data: stageData,
+      created_by: localStorage.getItem("userId")
+    };
+    
+    // Only update current_stage if we are creating a new opportunity
+    if (!isEditMode) {
+      payload.current_stage = activeStage;
+    }
+
+    saveOpportunity(payload, false);
   };
 
-  const advanceStage = () => {
-    if (canAdvance() && activeStage < 7) {
-      const next = activeStage + 1;
-      setActiveStage(next);
-      setMaxStage(Math.max(maxStage, next));
-      setStageStatus('In Progress');
-      // Ideally trigger a save here too
-    } else {
-      toast.warning("Cannot advance. Please ensure all required approvals/fields (Go/No-Go, Approvals) are set to 'Yes'.");
+  const handleNextStage = (e) => {
+    e?.preventDefault();
+    
+    if (!canAdvance()) {
+      toast.error("Cannot advance. Please fill all mandatory fields marked with * and ensure approvals are 'Yes'.");
+      return;
     }
+    
+    if (activeStage >= 7) {
+      toast.success("Opportunity already at final stage!");
+      return;
+    }
+
+    const payload = {
+      ...header,
+      current_stage: activeStage + 1, // Advance to next
+      stage_status: 'In Progress', // Reset status for next stage
+      stage_data: stageData,
+      created_by: localStorage.getItem("userId")
+    };
+    saveOpportunity(payload, true);
   };
 
   const renderStageBar = () => {
@@ -304,9 +348,11 @@ export default function SalesOpportunityView() {
   );
 
   // Helper for Yes/No Dropdown
-  const YesNoSelect = ({ label, stage, field, value }) => (
+  const YesNoSelect = ({ label, stage, field, value, required }) => (
     <div>
-      <label className="block text-sm font-medium mb-1 text-gray-700">{label}</label>
+      <label className="block text-sm font-medium mb-1 text-gray-700">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
       <select 
         className="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-500"
         value={value || 'No'}
@@ -325,8 +371,8 @@ export default function SalesOpportunityView() {
           <h1 className="text-2xl font-bold text-gray-800">
             {isEditMode ? `Opportunity: ${header.opportunity_name}` : "New Opportunity"}
           </h1>
-          <button onClick={handleSubmit} className="bg-indigo-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-700">
-            <Save className="w-4 h-4" /> Save
+          <button onClick={handleSaveDraft} className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-50 text-sm">
+            <Save className="w-4 h-4" /> Save Draft
           </button>
         </div>
 
@@ -465,7 +511,7 @@ export default function SalesOpportunityView() {
             <div className="flex gap-2">
                {/* Advance Button */}
                <button 
-                 onClick={advanceStage}
+                 onClick={handleNextStage}
                  disabled={activeStage === 7}
                  className="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2 disabled:opacity-50"
                >
@@ -512,7 +558,7 @@ export default function SalesOpportunityView() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Prepare RANT (Date)</label>
+                <label className="block text-sm font-medium mb-1">Prepare BANT (Date)</label>
                 <input type="date" className="w-full border p-2 rounded" value={stageData.stage1.rant_date} onChange={(e) => handleStageDataChange(1, 'rant_date', e.target.value)} />
               </div>
 
@@ -522,7 +568,7 @@ export default function SalesOpportunityView() {
               
               <FileUpload label="Deal Map Prepared (Org Chart)" stage={1} field="deal_map_org_chart" value={stageData.stage1.deal_map_org_chart} />
 
-              <YesNoSelect label="Go or No Go (Admin/Manager Sign-off)" stage={1} field="go_no_go" value={stageData.stage1.go_no_go} />
+              <YesNoSelect label="Go or No Go (Admin/Manager Sign-off)" stage={1} field="go_no_go" value={stageData.stage1.go_no_go} required={true} />
             </div>
           )}
 
@@ -537,28 +583,49 @@ export default function SalesOpportunityView() {
                  <select className="border p-2 rounded" value={stageData.stage2.align_oem} onChange={(e) => handleStageDataChange(2, 'align_oem', e.target.value)}>
                     <option value="">Select OEM</option>
                     <option value="Palo Alto">Palo Alto</option>
+                    <option value="F5">F5</option>
                     <option value="AWS">AWS</option>
+                    <option value="Proofpoint">Proofpoint</option>
                  </select>
                  <input placeholder="Account Manager" className="border p-2 rounded" value={stageData.stage2.oem_account_manager} onChange={(e) => handleStageDataChange(2, 'oem_account_manager', e.target.value)} />
                  <input placeholder="Contact Email" className="border p-2 rounded" value={stageData.stage2.oem_contact_email} onChange={(e) => handleStageDataChange(2, 'oem_contact_email', e.target.value)} />
               </div>
 
-              <FileUpload label="TOP Presentation (Internal / OEM)" stage={2} field="top_presentation_doc" value={stageData.stage2.top_presentation_doc} />
-              <YesNoSelect label="Handoff to Presales Team" stage={2} field="handoff_presales" value={stageData.stage2.handoff_presales} />
-              
-              <div className="col-span-full">
-                 <label className="block text-sm font-medium mb-1">Customer Requirement Discovery Call (Notes)</label>
-                 <textarea className="w-full border p-2 rounded" value={stageData.stage2.cust_req_discovery} onChange={(e) => handleStageDataChange(2, 'cust_req_discovery', e.target.value)} />
+              <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <YesNoSelect label="TQD Presentation" stage={2} field="tqd_presentation_yn" value={stageData.stage2.tqd_presentation_yn} />
+                 {stageData.stage2.tqd_presentation_yn === 'Yes' && (
+                    <FileUpload label="Upload TQD Presentation" stage={2} field="tqd_presentation_upload" value={stageData.stage2.tqd_presentation_upload} />
+                 )}
               </div>
 
-              <FileUpload label="First Level Presentation from TTL (FLP)" stage={2} field="flp_upload" value={stageData.stage2.flp_upload} />
-              <FileUpload label="Second Level Presentation from OEM" stage={2} field="oem_presentation_upload" value={stageData.stage2.oem_presentation_upload} />
+              <YesNoSelect label="Handoff to Presales Team" stage={2} field="handoff_presales" value={stageData.stage2.handoff_presales} required={true} />
               
-              <YesNoSelect label="Documenting Tech Success with OEM and Customer" stage={2} field="tech_success_doc" value={stageData.stage2.tech_success_doc} />
-              <FileUpload label="Use Case / POC Document" stage={2} field="poc_use_case_doc" value={stageData.stage2.poc_use_case_doc} />
-              
-              <YesNoSelect label="Use Case Signoff from Customer" stage={2} field="use_case_signoff" value={stageData.stage2.use_case_signoff} />
-              <YesNoSelect label="Approval from OEM (Account Manager)" stage={2} field="oem_approval" value={stageData.stage2.oem_approval} />
+              <div className={`col-span-full grid grid-cols-1 md:grid-cols-2 gap-6 ${stageData.stage2.handoff_presales !== 'Yes' ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <div className="col-span-full">
+                     <label className="block text-sm font-medium mb-1">Customer Requirement Discovery Call (Notes)</label>
+                     <textarea className="w-full border p-2 rounded" value={stageData.stage2.cust_req_discovery} onChange={(e) => handleStageDataChange(2, 'cust_req_discovery', e.target.value)} />
+                  </div>
+
+                  <div>
+                     <YesNoSelect label="First Level Presentation from TTL (FLP)" stage={2} field="flp_yn" value={stageData.stage2.flp_yn} />
+                     {stageData.stage2.flp_yn === 'Yes' && (
+                       <FileUpload label="Upload FLP" stage={2} field="flp_upload" value={stageData.stage2.flp_upload} />
+                     )}
+                  </div>
+
+                  <div>
+                     <YesNoSelect label="Second Level Presentation from OEM" stage={2} field="oem_presentation_yn" value={stageData.stage2.oem_presentation_yn} />
+                     {stageData.stage2.oem_presentation_yn === 'Yes' && (
+                       <FileUpload label="Upload OEM Presentation" stage={2} field="oem_presentation_upload" value={stageData.stage2.oem_presentation_upload} />
+                     )}
+                  </div>
+                  
+                  <YesNoSelect label="Documenting Tech Success with OEM and Customer" stage={2} field="tech_success_doc" value={stageData.stage2.tech_success_doc} />
+                  <FileUpload label="Use Case / POC Document" stage={2} field="poc_use_case_doc" value={stageData.stage2.poc_use_case_doc} />
+                  
+                  <YesNoSelect label="Use Case Signoff from Customer" stage={2} field="use_case_signoff" value={stageData.stage2.use_case_signoff} />
+                  <YesNoSelect label="Approval from OEM (Account Manager)" stage={2} field="oem_approval" value={stageData.stage2.oem_approval} required={true} />
+              </div>
             </div>
           )}
 
@@ -567,16 +634,33 @@ export default function SalesOpportunityView() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-4">
                  <YesNoSelect label="POC Detailed Document Ready?" stage={3} field="poc_detailed_doc_yn" value={stageData.stage3.poc_detailed_doc_yn} />
-                 <FileUpload label="Upload POC Detailed Doc" stage={3} field="poc_detailed_doc_upload" value={stageData.stage3.poc_detailed_doc_upload} />
+                 {stageData.stage3.poc_detailed_doc_yn === 'Yes' && (
+                    <FileUpload label="Upload POC Detailed Doc" stage={3} field="poc_detailed_doc_upload" value={stageData.stage3.poc_detailed_doc_upload} />
+                 )}
               </div>
 
-              <FileUpload label="Tech Solution Finalization" stage={3} field="tech_solution_final_upload" value={stageData.stage3.tech_solution_final_upload} />
-              <FileUpload label="BOQ Approval" stage={3} field="boq_approval_upload" value={stageData.stage3.boq_approval_upload} />
+              <div>
+                  <YesNoSelect label="Tech Solution Finalization" stage={3} field="tech_solution_final_yn" value={stageData.stage3.tech_solution_final_yn} />
+                  {stageData.stage3.tech_solution_final_yn === 'Yes' && (
+                     <FileUpload label="Upload Tech Solution Doc" stage={3} field="tech_solution_final_upload" value={stageData.stage3.tech_solution_final_upload} />
+                  )}
+              </div>
+
+              <div>
+                  <YesNoSelect label="BOQ Approval" stage={3} field="boq_approval_yn" value={stageData.stage3.boq_approval_yn} />
+                  {stageData.stage3.boq_approval_yn === 'Yes' && (
+                     <FileUpload label="Upload BOQ Approval" stage={3} field="boq_approval_upload" value={stageData.stage3.boq_approval_upload} />
+                  )}
+              </div>
               
               <YesNoSelect label="Handoff to Tech Team" stage={3} field="handoff_tech" value={stageData.stage3.handoff_tech} />
               
-              <FileUpload label="Detailed POC Cases" stage={3} field="detailed_poc_cases_upload" value={stageData.stage3.detailed_poc_cases_upload} />
-              <FileUpload label="Integrations with Solution" stage={3} field="integrations_upload" value={stageData.stage3.integrations_upload} />
+              <div>
+                  <YesNoSelect label="Integration with Solution" stage={3} field="integration_solution_yn" value={stageData.stage3.integration_solution_yn} />
+                  {stageData.stage3.integration_solution_yn === 'Yes' && (
+                     <FileUpload label="Upload Integration Doc" stage={3} field="integrations_upload" value={stageData.stage3.integrations_upload} />
+                  )}
+              </div>
               
               <div>
                  <label className="block text-sm font-medium mb-1">POC Kickoff Date</label>
@@ -589,7 +673,22 @@ export default function SalesOpportunityView() {
 
               <FileUpload label="POC / Use Case Document (POC-DOC)" stage={3} field="poc_use_case_doc_final" value={stageData.stage3.poc_use_case_doc_final} />
               <FileUpload label="Solution Document (SOL-DOC)" stage={3} field="solution_doc_upload" value={stageData.stage3.solution_doc_upload} />
-              <FileUpload label="BOQ Initial to Final Approved Versions" stage={3} field="boq_version_upload" value={stageData.stage3.boq_version_upload} />
+              
+              <div className="col-span-full border p-4 rounded bg-gray-50">
+                  <YesNoSelect label="BOQ Initial to Final Approved Versions" stage={3} field="boq_version_yn" value={stageData.stage3.boq_version_yn} />
+                  {stageData.stage3.boq_version_yn === 'Yes' && (
+                     <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Version</label>
+                            <select className="w-full border p-2 rounded" value={stageData.stage3.boq_version_number} onChange={(e) => handleStageDataChange(3, 'boq_version_number', e.target.value)}>
+                                <option value="">Select Version</option>
+                                {[...Array(10)].map((_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
+                            </select>
+                        </div>
+                        <FileUpload label="Upload BOQ Version" stage={3} field="boq_version_upload" value={stageData.stage3.boq_version_upload} />
+                     </div>
+                  )}
+              </div>
             </div>
           )}
 
@@ -613,7 +712,12 @@ export default function SalesOpportunityView() {
               <YesNoSelect label="Final PO Received along with Payment Terms" stage={4} field="final_po_payment_terms_yn" value={stageData.stage4.final_po_payment_terms_yn} />
               
               <FileUpload label="Distributor Approved Quote in INR (Dist)" stage={4} field="distributor_approved_quote_upload" value={stageData.stage4.distributor_approved_quote_upload} />
-              <FileUpload label="Customer PO (Cust-PO)" stage={4} field="customer_po_upload" value={stageData.stage4.customer_po_upload} />
+              <div>
+                 <YesNoSelect label="Customer PO (Cust-PO)" stage={4} field="customer_po_yn" value={stageData.stage4.customer_po_yn} />
+                 {stageData.stage4.customer_po_yn === 'Yes' && (
+                    <FileUpload label="Upload Customer PO" stage={4} field="customer_po_upload" value={stageData.stage4.customer_po_upload} />
+                 )}
+              </div>
               
               <YesNoSelect label="Internal Finance Approval" stage={4} field="internal_finance_approval" value={stageData.stage4.internal_finance_approval} />
             </div>
@@ -671,34 +775,82 @@ export default function SalesOpportunityView() {
           {/* STAGE 6 */}
           {activeStage === 6 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FileUpload label="Project Plan and Tracker" stage={6} field="project_plan_tracker_upload" value={stageData.stage6.project_plan_tracker_upload} />
-              <FileUpload label="Project Completion (Cert)" stage={6} field="project_completion_cert_upload" value={stageData.stage6.project_completion_cert_upload} />
+              <div>
+                 <YesNoSelect label="Project Plan and Tracker" stage={6} field="project_plan_tracker_yn" value={stageData.stage6.project_plan_tracker_yn} />
+                 {stageData.stage6.project_plan_tracker_yn === 'Yes' && (
+                    <FileUpload label="Upload Project Plan Tracker" stage={6} field="project_plan_tracker_upload" value={stageData.stage6.project_plan_tracker_upload} />
+                 )}
+              </div>
+
+              <div>
+                 <YesNoSelect label="Project Completion (Cert)" stage={6} field="project_completion_cert_yn" value={stageData.stage6.project_completion_cert_yn} />
+                 {stageData.stage6.project_completion_cert_yn === 'Yes' && (
+                    <FileUpload label="Upload Completion Cert" stage={6} field="project_completion_cert_upload" value={stageData.stage6.project_completion_cert_upload} />
+                 )}
+              </div>
               
               <YesNoSelect label="UAT Sign-off" stage={6} field="uat_signoff" value={stageData.stage6.uat_signoff} />
-              <YesNoSelect label="Project Plan and Technical Team Alignment" stage={6} field="project_plan_tech_align" value={stageData.stage6.project_plan_tech_align} />
               
-              <YesNoSelect label="Milestones Tracking" stage={6} field="milestones_tracking_yn" value={stageData.stage6.milestones_tracking_yn} />
+              <div>
+                 <YesNoSelect label="Project Plan and Technical Team Alignment" stage={6} field="project_plan_tech_align_yn" value={stageData.stage6.project_plan_tech_align_yn} />
+                 {stageData.stage6.project_plan_tech_align_yn === 'Yes' && (
+                    <input 
+                      placeholder="Enter Engineer Name" 
+                      className="w-full border p-2 rounded mt-2" 
+                      value={stageData.stage6.tech_align_engineer_name} 
+                      onChange={(e) => handleStageDataChange(6, 'tech_align_engineer_name', e.target.value)} 
+                    />
+                 )}
+              </div>
+              
+              <div>
+                 <label className="block text-sm font-medium mb-1">Milestones Tracking</label>
+                 <select 
+                   className="w-full border p-2 rounded" 
+                   value={stageData.stage6.milestones_tracking_meet} 
+                   onChange={(e) => handleStageDataChange(6, 'milestones_tracking_meet', e.target.value)}
+                 >
+                   <option value="">Select Milestone</option>
+                   {[...Array(10)].map((_, i) => <option key={i+1} value={`meet${i+1}`}>{`meet${i+1}`}</option>)}
+                 </select>
+              </div>
               
               <div className="col-span-full">
                  <label className="block text-sm font-medium mb-1">Milestones Timeline</label>
                  <textarea className="w-full border p-2 rounded" value={stageData.stage6.milestones_timeline} onChange={(e) => handleStageDataChange(6, 'milestones_timeline', e.target.value)} />
               </div>
 
-              <FileUpload label="Tech Implementation and UAT Testing (UAT)" stage={6} field="tech_implementation_uat_upload" value={stageData.stage6.tech_implementation_uat_upload} />
+              <div>
+                 <YesNoSelect label="Tech Implementation and UAT Testing (UAT)" stage={6} field="tech_implementation_uat_yn" value={stageData.stage6.tech_implementation_uat_yn} />
+                 {stageData.stage6.tech_implementation_uat_yn === 'Yes' && (
+                    <FileUpload label="Upload UAT Doc" stage={6} field="tech_implementation_uat_upload" value={stageData.stage6.tech_implementation_uat_upload} />
+                 )}
+              </div>
               
               <YesNoSelect label="Admin Training" stage={6} field="admin_training" value={stageData.stage6.admin_training} />
-              <FileUpload label="Handover and Signoff (Project-Doc)" stage={6} field="handover_signoff_doc" value={stageData.stage6.handover_signoff_doc} />
               
-              <YesNoSelect label="UAT Completion Document" stage={6} field="uat_completion_doc_yn" value={stageData.stage6.uat_completion_doc_yn} />
-              <YesNoSelect label="Project Signoff" stage={6} field="project_signoff" value={stageData.stage6.project_signoff} />
-              <YesNoSelect label="Closure Update Mail to Stakeholders" stage={6} field="closure_mail_yn" value={stageData.stage6.closure_mail_yn} />
+              <div>
+                 <YesNoSelect label="Handover and Signoff (Project-Doc)" stage={6} field="handover_signoff_yn" value={stageData.stage6.handover_signoff_yn} />
+                 {stageData.stage6.handover_signoff_yn === 'Yes' && (
+                    <FileUpload label="Upload Handover Doc" stage={6} field="handover_signoff_doc" value={stageData.stage6.handover_signoff_doc} />
+                 )}
+              </div>
+              
+              <YesNoSelect label="UAT Completion Document" stage={6} field="uat_completion_doc_yn" value={stageData.stage6.uat_completion_doc_yn} required={true} />
+              <YesNoSelect label="Project Signoff" stage={6} field="project_signoff" value={stageData.stage6.project_signoff} required={true} />
+              <YesNoSelect label="Closure Update Mail to OEM" stage={6} field="closure_mail_yn" value={stageData.stage6.closure_mail_yn} required={true} />
             </div>
           )}
 
           {/* STAGE 7 */}
           {activeStage === 7 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <FileUpload label="Invoice Submission (Invoice)" stage={7} field="invoice_submission_upload" value={stageData.stage7.invoice_submission_upload} />
+               <div>
+                  <YesNoSelect label="Invoice Submission (Invoice)" stage={7} field="invoice_submission_yn" value={stageData.stage7.invoice_submission_yn} />
+                  {stageData.stage7.invoice_submission_yn === 'Yes' && (
+                     <FileUpload label="Upload Invoice" stage={7} field="invoice_submission_upload" value={stageData.stage7.invoice_submission_upload} />
+                  )}
+               </div>
                
                <YesNoSelect label="Payment Success" stage={7} field="payment_success" value={stageData.stage7.payment_success} />
                <YesNoSelect label="Finance Confirmation" stage={7} field="finance_confirmation" value={stageData.stage7.finance_confirmation} />
@@ -716,6 +868,23 @@ export default function SalesOpportunityView() {
             </div>
           )}
 
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-4 mt-8 pb-8 border-t pt-6">
+          <button 
+            onClick={handleSaveDraft} 
+            className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 flex items-center gap-2 transition-colors"
+          >
+            <Save className="w-4 h-4" /> Save Draft
+          </button>
+          
+          <button 
+            onClick={handleNextStage} 
+            className="px-6 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 shadow-sm flex items-center gap-2 transition-colors"
+          >
+            Next Stage <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </EngineerLayout>
