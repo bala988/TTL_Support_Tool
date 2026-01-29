@@ -15,7 +15,7 @@ export const createOpportunity = async (req, res) => {
     const {
       opportunity_name, customer_name, customer_address, customer_contact_person, customer_email,
       ttl_sales_name, ttl_contact_number, ttl_email, technical_owner,
-      product, oem, oem_contact, oem_details, distributor_name, distributor_contact, distributor_email,
+      product, oem, oem_contact, oem_details, distributor_name, distributor_contact, distributor_contact_person, distributor_email,
       created_by,
       // Initial stage data might be passed (e.g. stage1 info)
       stage_data
@@ -30,13 +30,13 @@ export const createOpportunity = async (req, res) => {
         `INSERT INTO sales_opportunities (
           opportunity_name, customer_name, customer_address, customer_contact_person, customer_email,
           ttl_sales_name, ttl_contact_number, ttl_email, technical_owner,
-          product, oem, oem_contact, oem_details, distributor_name, distributor_contact, distributor_email,
+          product, oem, oem_contact, oem_details, distributor_name, distributor_contact, distributor_contact_person, distributor_email,
           current_stage, stage_status, created_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'In Progress', ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'In Progress', ?)`,
         [
           opportunity_name, customer_name, customer_address, customer_contact_person, customer_email,
           ttl_sales_name, ttl_contact_number, ttl_email, technical_owner,
-          product, oem, oem_contact, oem_details, distributor_name, distributor_contact, distributor_email,
+          product, oem, oem_contact, oem_details, distributor_name, distributor_contact, distributor_contact_person, distributor_email,
           created_by
         ]
       );
@@ -159,7 +159,7 @@ export const updateOpportunity = async (req, res) => {
       // Header fields
       opportunity_name, customer_name, customer_address, customer_contact_person, customer_email,
       ttl_sales_name, ttl_contact_number, ttl_email, technical_owner,
-      product, oem, oem_contact, oem_details, distributor_name, distributor_contact, distributor_email
+      product, oem, oem_contact, oem_details, distributor_name, distributor_contact, distributor_contact_person, distributor_email
     } = req.body;
 
     const connection = await db.getConnection();
@@ -173,7 +173,7 @@ export const updateOpportunity = async (req, res) => {
       const headerFields = {
         opportunity_name, customer_name, customer_address, customer_contact_person, customer_email,
         ttl_sales_name, ttl_contact_number, ttl_email, technical_owner,
-        product, oem, oem_contact, oem_details, distributor_name, distributor_contact, distributor_email,
+        product, oem, oem_contact, oem_details, distributor_name, distributor_contact, distributor_contact_person, distributor_email,
         current_stage, stage_status
       };
 

@@ -21,7 +21,7 @@ export default function SalesOpportunityView() {
     customer_contact_person: '', customer_email: '',
     ttl_sales_name: '', ttl_contact_number: '', ttl_email: '',
     technical_owner: '', product: '', oem: '', oem_contact: '', oem_details: '',
-    distributor_name: '', distributor_contact: '', distributor_email: ''
+    distributor_name: '', distributor_contact: '', distributor_email: '', distributor_contact_person: ''
   });
 
   // Stage Data State (JSON structure)
@@ -153,7 +153,8 @@ export default function SalesOpportunityView() {
         oem_details: data.oem_details,
         distributor_name: data.distributor_name,
         distributor_contact: data.distributor_contact,
-        distributor_email: data.distributor_email
+        distributor_email: data.distributor_email,
+        distributor_contact_person: data.distributor_contact_person || ''
       });
 
       // Populate Stages safely to avoid null/undefined
@@ -597,9 +598,9 @@ export default function SalesOpportunityView() {
                 <select name="technical_owner" value={header.technical_owner} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg bg-white">
                   <option value="">Select Technical Owner</option>
                   <option value="Unassigned">Unassigned</option>
-                  <option value="John Doe">John Doe</option>
-                  <option value="Jane Smith">Jane Smith</option>
-                  <option value="Mike Johnson">Mike Johnson</option>
+                  <option value="John Doe">Ram Balaji</option>
+                  {/* <option value="Jane Smith">Jane Smith</option>
+                  <option value="Mike Johnson">Mike Johnson</option> */}
                 </select>
               </div>
 
@@ -638,18 +639,40 @@ export default function SalesOpportunityView() {
                 <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Distributor Name</label>
-                    <select name="distributor_name" value={header.distributor_name} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg bg-white">
+                    <select 
+                      name="distributor_name" 
+                      value={['Ingram Micro', 'Redington', 'Westcon', 'Tech Data', 'Savex', ''].includes(header.distributor_name) ? header.distributor_name : 'Others'} 
+                      onChange={(e) => {
+                        if (e.target.value === 'Others') {
+                          setHeader(prev => ({ ...prev, distributor_name: 'Others' }));
+                        } else {
+                          handleHeaderChange(e);
+                        }
+                      }} 
+                      className="w-full border border-gray-300 p-2 rounded-lg bg-white"
+                    >
                       <option value="">Select Distributor</option>
-                      <option value="Ingram Micro">Ingram Micro</option>
+                      <option value="Ingram Micro">Ingram</option>
                       <option value="Redington">Redington</option>
                       <option value="Westcon">Westcon</option>
                       <option value="Tech Data">Tech Data</option>
                       <option value="Savex">Savex</option>
+                      <option value="Others">Others</option>
                     </select>
+                    {(!['Ingram Micro', 'Redington', 'Westcon', 'Tech Data', 'Savex', ''].includes(header.distributor_name)) && (
+                      <input 
+                        name="distributor_name" 
+                        placeholder="Enter Distributor Name" 
+                        value={header.distributor_name === 'Others' ? '' : header.distributor_name} 
+                        onChange={handleHeaderChange} 
+                        className="w-full border border-gray-300 p-2 rounded-lg mt-2" 
+                      />
+                    )}
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <input name="distributor_contact" placeholder="Distributor Contact" value={header.distributor_contact} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg" />
-                    <input type="email" name="distributor_email" placeholder="Distributor Email" value={header.distributor_email} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg" />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <input name="distributor_contact_person" placeholder="Contact Name" value={header.distributor_contact_person} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg" />
+                    <input name="distributor_contact" placeholder="Contact No." value={header.distributor_contact} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg" />
+                    <input type="email" name="distributor_email" placeholder="Email" value={header.distributor_email} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg" />
                   </div>
                 </div>
               </div>
@@ -696,11 +719,32 @@ export default function SalesOpportunityView() {
               
               <div>
                 <label className="block text-sm font-medium mb-1">Map applicable cybersecurity solutions</label>
-                <select className="w-full border p-2 rounded" value={stageData.stage1.mapped_product} onChange={(e) => handleStageDataChange(1, 'mapped_product', e.target.value)}>
+                <select 
+                  className="w-full border p-2 rounded" 
+                  value={['NGFW', 'Prisma', 'XDR', 'SIEM', ''].includes(stageData.stage1.mapped_product) ? stageData.stage1.mapped_product : 'Others'} 
+                  onChange={(e) => {
+                    if (e.target.value === 'Others') {
+                      handleStageDataChange(1, 'mapped_product', 'Others');
+                    } else {
+                      handleStageDataChange(1, 'mapped_product', e.target.value);
+                    }
+                  }}
+                >
                    <option value="">Select Product</option>
-                   <option value="Product A">Product A</option>
-                   <option value="Product B">Product B</option>
+                   <option value="NGFW">NGFW</option>
+                   <option value="Prisma">Prisma</option>
+                   <option value="XDR">XDR</option>
+                   <option value="SIEM">SIEM</option>
+                   <option value="Others">Others</option>
                 </select>
+                {(!['NGFW', 'Prisma', 'XDR', 'SIEM', ''].includes(stageData.stage1.mapped_product)) && (
+                  <input 
+                    placeholder="Enter Product Name" 
+                    className="w-full border p-2 rounded mt-2" 
+                    value={stageData.stage1.mapped_product === 'Others' ? '' : stageData.stage1.mapped_product} 
+                    onChange={(e) => handleStageDataChange(1, 'mapped_product', e.target.value)} 
+                  />
+                )}
               </div>
 
               <div className="col-span-full">
