@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import toast from 'react-hot-toast';
 import EngineerLayout from "../common/EngineerLayout";
-import { Save, Upload, CheckCircle, AlertCircle, Lock, ChevronRight, Calendar, FileText } from "lucide-react";
+import { Save, Upload, CheckCircle, AlertCircle, Lock, ChevronRight, Calendar, FileText, Clock } from "lucide-react";
 
 export default function SalesOpportunityView() {
   const { id } = useParams();
@@ -13,6 +13,7 @@ export default function SalesOpportunityView() {
   const [loading, setLoading] = useState(false);
   const [activeStage, setActiveStage] = useState(1);
   const [maxStage, setMaxStage] = useState(1); // The highest unlocked stage
+  const [approvalStatus, setApprovalStatus] = useState(null); // 'Pending', 'Approved', 'Rejected', null
   
   // Header State
   const [header, setHeader] = useState({
@@ -99,6 +100,35 @@ export default function SalesOpportunityView() {
     }
   }, [id]);
 
+  // Polling for Approval Status
+  useEffect(() => {
+    let interval;
+    if (approvalStatus === 'Pending' && id) {
+      interval = setInterval(async () => {
+        try {
+           const res = await fetch(`http://localhost:5000/api/sales-approvals/status/${id}`);
+           const data = await res.json();
+           
+           if (data.status && data.status !== 'Pending') {
+              setApprovalStatus(data.status);
+              if (data.status === 'Approved') {
+                 toast.success("Sales Approval Granted!");
+                 setStageData(prev => ({
+                    ...prev,
+                    stage1: { ...prev.stage1, go_no_go: 'Yes' }
+                 }));
+              } else if (data.status === 'Rejected') {
+                 toast.error("Sales Approval Rejected");
+              }
+           }
+        } catch (e) {
+           console.error("Polling error", e);
+        }
+      }, 3000); // Check every 3 seconds
+    }
+    return () => clearInterval(interval);
+  }, [approvalStatus, id]);
+
   const fetchOpportunity = async () => {
     try {
       setLoading(true);
@@ -107,6 +137,7 @@ export default function SalesOpportunityView() {
       
       // Populate Header
       setHeader({
+        ...header, // Keep defaults and overwrite
         opportunity_name: data.opportunity_name,
         customer_name: data.customer_name,
         customer_address: data.customer_address,
@@ -125,14 +156,45 @@ export default function SalesOpportunityView() {
         distributor_email: data.distributor_email
       });
 
-      // Populate Stages
+      // Populate Stages safely to avoid null/undefined
       if (data.stage_data) {
-        setStageData(data.stage_data); 
+        setStageData(prev => {
+           const newData = { ...prev };
+           Object.keys(prev).forEach(stageKey => {
+              if (data.stage_data[stageKey]) {
+                 newData[stageKey] = { ...prev[stageKey], ...data.stage_data[stageKey] };
+                 // Ensure no nulls in fields
+                 Object.keys(newData[stageKey]).forEach(field => {
+                    if (newData[stageKey][field] === null || newData[stageKey][field] === undefined) {
+                       newData[stageKey][field] = '';
+                    }
+                 });
+              }
+           });
+           return newData;
+        });
       }
       
       setActiveStage(data.current_stage || 1);
       setMaxStage(data.current_stage || 1);
       setStageStatus(data.stage_status);
+
+      // Fetch Approval Status
+      try {
+        const appRes = await fetch(`http://localhost:5000/api/sales-approvals/status/${id}`);
+        const appData = await appRes.json();
+        setApprovalStatus(appData.status);
+        
+        // If approved from backend, ensure frontend is synced
+        if (appData.status === 'Approved') {
+           setStageData(prev => ({
+              ...prev,
+              stage1: { ...prev.stage1, go_no_go: 'Yes' }
+           }));
+        }
+      } catch(err) {
+        console.error("Failed to fetch approval status", err);
+      }
 
     } catch (error) {
       console.error("Error fetching opportunity:", error);
@@ -195,6 +257,35 @@ export default function SalesOpportunityView() {
       }
     } catch (error) {
       console.error("Upload failed:", error);
+    }
+  };
+
+  const handleRequestApproval = async () => {
+    if (!id) {
+       toast.error("Please save the opportunity first.");
+       return;
+    }
+    
+    try {
+       const res = await fetch('http://localhost:5000/api/sales-approvals/request', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ 
+           opportunityId: id,
+           requesterId: localStorage.getItem("userId")
+         })
+       });
+       const data = await res.json();
+       
+       if (res.ok) {
+         toast.success("Approval requested!");
+         setApprovalStatus('Pending');
+       } else {
+         toast.error(data.message);
+       }
+    } catch(err) {
+       console.error("Request approval failed:", err);
+       toast.error("Failed to request approval");
     }
   };
 
@@ -268,8 +359,30 @@ export default function SalesOpportunityView() {
   const handleNextStage = (e) => {
     e?.preventDefault();
     
-    if (!canAdvance()) {
-      toast.error("Cannot advance. Please fill all mandatory fields marked with * and ensure approvals are 'Yes'.");
+    // Validation
+    const newErrors = {};
+    if (activeStage === 1) {
+       if (stageData.stage1.go_no_go !== 'Yes') newErrors['stage1.go_no_go'] = true;
+    }
+    if (activeStage === 2) {
+       if (stageData.stage2.handoff_presales !== 'Yes') newErrors['stage2.handoff_presales'] = true;
+       if (stageData.stage2.oem_approval !== 'Yes') newErrors['stage2.oem_approval'] = true;
+    }
+    if (activeStage === 3) {
+       if (stageData.stage3.handoff_tech !== 'Yes') newErrors['stage3.handoff_tech'] = true;
+    }
+    if (activeStage === 4) {
+       if (stageData.stage4.commercial_closure !== 'Yes') newErrors['stage4.commercial_closure'] = true;
+    }
+    if (activeStage === 6) {
+       if (stageData.stage6.uat_completion_doc_yn !== 'Yes') newErrors['stage6.uat_completion_doc_yn'] = true;
+       if (stageData.stage6.project_signoff !== 'Yes') newErrors['stage6.project_signoff'] = true;
+       if (stageData.stage6.closure_mail_yn !== 'Yes') newErrors['stage6.closure_mail_yn'] = true;
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("Please fill all mandatory fields marked with *.");
       return;
     }
     
@@ -347,6 +460,8 @@ export default function SalesOpportunityView() {
     </div>
   );
 
+  const [errors, setErrors] = useState({});
+
   // Helper for Yes/No Dropdown
   const YesNoSelect = ({ label, stage, field, value, required }) => (
     <div>
@@ -354,13 +469,58 @@ export default function SalesOpportunityView() {
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <select 
-        className="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-500"
+        className={`w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 ${errors[`stage${stage}.${field}`] ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
         value={value || 'No'}
-        onChange={(e) => handleStageDataChange(stage, field, e.target.value)}
+        onChange={(e) => {
+            handleStageDataChange(stage, field, e.target.value);
+            if (errors[`stage${stage}.${field}`]) {
+                setErrors(prev => ({ ...prev, [`stage${stage}.${field}`]: false }));
+            }
+        }}
       >
         <option value="Yes">Yes</option>
         <option value="No">No</option>
       </select>
+       {errors[`stage${stage}.${field}`] && <p className="text-red-500 text-xs mt-1">This field is required</p>}
+    </div>
+  );
+
+  const ApprovalStatus = ({ label, value, onRequest }) => (
+    <div>
+      <label className="block text-sm font-medium mb-1 text-gray-700">
+        {label} <span className="text-red-500">*</span>
+      </label>
+      <div className="flex items-center gap-4">
+        <div className={`px-4 py-2 rounded-lg font-semibold text-sm border 
+          ${value === 'Yes' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+          {value === 'Yes' ? 'Approved (Go)' : 'No-Go / Pending'}
+        </div>
+        
+        {value !== 'Yes' && (
+           <>
+             {approvalStatus === 'Pending' ? (
+                <span className="text-orange-500 font-medium flex items-center gap-2">
+                  <Clock className="w-4 h-4" /> Approval Pending...
+                </span>
+             ) : approvalStatus === 'Approved' ? (
+                <span className="text-green-600 font-medium flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4" /> Access Granted
+                </span>
+             ) : (
+                <button 
+                  type="button"
+                  onClick={onRequest}
+                  className="bg-indigo-600 text-white px-3 py-1.5 rounded text-sm hover:bg-indigo-700 transition"
+                >
+                  Request Access
+                </button>
+             )}
+             {approvalStatus === 'Rejected' && (
+                <span className="text-red-500 text-sm font-medium ml-2">Request Rejected</span>
+             )}
+           </>
+        )}
+      </div>
     </div>
   );
 
@@ -568,7 +728,11 @@ export default function SalesOpportunityView() {
               
               <FileUpload label="Deal Map Prepared (Org Chart)" stage={1} field="deal_map_org_chart" value={stageData.stage1.deal_map_org_chart} />
 
-              <YesNoSelect label="Go or No Go (Admin/Manager Sign-off)" stage={1} field="go_no_go" value={stageData.stage1.go_no_go} required={true} />
+              <ApprovalStatus 
+                 label="Go or No Go (Admin/Manager Sign-off)" 
+                 value={stageData.stage1.go_no_go}
+                 onRequest={handleRequestApproval}
+              />
             </div>
           )}
 
@@ -653,7 +817,7 @@ export default function SalesOpportunityView() {
                   )}
               </div>
               
-              <YesNoSelect label="Handoff to Tech Team" stage={3} field="handoff_tech" value={stageData.stage3.handoff_tech} />
+              <YesNoSelect label="Handoff to Tech Team" stage={3} field="handoff_tech" value={stageData.stage3.handoff_tech} required={true} />
               
               <div>
                   <YesNoSelect label="Integration with Solution" stage={3} field="integration_solution_yn" value={stageData.stage3.integration_solution_yn} />
