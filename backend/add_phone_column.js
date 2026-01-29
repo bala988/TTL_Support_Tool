@@ -16,6 +16,6 @@ const addPhoneColumn = async () => {
   } finally {
     process.exit();
   }
-};
+};//testing
 
 addPhoneColumn();
