@@ -45,4 +45,10 @@ export const adminAPI = {
     });
     return response.data;
   },
+
+  // Get dashboard stats
+  getDashboardStats: async () => {
+    const response = await axios.get('/admin/stats');
+    return response.data;
+  },
 };

@@ -17,6 +17,7 @@ const AdminDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [stats, setStats] = useState({ totalEmployees: 0, activeToday: 0 });
   // Date range for report
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 1), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -35,6 +36,12 @@ const AdminDashboard = () => {
     try {
       const response = await adminAPI.getAllEmployees({ sortBy, order: sortOrder });
       setEmployees(response.data.employees);
+      
+      // Load stats
+      const statsResponse = await adminAPI.getDashboardStats();
+      if (statsResponse.success) {
+        setStats(statsResponse.data);
+      }
     } catch (error) {
       console.error('Failed to load employees:', error);
       toast.error('Failed to load employees');
@@ -134,7 +141,7 @@ const AdminDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-green-100 mb-1">Active Today</p>
-                <p className="text-4xl font-bold">-</p>
+                <p className="text-4xl font-bold">{stats.activeToday}</p>
               </div>
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
                 <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">

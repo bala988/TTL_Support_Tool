@@ -327,6 +327,31 @@ export const exportGlobalAttendanceCSV = async (req, res, next) => {
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.status(200).send(csvContent);
     
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get dashboard stats
+// @route   GET /api/admin/stats
+// @access  Private (Admin)
+export const getDashboardStats = async (req, res, next) => {
+  try {
+    // 1. Total Employees
+    const totalEmployees = await User.countDocuments({ role: 'employee' });
+    
+    // 2. Active Today
+    const today = new Date().toISOString().split('T')[0];
+    const activeToday = await Attendance.countDocuments({ date: today });
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        totalEmployees,
+        activeToday,
+      },
+    });
   } catch (error) {
     next(error);
   }

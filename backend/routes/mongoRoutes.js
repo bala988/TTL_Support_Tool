@@ -14,6 +14,7 @@ import {
   getEmployeeAttendance,
   exportEmployeeCSV,
   exportGlobalAttendanceCSV,
+  getDashboardStats,
 } from '../controllers/mongo/adminController.js';
 import { verifyToken } from '../middlewares/authMiddleware.js'; // Main App Auth
 import { syncMongoUser } from '../middlewares/mongoSync.js'; // Sync Middleware
@@ -52,5 +53,6 @@ router.get('/admin/employees/:id/worklogs', requireAdmin, getEmployeeWorklogs);
 router.get('/admin/employees/:id/attendance', requireAdmin, getEmployeeAttendance);
 router.get('/admin/employees/:id/export/csv', requireAdmin, exportEmployeeCSV);
 router.get('/admin/attendance/export', requireAdmin, exportGlobalAttendanceCSV);
+router.get('/admin/stats', requireAdmin, getDashboardStats);
 
 export default router;
