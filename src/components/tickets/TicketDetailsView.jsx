@@ -12,6 +12,7 @@ import {
   AlertCircle,
   CheckCircle2,
   ArrowRightCircle,
+  StickyNote,
 } from "lucide-react";
 
 export default function TicketDetailsView() {
@@ -26,6 +27,7 @@ export default function TicketDetailsView() {
 
   const [ticket, setTicket] = useState(null);
   const [newUpdate, setNewUpdate] = useState("");
+  const [isRoughNotesEditing, setIsRoughNotesEditing] = useState(false);
 
   const [initialStatus, setInitialStatus] = useState("");
   const [openDuration, setOpenDuration] = useState("");
@@ -76,6 +78,7 @@ export default function TicketDetailsView() {
             tacCaseNumber: t.tac_case_number,
             engineerRemarks: t.engineer_remarks || "No remarks yet",
             problemResolution: t.problem_resolution || "Pending resolution",
+            roughNotes: t.rough_notes || "",
             openDate: t.open_date,
             closeDate: t.close_date,
             timeline: timelineData,
@@ -224,6 +227,7 @@ export default function TicketDetailsView() {
           issue_description: ticket.issueDescription,
           engineer_remarks: ticket.engineerRemarks,
           problem_resolution: ticket.problemResolution,
+          rough_notes: ticket.roughNotes,
           timeline: updatedTimeline
         })
       });
@@ -283,7 +287,8 @@ export default function TicketDetailsView() {
           issue_subject: ticket.issueSubject,
           issue_description: ticket.issueDescription,
           engineer_remarks: ticket.engineerRemarks,
-          problem_resolution: ticket.problemResolution
+          problem_resolution: ticket.problemResolution,
+          rough_notes: ticket.roughNotes
         })
       });
 
@@ -331,6 +336,7 @@ export default function TicketDetailsView() {
              issue_description: ticket.issueDescription,
              engineer_remarks: ticket.engineerRemarks,
              problem_resolution: ticket.problemResolution,
+             rough_notes: ticket.roughNotes,
              timeline: updatedTimeline
           })
       });
@@ -342,6 +348,34 @@ export default function TicketDetailsView() {
     } catch (e) {
        console.error("Error saving update:", e);
        toast.error("Error saving update");
+    }
+  };
+
+  const handleSaveRoughNotes = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tickets/${ticket.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: ticket.status,
+          severity: ticket.severity,
+          issue_subject: ticket.issueSubject,
+          issue_description: ticket.issueDescription,
+          engineer_remarks: ticket.engineerRemarks,
+          problem_resolution: ticket.problemResolution,
+          rough_notes: ticket.roughNotes
+        })
+      });
+
+      if (response.ok) {
+        setIsRoughNotesEditing(false);
+        toast.success("Rough notes saved as draft");
+      } else {
+        toast.error("Failed to save rough notes");
+      }
+    } catch (error) {
+       console.error("Error saving rough notes:", error);
+       toast.error("Error saving rough notes");
     }
   };
 
@@ -803,6 +837,46 @@ export default function TicketDetailsView() {
             >
               Print Details
             </button>
+          </div>
+
+          {/* Rough Sheet */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-3">
+            <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <StickyNote className="w-5 h-5 text-indigo-600" />
+              Rough Sheet
+            </h2>
+            
+            {isRoughNotesEditing ? (
+              <textarea
+                value={ticket.roughNotes}
+                onChange={(e) => setTicket({ ...ticket, roughNotes: e.target.value })}
+                rows={10}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none text-sm"
+                placeholder="Type your notes here..."
+              />
+            ) : (
+              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 min-h-[150px] text-sm text-gray-700 whitespace-pre-wrap">
+                {ticket.roughNotes || "No notes yet..."}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+               {isRoughNotesEditing ? (
+                 <button
+                   onClick={handleSaveRoughNotes}
+                   className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium"
+                 >
+                   Save Draft
+                 </button>
+               ) : (
+                 <button
+                   onClick={() => setIsRoughNotesEditing(true)}
+                   className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium"
+                 >
+                   Edit
+                 </button>
+               )}
+            </div>
           </div>
         </div>
       </div>

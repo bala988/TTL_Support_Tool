@@ -186,14 +186,14 @@ export const updateTicket = async (req, res) => {
     const { id } = req.params;
     const {
       status, severity, issue_subject, issue_description,
-      engineer_remarks, problem_resolution, timeline
+      engineer_remarks, problem_resolution, timeline, rough_notes
     } = req.body;
 
     let query = `UPDATE tickets SET 
         status = ?, severity = ?, issue_subject = ?, issue_description = ?,
-        engineer_remarks = ?, problem_resolution = ?`;
+        engineer_remarks = ?, problem_resolution = ?, rough_notes = ?`;
     
-    const params = [status, severity, issue_subject, issue_description, engineer_remarks, problem_resolution];
+    const params = [status, severity, issue_subject, issue_description, engineer_remarks, problem_resolution, rough_notes];
 
     if (timeline) {
       query += `, timeline = ?`;

@@ -251,16 +251,43 @@ export default function TicketCreationForm() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Customer Name <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  className="input"
-                  value={formData.customerName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, customerName: e.target.value })
-                  }
-                  placeholder="Enter customer name eg. GROWW"
+                <select
+                  className="input mb-2"
+                  value={['Hexaware', 'Collabera', 'Swiggy', 'Groww', 'Freshworks', 'Mpl', 'vishwa samudra', 'flipkart', 'forcepoint', 'f5'].includes(formData.customerName) ? formData.customerName : (formData.customerName ? 'Others' : '')}
+                  onChange={(e) => {
+                    if (e.target.value === 'Others') {
+                      setFormData({ ...formData, customerName: 'Others' });
+                    } else {
+                      setFormData({ ...formData, customerName: e.target.value });
+                    }
+                  }}
                   required
-                />
+                >
+                  <option value="">Select Customer</option>
+                  <option value="Hexaware">Hexaware</option>
+                  <option value="Collabera">Collabera</option>
+                  <option value="Swiggy">Swiggy</option>
+                  <option value="Groww">Groww</option>
+                  <option value="Freshworks">Freshworks</option>
+                  <option value="MPL">MPL</option>
+                  <option value="Vishwa Samudra">Vishwa Samudra</option>
+                  <option value="flipkart">flipkart</option>
+                  {/* <option value="forcepoint">forcepoint</option>
+                  <option value="f5">f5</option> */}
+                  <option value="Others">Others</option>
+                </select>
+                {(!['Hexaware', 'Collabera', 'Swiggy', 'Groww', 'Freshworks', 'Mpl', 'vishwa samudra', 'flipkart', ''].includes(formData.customerName) || formData.customerName === 'Others') && (
+                  <input
+                    type="text"
+                    className="input"
+                    value={formData.customerName === 'Others' ? '' : formData.customerName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, customerName: e.target.value })
+                    }
+                    placeholder="Enter customer name"
+                    required
+                  />
+                )}
               </div>
 
               <div>
