@@ -91,10 +91,10 @@ const Profile = () => {
   if (!user) return <div>Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-servicenow-dark dark:to-servicenow-dark p-6">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-dark-900">My Profile</h1>
+          <h1 className="text-3xl font-bold text-dark-900 dark:text-white">My Profile</h1>
           <Button 
             variant="outline" 
             onClick={() => navigate('/attendance/dashboard')}
@@ -112,7 +112,7 @@ const Profile = () => {
           <div className="md:col-span-1">
             <Card className="text-center">
               <div className="relative inline-block mb-4">
-                <div className="w-32 h-32 rounded-full border-4 border-primary-100 shadow-xl overflow-hidden mx-auto bg-white flex items-center justify-center">
+                <div className="w-32 h-32 rounded-full border-4 border-primary-100 dark:border-primary-900 shadow-xl overflow-hidden mx-auto bg-white dark:bg-servicenow-dark flex items-center justify-center">
                   {previewImage ? (
                     <img 
                       src={previewImage} 
@@ -143,17 +143,17 @@ const Profile = () => {
                 </label>
               </div>
               
-              <h2 className="text-xl font-bold text-dark-900">{user.fullName}</h2>
-              <p className="text-primary-600 font-medium mb-4 capitalize">{user.role}</p>
+              <h2 className="text-xl font-bold text-dark-900 dark:text-white">{user.fullName}</h2>
+              <p className="text-primary-600 dark:text-primary-400 font-medium mb-4 capitalize">{user.role}</p>
               
-              <div className="bg-blue-50 rounded-xl p-4 text-left space-y-2">
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 text-left space-y-2">
                 <div>
-                  <span className="text-xs text-dark-500 uppercase tracking-wider font-semibold">Employee ID</span>
-                  <p className="font-mono font-medium text-dark-900">{user.employeeId || 'EMP-001'}</p>
+                  <span className="text-xs text-dark-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Employee ID</span>
+                  <p className="font-mono font-medium text-dark-900 dark:text-white">{user.employeeId || 'EMP-001'}</p>
                 </div>
                 <div>
-                  <span className="text-xs text-dark-500 uppercase tracking-wider font-semibold">Email</span>
-                  <p className="font-medium text-dark-900 truncate" title={user.email}>{user.email}</p>
+                  <span className="text-xs text-dark-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Email</span>
+                  <p className="font-medium text-dark-900 dark:text-white truncate" title={user.email}>{user.email}</p>
                 </div>
               </div>
             </Card>
@@ -162,7 +162,7 @@ const Profile = () => {
           {/* Right Column - Edit Form */}
           <div className="md:col-span-2">
             <Card>
-              <h3 className="text-xl font-bold text-dark-900 mb-6 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-dark-900 dark:text-white mb-6 flex items-center gap-2">
                 <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>

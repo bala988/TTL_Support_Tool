@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,jsx,ts,tsx}",
@@ -7,6 +8,11 @@ export default {
   theme: {
     extend: {
       colors: {
+        servicenow: {
+          DEFAULT: '#032d42',
+          dark: '#021e2e',
+          light: '#053c57'
+        },
         primary: {
           50: '#eef2ff',
           100: '#e0e7ff',

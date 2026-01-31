@@ -60,7 +60,7 @@ export default function EngineerLayout({ children }) {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-slate-50">
+    <div className="flex min-h-screen w-full bg-slate-50 dark:bg-servicenow">
       {/* Sidebar */}
       <Sidebar 
         userRole={userRole}

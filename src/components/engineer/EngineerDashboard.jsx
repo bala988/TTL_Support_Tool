@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { Ticket, Clock, CheckCircle, AlertTriangle } from "lucide-react";
 import { StatsCard } from "../common/StatsCard";
 import { TicketsTable } from "../tickets/TicketsTable";
+import { useTheme } from "../../context/ThemeContext";
 import {
   PieChart,
   Pie,
@@ -21,6 +22,7 @@ import {
 
 export default function EngineerDashboard() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [myApprovals, setMyApprovals] = useState({});
@@ -141,11 +143,15 @@ export default function EngineerDashboard() {
     { name: "Closed", value: stats.closed, color: "#6b7280" },
   ];
 
+  const chartTextColor = theme === 'dark' ? '#cbd5e1' : '#475569'; // slate-300 : slate-600
+  const chartGridColor = theme === 'dark' ? '#334155' : '#e2e8f0'; // slate-700 : slate-200
+  const tooltipStyle = theme === 'dark' ? { backgroundColor: '#053c57', borderColor: '#053c57', color: '#fff' } : {};
+
   return (
     <EngineerLayout>
       <div className="p-8 max-w-[1400px] mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900">Engineer Dashboard</h1>
-        <p className="text-gray-600 mt-2">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Engineer Dashboard</h1>
+        <p className="text-gray-600 dark:text-slate-400 mt-2">
           Welcome back! Here's your ticket overview
         </p>
 
@@ -181,8 +187,8 @@ export default function EngineerDashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
+          <div className="bg-white dark:bg-servicenow-light rounded-xl p-6 shadow-sm border border-gray-200 dark:border-servicenow-dark">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
               Tickets by Severity
             </h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -203,22 +209,22 @@ export default function EngineerDashboard() {
                     <Cell key={index} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip />
-                <Legend />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Legend formatter={(value) => <span style={{ color: chartTextColor }}>{value}</span>} />
               </PieChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
+          <div className="bg-white dark:bg-servicenow-light rounded-xl p-6 shadow-sm border border-gray-200 dark:border-servicenow-dark">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
               Tickets by Status
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={statusData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} />
+                <XAxis dataKey="name" stroke={chartTextColor} />
+                <YAxis stroke={chartTextColor} />
+                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: theme === 'dark' ? '#021e2e' : '#f8fafc' }} />
                 <Bar dataKey="value" radius={[8, 8, 0, 0]}>
                   {statusData.map((entry, index) => (
                     <Cell key={index} fill={entry.color} />
@@ -231,12 +237,12 @@ export default function EngineerDashboard() {
 
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
               My Assigned Tickets
             </h2>
             <button
               onClick={() => navigate("/tickets/create")}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition font-medium"
             >
               Create New Ticket
             </button>
@@ -249,7 +255,7 @@ export default function EngineerDashboard() {
         </div>
 
         <div className="mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
             Other Tickets
           </h2>
           <TicketsTable

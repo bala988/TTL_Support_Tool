@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import EngineerLayout from "../common/EngineerLayout";
 import { useNavigate } from "react-router-dom";
 import { Plus, BarChart2, PieChart as PieChartIcon, TrendingUp } from "lucide-react";
+import { useTheme } from "../../context/ThemeContext";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
@@ -12,6 +13,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'
 
 export default function SalesDashboard() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -63,14 +65,18 @@ export default function SalesDashboard() {
     }, {})
   ).map(([name, value]) => ({ name, value }));
 
+  const chartTextColor = theme === 'dark' ? '#cbd5e1' : '#475569';
+  const chartGridColor = theme === 'dark' ? '#334155' : '#e2e8f0';
+  const tooltipStyle = theme === 'dark' ? { backgroundColor: '#053c57', borderColor: '#053c57', color: '#fff' } : {};
+
   return (
     <EngineerLayout>
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Sales Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Sales Dashboard</h1>
           <button
             onClick={() => navigate('/sales/create')}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-700"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
           >
             <Plus className="w-4 h-4" />
             New Opportunity
@@ -80,18 +86,18 @@ export default function SalesDashboard() {
         {/* Analytics Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {/* Stages Bar Chart */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 col-span-1 md:col-span-2 lg:col-span-1">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-servicenow-light p-4 rounded-xl shadow-sm border border-gray-100 dark:border-servicenow-dark col-span-1 md:col-span-2 lg:col-span-1">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800 dark:text-white">
               <BarChart2 className="w-5 h-5 text-indigo-500" />
               Opportunity Stages
             </h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={stageData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" fontSize={12} />
-                  <YAxis />
-                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} />
+                  <XAxis dataKey="name" fontSize={12} stroke={chartTextColor} />
+                  <YAxis stroke={chartTextColor} />
+                  <Tooltip contentStyle={tooltipStyle} cursor={{ fill: theme === 'dark' ? '#021e2e' : '#f8fafc' }} />
                   <Bar dataKey="value" fill="#6366f1" />
                 </BarChart>
               </ResponsiveContainer>
@@ -99,8 +105,8 @@ export default function SalesDashboard() {
           </div>
 
           {/* Product Pie Chart */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-servicenow-light p-4 rounded-xl shadow-sm border border-gray-100 dark:border-servicenow-dark">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800 dark:text-white">
               <PieChartIcon className="w-5 h-5 text-green-500" />
               By Product
             </h3>
@@ -120,16 +126,16 @@ export default function SalesDashboard() {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Legend formatter={(value) => <span style={{ color: chartTextColor }}>{value}</span>} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* OEM Pie Chart */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-servicenow-light p-4 rounded-xl shadow-sm border border-gray-100 dark:border-servicenow-dark">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800 dark:text-white">
               <TrendingUp className="w-5 h-5 text-orange-500" />
               By OEM
             </h3>
@@ -149,15 +155,15 @@ export default function SalesDashboard() {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Legend formatter={(value) => <span style={{ color: chartTextColor }}>{value}</span>} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           </div>
           {/* Won vs Lost Pie Chart */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-servicenow-light p-4 rounded-xl shadow-sm border border-gray-100 dark:border-servicenow-dark">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800 dark:text-white">
               <PieChartIcon className="w-5 h-5 text-red-500" />
               Won vs Lost
             </h3>
@@ -176,8 +182,8 @@ export default function SalesDashboard() {
                     <Cell fill="#10B981" /> {/* Green for Won */}
                     <Cell fill="#EF4444" /> {/* Red for Lost */}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Legend formatter={(value) => <span style={{ color: chartTextColor }}>{value}</span>} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -186,46 +192,46 @@ export default function SalesDashboard() {
         </div>
 
         {/* Opportunities List */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-4 border-b border-gray-100">
-            <h3 className="text-lg font-semibold">Recent Opportunities</h3>
+        <div className="bg-white dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-100 dark:border-servicenow-dark overflow-hidden transition-colors">
+          <div className="p-4 border-b border-gray-100 dark:border-servicenow-dark">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Opportunities</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-servicenow-dark">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Opportunity</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stage</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Opportunity</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Customer</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Product</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Stage</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-servicenow-light divide-y divide-gray-200 dark:divide-slate-700">
                 {opportunities.map((opp) => (
-                  <tr key={opp.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{opp.opportunity_name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-500">{opp.customer_name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-500">{opp.product}</td>
+                  <tr key={opp.id} className="hover:bg-gray-50 dark:hover:bg-servicenow-dark transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">{opp.opportunity_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-500 dark:text-slate-300">{opp.customer_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-500 dark:text-slate-300">{opp.product}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                         Stage {opp.current_stage}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        opp.stage_status === 'Approved' ? 'bg-green-100 text-green-800' : 
-                        opp.stage_status === 'Completed' ? 'bg-indigo-100 text-indigo-800' : 
-                        'bg-yellow-100 text-yellow-800'
+                        opp.stage_status === 'Approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 
+                        opp.stage_status === 'Completed' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300' : 
+                        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
                       }`}>
                         {opp.stage_status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
                       <button 
                         onClick={() => navigate(`/sales/${opp.id}`)}
-                        className="text-indigo-600 hover:text-indigo-900"
+                        className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
                       >
                         View
                       </button>
@@ -234,7 +240,7 @@ export default function SalesDashboard() {
                 ))}
                 {opportunities.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500 dark:text-slate-400">
                       No opportunities found. Create one to get started.
                     </td>
                   </tr>

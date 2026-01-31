@@ -50,18 +50,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-slate-100 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-slate-100 dark:from-servicenow dark:to-servicenow-dark flex items-center justify-center px-4">
       <form
         onSubmit={handleLogin}
-        className="w-full max-w-md bg-white rounded-2xl shadow-xl px-8 py-10"
+        className="w-full max-w-md bg-white dark:bg-servicenow-light rounded-2xl shadow-xl px-8 py-10 border border-transparent dark:border-servicenow-dark"
       >
         <div className="w-14 h-14 bg-indigo-600 text-white rounded-2xl flex items-center justify-center text-2xl mx-auto mb-6">
           🛡️
         </div>
-        <h1 className="text-3xl font-bold text-slate-900 text-center">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white text-center">
           IT Support Portal
         </h1>
-        <p className="mt-2 text-sm text-slate-500 text-center">
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-300 text-center">
           Sign in to your account
         </p>
 
@@ -71,7 +71,7 @@ export default function LoginPage() {
             placeholder="you@company.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40"
+            className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40 dark:bg-servicenow-dark dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
           />
 
           <input
@@ -79,15 +79,15 @@ export default function LoginPage() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40"
+            className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/40 dark:bg-servicenow-dark dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
           />
 
-          <div className="flex items-center justify-between text-sm text-slate-600">
+          <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-400">
             <label className="flex items-center gap-2">
-              <input type="checkbox" className="rounded border-slate-300" />
+              <input type="checkbox" className="rounded border-slate-300 dark:bg-servicenow-dark dark:border-slate-600" />
               <span>Remember me</span>
             </label>
-            <a href="#" className="text-indigo-600 hover:text-indigo-700">
+            <a href="#" className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
               Forgot password?
             </a>
           </div>
@@ -95,7 +95,7 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          className="mt-6 w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/40 hover:bg-indigo-700"
+          className="mt-6 w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/40 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
         >
           Sign In
         </button>

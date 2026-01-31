@@ -17,7 +17,7 @@ const EmployeeDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-servicenow-dark dark:to-servicenow-dark p-6">
       
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-end mb-4">
@@ -29,13 +29,13 @@ const EmployeeDashboard = () => {
         <HeaderCard user={user} />
 
         {/* Tab Navigation */}
-        <div className="flex space-x-4 mb-6 sticky top-4 z-20 bg-white/80 p-2 rounded-xl backdrop-blur-md shadow-sm border border-white/20">
+        <div className="flex space-x-4 mb-6 sticky top-4 z-20 bg-white/80 dark:bg-servicenow-light/80 p-2 rounded-xl backdrop-blur-md shadow-sm border border-white/20 dark:border-white/10">
           <button
             onClick={() => setActiveTab('daily')}
             className={`px-6 py-2 rounded-lg font-semibold transition-all duration-200 ${
               activeTab === 'daily'
                 ? 'bg-primary-600 text-white shadow-lg transform scale-105'
-                : 'text-dark-600 hover:bg-primary-50'
+                : 'text-dark-600 dark:text-slate-300 hover:bg-primary-50 dark:hover:bg-servicenow'
             }`}
           >
             Daily Entry
@@ -45,7 +45,7 @@ const EmployeeDashboard = () => {
             className={`px-6 py-2 rounded-lg font-semibold transition-all duration-200 ${
               activeTab === 'calendar'
                 ? 'bg-primary-600 text-white shadow-lg transform scale-105'
-                : 'text-dark-600 hover:bg-primary-50'
+                : 'text-dark-600 dark:text-slate-300 hover:bg-primary-50 dark:hover:bg-servicenow'
             }`}
           >
             Calendar View
@@ -55,7 +55,7 @@ const EmployeeDashboard = () => {
             className={`px-6 py-2 rounded-lg font-semibold transition-all duration-200 ${
               activeTab === 'history'
                 ? 'bg-primary-600 text-white shadow-lg transform scale-105'
-                : 'text-dark-600 hover:bg-primary-50'
+                : 'text-dark-600 dark:text-slate-300 hover:bg-primary-50 dark:hover:bg-servicenow'
             }`}
           >
             History
@@ -74,8 +74,8 @@ const EmployeeDashboard = () => {
                 <WorklogForm onSuccess={handleRefresh} />
               </div>
               <div className="md:col-span-1">
-                <div className="bg-white p-6 rounded-2xl shadow-premium border border-dark-100 sticky top-24">
-                  <h3 className="text-lg font-bold text-dark-900 mb-4">Quick Actions</h3>
+                <div className="bg-white dark:bg-servicenow-light p-6 rounded-2xl shadow-premium border border-dark-100 dark:border-servicenow-dark sticky top-24">
+                  <h3 className="text-lg font-bold text-dark-900 dark:text-white mb-4">Quick Actions</h3>
                   <Button 
                     variant="secondary" 
                     className="w-full mb-3 flex items-center justify-center gap-2"
@@ -88,9 +88,9 @@ const EmployeeDashboard = () => {
                   </Button>
                 </div>
                 
-                <div className="bg-green-50 p-6 rounded-2xl border border-green-100 mt-6 sticky top-64">
-                  <h3 className="text-lg font-bold text-green-800 mb-2">Tips</h3>
-                  <ul className="text-sm text-green-700 space-y-2 list-disc pl-4">
+                <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-2xl border border-green-100 dark:border-green-900/30 mt-6 sticky top-64">
+                  <h3 className="text-lg font-bold text-green-800 dark:text-green-400 mb-2">Tips</h3>
+                  <ul className="text-sm text-green-700 dark:text-green-300 space-y-2 list-disc pl-4">
                     <li>Mark attendance daily to track presence</li>
                     <li>Add worklogs with accurate time ranges</li>
                     <li>Worklogs cannot overlap in time</li>
