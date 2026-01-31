@@ -71,19 +71,18 @@ export default function Sidebar({ userRole = 'engineer', currentPage, onNavigate
   const visibleMenuItems = menuItems.filter(item => {
     // Special override for allowed sales user to see sales items regardless of role
     if (item.restricted && isSalesAllowed) return true;
-    
+
     if (!item.roles.includes(userRole)) return false;
-    
+
     return true;
   });
-  
+
   const userName = localStorage.getItem("userName");
 
   return (
-    <div 
-      className={`${
-        isCollapsed ? 'w-20' : 'w-64'
-      } bg-gray-900 border-r border-gray-800 text-white flex flex-col min-h-screen transition-all duration-300 relative dark:bg-servicenow-dark dark:border-servicenow-light`}
+    <div
+      className={`${isCollapsed ? 'w-20' : 'w-64'
+        } bg-gray-900 border-r border-gray-800 text-white flex flex-col h-screen sticky top-0 transition-all duration-300 dark:bg-servicenow-dark dark:border-servicenow-light`}
     >
       {/* Toggle Button */}
       <button
@@ -93,7 +92,7 @@ export default function Sidebar({ userRole = 'engineer', currentPage, onNavigate
         {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
       </button>
 
-      <div className={`p-6 border-b border-gray-800 dark:border-servicenow-light ${isCollapsed ? 'px-2 flex justify-center' : ''}`}>
+      <div className={`p-4 border-b border-gray-800 dark:border-servicenow-light ${isCollapsed ? 'px-2 flex justify-center' : ''}`}>
         <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
           <div className="bg-indigo-600 p-2 rounded-lg shrink-0">
             <Shield className="w-6 h-6" />
@@ -108,11 +107,11 @@ export default function Sidebar({ userRole = 'engineer', currentPage, onNavigate
         </div>
       </div>
 
-      <nav className="flex-1 p-4 space-y-2 overflow-x-hidden">
+      <nav className="flex-1 p-4 flex flex-col justify-between">
         {visibleMenuItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.page;
-          
+
           return (
             <button
               key={item.page}
@@ -124,45 +123,46 @@ export default function Sidebar({ userRole = 'engineer', currentPage, onNavigate
                 }
               }}
               title={isCollapsed ? item.label : ""}
-              className={`w-full flex items-center ${
-                isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'
-              } py-3 rounded-lg transition ${
-                isActive
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'
+                } py-2 rounded-lg transition ${isActive
                   ? 'bg-indigo-600 text-white'
                   : 'text-gray-300 hover:bg-gray-800 hover:text-white dark:hover:bg-servicenow-light'
-              }`}
+                }`}
             >
               <Icon className="w-5 h-5 shrink-0" />
               {!isCollapsed && <span className="font-medium whitespace-nowrap">{item.label}</span>}
             </button>
           );
         })}
-      </nav>
 
-      <div className="p-4 border-t border-gray-800 dark:border-servicenow-light space-y-2">
+
+        {/* Separator for system actions */}
+        <div className="border-t border-gray-800 dark:border-servicenow-light my-2"></div>
+
         {/* Theme Toggle Button */}
-         <button
+        <button
           onClick={toggleTheme}
           title={isCollapsed ? (theme === 'dark' ? "Light Mode" : "Dark Mode") : ""}
-          className={`w-full flex items-center ${
-            isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'
-          } py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition dark:hover:bg-servicenow-light`}
+          className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'
+            } py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition dark:hover:bg-servicenow-light`}
         >
           {theme === 'dark' ? <Sun className="w-5 h-5 shrink-0 text-yellow-400" /> : <Moon className="w-5 h-5 shrink-0" />}
           {!isCollapsed && <span className="font-medium whitespace-nowrap">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
         </button>
 
+        {/* Logout Button */}
         <button
           onClick={onLogout}
           title={isCollapsed ? "Logout" : ""}
-          className={`w-full flex items-center ${
-            isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'
-          } py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition dark:hover:bg-servicenow-light`}
+          className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'
+            } py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition dark:hover:bg-servicenow-light`}
         >
           <LogOut className="w-5 h-5 shrink-0" />
           {!isCollapsed && <span className="font-medium whitespace-nowrap">Logout</span>}
         </button>
-      </div>
+      </nav>
+
+
     </div>
   );
 }
