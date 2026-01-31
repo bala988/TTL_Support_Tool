@@ -105,13 +105,13 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 dark:from-servicenow-dark dark:to-servicenow-dark p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-4xl font-bold text-gradient mb-2">Admin Dashboard</h1>
-            <p className="text-dark-600 text-lg">Tutelar Tech Labs - Employee Management</p>
+            <p className="text-dark-600 dark:text-slate-400 text-lg">Tutelar Tech Labs - Employee Management</p>
           </div>
           <Button variant="outline" onClick={handleLogout}>
             <svg className="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,13 +170,13 @@ const AdminDashboard = () => {
         <Card className="mb-8 border-l-4 border-l-primary-500">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold text-dark-900">Attendance Report</h2>
-              <p className="text-dark-600 text-sm">Download global attendance report (CSV) and auto-upload to Drive</p>
+              <h2 className="text-xl font-bold text-dark-900 dark:text-white">Attendance Report</h2>
+              <p className="text-dark-600 dark:text-slate-400 text-sm">Download global attendance report (CSV) and auto-upload to Drive</p>
             </div>
             
             <div className="flex flex-wrap items-end gap-3">
               <div>
-                <label className="block text-xs font-semibold text-dark-500 uppercase tracking-wider mb-1">From Date</label>
+                <label className="block text-xs font-semibold text-dark-500 dark:text-slate-400 uppercase tracking-wider mb-1">From Date</label>
                 <input
                   type="date"
                   value={startDate}
@@ -186,7 +186,7 @@ const AdminDashboard = () => {
               </div>
               
               <div>
-                <label className="block text-xs font-semibold text-dark-500 uppercase tracking-wider mb-1">To Date</label>
+                <label className="block text-xs font-semibold text-dark-500 dark:text-slate-400 uppercase tracking-wider mb-1">To Date</label>
                 <input
                   type="date"
                   value={endDate}
@@ -221,7 +221,7 @@ const AdminDashboard = () => {
         {/* Employee Table */}
         <Card>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-dark-900">All Employees</h2>
+            <h2 className="text-2xl font-bold text-dark-900 dark:text-white">All Employees</h2>
             <Button onClick={loadEmployees} variant="secondary">
               <svg className="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -260,7 +260,7 @@ const AdminDashboard = () => {
               </select>
               <button
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-4 py-2 bg-white border-2 border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-slate-700"
+                className="px-4 py-2 bg-white dark:bg-servicenow-dark border-2 border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-servicenow transition-colors text-slate-700 dark:text-slate-200"
                 title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
               >
                 <svg className={`w-5 h-5 transform ${sortOrder === 'desc' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -275,29 +275,29 @@ const AdminDashboard = () => {
             <Loading />
           ) : filteredEmployees.length === 0 ? (
             <div className="text-center py-12">
-              <svg className="w-16 h-16 text-dark-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-16 h-16 text-dark-300 dark:text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
-              <p className="text-dark-600">No employees found</p>
+              <p className="text-dark-600 dark:text-slate-400">No employees found</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b-2 border-dark-200">
-                    <th className="text-left p-4 text-sm font-semibold text-dark-700">Name</th>
-                    <th className="text-left p-4 text-sm font-semibold text-dark-700">Employee ID</th>
-                    <th className="text-left p-4 text-sm font-semibold text-dark-700">Email</th>
-                    <th className="text-left p-4 text-sm font-semibold text-dark-700">Joined Date</th>
-                    <th className="text-center p-4 text-sm font-semibold text-dark-700">Actions</th>
+                  <tr className="border-b-2 border-dark-200 dark:border-slate-700">
+                    <th className="text-left p-4 text-sm font-semibold text-dark-700 dark:text-slate-300">Name</th>
+                    <th className="text-left p-4 text-sm font-semibold text-dark-700 dark:text-slate-300">Employee ID</th>
+                    <th className="text-left p-4 text-sm font-semibold text-dark-700 dark:text-slate-300">Email</th>
+                    <th className="text-left p-4 text-sm font-semibold text-dark-700 dark:text-slate-300">Joined Date</th>
+                    <th className="text-center p-4 text-sm font-semibold text-dark-700 dark:text-slate-300">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredEmployees.map((emp, index) => (
                     <tr
                       key={emp.id}
-                      className={`border-b border-dark-100 hover:bg-purple-50 transition-colors cursor-pointer ${
-                        index % 2 === 0 ? 'bg-white' : 'bg-dark-50'
+                      className={`border-b border-dark-100 dark:border-slate-700 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-colors cursor-pointer ${
+                        index % 2 === 0 ? 'bg-white dark:bg-servicenow-light' : 'bg-dark-50 dark:bg-servicenow-dark'
                       }`}
                       onClick={() => handleViewEmployee(emp.id)}
                     >
@@ -310,12 +310,12 @@ const AdminDashboard = () => {
                               emp.fullName.charAt(0)
                             )}
                           </div>
-                          <span className="font-semibold text-dark-900">{emp.fullName}</span>
+                          <span className="font-semibold text-dark-900 dark:text-white">{emp.fullName}</span>
                         </div>
                       </td>
-                      <td className="p-4 text-dark-700 font-mono">{emp.employeeId}</td>
-                      <td className="p-4 text-dark-700">{emp.email}</td>
-                      <td className="p-4 text-dark-700">
+                      <td className="p-4 text-dark-700 dark:text-slate-300 font-mono">{emp.employeeId}</td>
+                      <td className="p-4 text-dark-700 dark:text-slate-300">{emp.email}</td>
+                      <td className="p-4 text-dark-700 dark:text-slate-300">
                         {format(new Date(emp.joinedDate), 'MMM d, yyyy')}
                       </td>
                       <td className="p-4 text-center">

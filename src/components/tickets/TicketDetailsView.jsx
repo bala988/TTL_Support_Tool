@@ -169,30 +169,30 @@ export default function TicketDetailsView() {
   const getSeverityColor = (severity) => {
     switch (severity) {
       case "Critical":
-        return "bg-red-100 text-red-700 border-red-200";
+        return "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800";
       case "High":
-        return "bg-orange-100 text-orange-700 border-orange-200";
+        return "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800";
       case "Medium":
-        return "bg-yellow-100 text-yellow-700 border-yellow-200";
+        return "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800";
       case "Low":
-        return "bg-green-100 text-green-700 border-green-200";
+        return "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800";
       default:
-        return "bg-gray-100 text-gray-700 border-gray-200";
+        return "bg-gray-100 text-gray-700 border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700";
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
       case "Open":
-        return "bg-blue-100 text-blue-700 border-blue-200";
+        return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800";
       case "In Progress":
-        return "bg-purple-100 text-purple-700 border-purple-200";
+        return "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800";
       case "Pending from Customer":
-        return "bg-orange-100 text-orange-700 border-orange-200";
+        return "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800";
       case "Closed":
-        return "bg-gray-100 text-gray-700 border-gray-200";
+        return "bg-gray-100 text-gray-700 border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700";
       default:
-        return "bg-gray-100 text-gray-700 border-gray-200";
+        return "bg-gray-100 text-gray-700 border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700";
     }
   };
 
@@ -443,7 +443,7 @@ export default function TicketDetailsView() {
       <div className="p-8 w-full" onClick={() => setShowTransferDropdown(false)}>
         <button
           onClick={() => navigate(userRole === 'admin' ? "/admin/dashboard" : "/engineer/dashboard")}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 dark:text-slate-400 dark:hover:text-slate-200"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
@@ -451,8 +451,8 @@ export default function TicketDetailsView() {
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{ticket.ticketNumber || ticket.id}</h1>
-          <p className="text-gray-600 mt-2">{ticket.issueSubject}</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{ticket.ticketNumber || ticket.id}</h1>
+          <p className="text-gray-600 mt-2 dark:text-slate-400">{ticket.issueSubject}</p>
         </div>
         {canEdit && (
           <div className="flex gap-3">
@@ -462,19 +462,19 @@ export default function TicketDetailsView() {
                   e.stopPropagation();
                   setShowTransferDropdown(!showTransferDropdown);
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-servicenow-dark text-gray-700 dark:text-slate-300 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-servicenow"
               >
                 <ArrowRightCircle className="w-4 h-4" />
                 Transfer
               </button>
 
               {showTransferDropdown && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 z-10 py-1">
+                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-servicenow-light rounded-lg shadow-lg border border-gray-100 dark:border-servicenow-dark z-10 py-1">
                   {availableEngineers.map((engineer) => (
                     <button
                       key={engineer}
                       onClick={() => handleTransfer(engineer)}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-servicenow-dark"
                     >
                       {engineer}
                     </button>
@@ -486,7 +486,7 @@ export default function TicketDetailsView() {
             {!isEditing ? (
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-servicenow-dark text-gray-700 dark:text-slate-300 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-servicenow"
               >
                 <Edit2 className="w-4 h-4" />
                 Edit
@@ -494,7 +494,7 @@ export default function TicketDetailsView() {
             ) : (
               <button
                 onClick={handleSave}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
               >
                 <Save className="w-4 h-4" />
                 Save Changes
@@ -508,27 +508,27 @@ export default function TicketDetailsView() {
         <div className="lg:col-span-2 space-y-6">
           {/* Timers */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg flex items-center gap-3">
-                <Clock className="w-6 h-6 text-blue-600" />
+             <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 p-4 rounded-lg flex items-center gap-3">
+                <Clock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 <div>
-                  <p className="text-sm text-blue-800 font-medium">Ticket Open Duration</p>
-                  <p className="text-xl font-bold text-blue-900">{openDuration}</p>
+                  <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">Ticket Open Duration</p>
+                  <p className="text-xl font-bold text-blue-900 dark:text-blue-100">{openDuration}</p>
                 </div>
              </div>
 
-             <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg flex items-center gap-3">
-                <Clock className="w-6 h-6 text-orange-600" />
+             <div className="bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800 p-4 rounded-lg flex items-center gap-3">
+                <Clock className="w-6 h-6 text-orange-600 dark:text-orange-400" />
                 <div>
-                  <p className="text-sm text-orange-800 font-medium">Pending from Customer</p>
-                  <p className="text-xl font-bold text-orange-900">{customerPendingDuration}</p>
+                  <p className="text-sm text-orange-800 dark:text-orange-200 font-medium">Pending from Customer</p>
+                  <p className="text-xl font-bold text-orange-900 dark:text-orange-100">{customerPendingDuration}</p>
                 </div>
              </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark p-6">
             <div className="flex flex-wrap items-center gap-6 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Status
                 </label>
                 {isEditing ? (
@@ -566,29 +566,29 @@ export default function TicketDetailsView() {
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Clock className="w-4 h-4 text-gray-400" />
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-400">
+                <Clock className="w-4 h-4 text-gray-400 dark:text-slate-500" />
                 <span>Opened</span>
-                <span className="font-medium text-gray-900">
+                <span className="font-medium text-gray-900 dark:text-white">
                   {ticket.openDate}
                 </span>
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-4 mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="border-t border-gray-200 dark:border-slate-700 pt-4 mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <p className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                   Ticket Type
                 </p>
-                <p className="mt-1 text-sm font-semibold text-gray-900">
+                <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
                   {ticket.type}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <p className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                   Technology Domain
                 </p>
-                <p className="mt-1 text-sm font-semibold text-gray-900">
+                <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
                   {ticket.technologyDomain}
                 </p>
               </div>
@@ -596,60 +596,60 @@ export default function TicketDetailsView() {
           </div>
 
            {/* Issue Details */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-indigo-600" />
+          <div className="bg-white dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               Issue Details
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Subject</label>
                 {isEditing ? (
                   <input
                     type="text"
                     value={ticket.issueSubject}
                     onChange={(e) => setTicket({ ...ticket, issueSubject: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                    className="input"
                   />
                 ) : (
-                  <p className="text-gray-900">{ticket.issueSubject}</p>
+                  <p className="text-gray-900 dark:text-white">{ticket.issueSubject}</p>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Description</label>
                 {isEditing ? (
                   <textarea
                     value={ticket.issueDescription}
                     onChange={(e) => setTicket({ ...ticket, issueDescription: e.target.value })}
                     rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none"
+                    className="input resize-none"
                   />
                 ) : (
-                  <p className="text-gray-900">{ticket.issueDescription}</p>
+                  <p className="text-gray-900 dark:text-white">{ticket.issueDescription}</p>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">OEM/TAC Involved</label>
-                  <p className="text-gray-900">{ticket.oemTacInvolved}</p>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">OEM/TAC Involved</label>
+                  <p className="text-gray-900 dark:text-white">{ticket.oemTacInvolved}</p>
                 </div>
                 {ticket.oemTacInvolved === 'Yes' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">TAC Case Number</label>
-                    <p className="text-gray-900 font-mono">{ticket.tacCaseNumber}</p>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">TAC Case Number</label>
+                    <p className="text-gray-900 dark:text-white font-mono">{ticket.tacCaseNumber}</p>
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
-            <div className="flex items-center gap-2 text-emerald-700 font-semibold">
+          <div className="bg-white dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark p-6 space-y-4">
+            <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold">
               <CheckCircle2 className="w-5 h-5" />
               <span>Resolution</span>
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <p className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                 Engineer Remarks
               </p>
               {isEditing ? (
@@ -657,17 +657,17 @@ export default function TicketDetailsView() {
                   value={ticket.engineerRemarks}
                   onChange={(e) => setTicket({ ...ticket, engineerRemarks: e.target.value })}
                   rows={3}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none text-sm"
+                  className="input resize-none text-sm mt-1"
                   placeholder="Add remarks..."
                 />
               ) : (
-                <p className="mt-1 text-sm text-gray-700">
+                <p className="mt-1 text-sm text-gray-700 dark:text-slate-300">
                   {ticket.engineerRemarks}
                 </p>
               )}
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <p className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                 Problem Resolution
               </p>
               {isEditing ? (
@@ -675,11 +675,11 @@ export default function TicketDetailsView() {
                   value={ticket.problemResolution}
                   onChange={(e) => setTicket({ ...ticket, problemResolution: e.target.value })}
                   rows={3}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none text-sm"
+                  className="input resize-none text-sm mt-1"
                   placeholder="Describe resolution..."
                 />
               ) : (
-                <p className="mt-1 text-sm text-gray-700">
+                <p className="mt-1 text-sm text-gray-700 dark:text-slate-300">
                   {ticket.problemResolution}
                 </p>
               )}
@@ -687,9 +687,9 @@ export default function TicketDetailsView() {
           </div>
 
           {/* Updates & Comments */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-             <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Edit2 className="w-5 h-5 text-indigo-600" />
+          <div className="bg-white dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark p-6">
+             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <Edit2 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                 Updates & Comments
              </h2>
              <div className="space-y-4">
@@ -698,13 +698,13 @@ export default function TicketDetailsView() {
                   onChange={(e) => setNewUpdate(e.target.value)}
                   placeholder="Add a new update or comment..."
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none"
+                  className="input resize-none"
                 />
                 <div className="flex justify-end">
                    <button
                      onClick={handleAddUpdate}
                      disabled={!newUpdate.trim()}
-                     className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+                     className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
                    >
                      Post Update
                    </button>
@@ -713,9 +713,9 @@ export default function TicketDetailsView() {
           </div>
 
          {/* Timeline */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-indigo-600" />
+          <div className="bg-white dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               Ticket Timeline
             </h2>
             <div className="space-y-4">
@@ -729,12 +729,12 @@ export default function TicketDetailsView() {
                       'bg-green-500'
                     }`} />
                     {index !== ticket.timeline.length - 1 && (
-                      <div className="w-0.5 h-full bg-gray-200 my-1" />
+                      <div className="w-0.5 h-full bg-gray-200 dark:bg-slate-700 my-1" />
                     )}
                   </div>
                   <div className="flex-1 pb-4">
-                    <p className="text-sm font-medium text-gray-900">{entry.event}</p>
-                    <p className="text-xs text-gray-600 mt-1">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{entry.event}</p>
+                    <p className="text-xs text-gray-600 dark:text-slate-400 mt-1">
                       {entry.date} • {entry.user}
                     </p>
                   </div>
@@ -745,72 +745,84 @@ export default function TicketDetailsView() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Building className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-sm font-semibold text-gray-900">
+              <Building className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
                 Customer Info
               </h2>
             </div>
             <div className="space-y-4 text-sm">
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <p className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                   Company
                 </p>
-                <p className="mt-1 text-gray-900">{ticket.customerName}</p>
+                <p className="mt-1 text-gray-900 dark:text-white">{ticket.customerName}</p>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <p className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                   Customer ID
                 </p>
-                <p className="mt-1 text-gray-900">{ticket.customerId}</p>
+                <p className="mt-1 text-gray-900 dark:text-white">{ticket.customerId}</p>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <p className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                   Contact Person
                 </p>
-                <p className="mt-1 text-gray-900">{ticket.contactName}</p>
+                <p className="mt-1 text-gray-900 dark:text-white">{ticket.contactName}</p>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <p className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                   Phone
                 </p>
-                <p className="mt-1 text-gray-900">{ticket.phone}</p>
+                <p className="mt-1 text-gray-900 dark:text-white">{ticket.phone}</p>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <p className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                   Email
                 </p>
-                <p className="mt-1 text-gray-900">{ticket.email}</p>
+                <p className="mt-1 text-gray-900 dark:text-white">{ticket.email}</p>
               </div>
             </div>
           </div>
 
           {/* Engineer Info */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <User className="w-5 h-5 text-indigo-600" />
+          <div className="bg-white dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <User className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               Assigned Engineer
             </h3>
             <div className="space-y-3">
               <div>
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-medium text-lg">
+                  <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-medium text-lg">
                     {ticket.assignedEngineer.split(' ').map(n => n[0]).join('')}
                   </div>
                   <div>
-                    <div className="font-medium text-gray-900">{ticket.assignedEngineer}</div>
-                    <div className="text-sm text-gray-600">Support Engineer</div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {ticket.assignedEngineer}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">
+                      Technical Support Engineer
+                    </p>
                   </div>
                 </div>
               </div>
-              <div className="pt-3 border-t border-gray-200">
-                <div className="text-sm text-gray-600">Phone</div>
-                <div className="text-gray-900">{ticket.engineerPhone}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-600">Email</div>
-                <div className="text-gray-900 text-sm break-all">{ticket.engineerEmail}</div>
+              <div className="border-t border-gray-100 dark:border-slate-700 pt-3 mt-3">
+                <div className="grid grid-cols-1 gap-3">
+                   <div>
+                      <p className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
+                        Email
+                      </p>
+                      <p className="text-sm text-gray-900 dark:text-white">{ticket.engineerEmail}</p>
+                   </div>
+                   <div>
+                      <p className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
+                        Phone
+                      </p>
+                      <p className="text-sm text-gray-900 dark:text-white">{ticket.engineerPhone}</p>
+                   </div>
+                </div>
               </div>
             </div>
           </div>

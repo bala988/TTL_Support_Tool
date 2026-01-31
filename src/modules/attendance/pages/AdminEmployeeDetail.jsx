@@ -121,7 +121,7 @@ const AdminEmployeeDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 dark:from-servicenow-dark dark:to-servicenow-dark p-6">
       <div className="max-w-7xl mx-auto">
         {/* Back Button */}
         <Button
@@ -136,9 +136,9 @@ const AdminEmployeeDetail = () => {
         </Button>
 
         {/* Employee Profile */}
-        <Card className="mb-6 bg-gradient-to-r from-primary-600 to-purple-600 text-white">
+        <Card className="mb-6 bg-gradient-to-r from-primary-600 to-purple-600 dark:from-primary-700 dark:to-purple-700 text-white">
           <div className="flex items-center gap-6">
-            <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm border-4 border-white/30 overflow-hidden flex items-center justify-center">
+            <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm border-4 border-white/30 dark:border-white/20 overflow-hidden flex items-center justify-center">
               {employee.profilePicture ? (
                 <img src={employee.profilePicture} alt={employee.fullName} className="w-full h-full object-cover" />
               ) : (
@@ -173,17 +173,17 @@ const AdminEmployeeDetail = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
-            <h3 className="text-sm text-blue-900 mb-1">Total Worklogs</h3>
-            <p className="text-3xl font-bold text-blue-700">{worklogs.length}</p>
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30">
+            <h3 className="text-sm text-blue-900 dark:text-blue-100 mb-1">Total Worklogs</h3>
+            <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{worklogs.length}</p>
           </Card>
-          <Card className="bg-gradient-to-br from-green-50 to-green-100">
-            <h3 className="text-sm text-green-900 mb-1">Days Present</h3>
-            <p className="text-3xl font-bold text-green-700">{attendance.length}</p>
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30">
+            <h3 className="text-sm text-green-900 dark:text-green-100 mb-1">Days Present</h3>
+            <p className="text-3xl font-bold text-green-700 dark:text-green-300">{attendance.length}</p>
           </Card>
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
-            <h3 className="text-sm text-purple-900 mb-1">Total Hours</h3>
-            <p className="text-3xl font-bold text-purple-700">{totalHours.toFixed(1)}h</p>
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30">
+            <h3 className="text-sm text-purple-900 dark:text-purple-100 mb-1">Total Hours</h3>
+            <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">{totalHours.toFixed(1)}h</p>
           </Card>
         </div>
 
@@ -218,7 +218,8 @@ const AdminEmployeeDetail = () => {
 
         {/* Calendar */}
         <Card className="mb-6">
-          <h2 className="text-2xl font-bold text-dark-900 mb-4">Calendar View</h2>
+          <h2 className="text-2xl font-bold text-dark-900 dark:text-white mb-4">Calendar View</h2>
+          <div className="dark:text-slate-200 [&_.fc-theme-standard_td]:dark:border-slate-700 [&_.fc-theme-standard_th]:dark:border-slate-700 [&_.fc-daygrid-day-number]:dark:text-slate-300">
           <FullCalendar
             plugins={[dayGridPlugin]}
             initialView="dayGridMonth"
@@ -233,43 +234,44 @@ const AdminEmployeeDetail = () => {
           <div className="mt-4 flex gap-4 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-green-500 rounded"></div>
-              <span className="text-dark-600">Attendance</span>
+              <span className="text-dark-600 dark:text-slate-400">Attendance</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-blue-500 rounded"></div>
-              <span className="text-dark-600">Worklogs</span>
+              <span className="text-dark-600 dark:text-slate-400">Worklogs</span>
             </div>
+          </div>
           </div>
         </Card>
 
         {/* Worklogs Table */}
         <Card className="mb-6">
-          <h2 className="text-2xl font-bold text-dark-900 mb-4">Worklog Details</h2>
+          <h2 className="text-2xl font-bold text-dark-900 dark:text-white mb-4">Worklog Details</h2>
           {worklogs.length === 0 ? (
-            <p className="text-center text-dark-600 py-8">No worklogs for selected month</p>
+            <p className="text-center text-dark-600 dark:text-slate-400 py-8">No worklogs for selected month</p>
           ) : (
             <div className="space-y-4">
               {worklogs.map((log) => (
                 <div
                   key={log._id}
-                  className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200"
+                  className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border-2 border-blue-200 dark:border-blue-900/40"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold bg-blue-200 text-blue-800 px-2 py-0.5 rounded">
+                      <span className="text-xs font-bold bg-blue-200 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-0.5 rounded">
                         {format(new Date(log.date), 'MMM d')}
                       </span>
-                      <span className="text-sm font-semibold text-blue-900">
+                      <span className="text-sm font-semibold text-blue-900 dark:text-blue-100">
                         {log.fromTime} - {log.toTime}
                       </span>
                     </div>
-                    <span className="text-sm text-blue-700">
+                    <span className="text-sm text-blue-700 dark:text-blue-300">
                       {Math.floor(log.durationMinutes / 60)}h {log.durationMinutes % 60}m
                     </span>
                   </div>
                   
                   {(log.customerName || log.ticketId) && (
-                    <div className="flex gap-4 mb-2 text-xs text-dark-500 font-medium">
+                    <div className="flex gap-4 mb-2 text-xs text-dark-500 dark:text-slate-400 font-medium">
                       {log.customerName && (
                         <span className="flex items-center gap-1">
                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -289,7 +291,7 @@ const AdminEmployeeDetail = () => {
                     </div>
                   )}
 
-                  <p className="text-dark-700">{log.activity}</p>
+                  <p className="text-dark-700 dark:text-slate-300">{log.activity}</p>
                 </div>
               ))}
             </div>
@@ -298,7 +300,7 @@ const AdminEmployeeDetail = () => {
 
         {/* CSV Export */}
         <Card>
-          <h2 className="text-2xl font-bold text-dark-900 mb-4">Export Worklogs</h2>
+          <h2 className="text-2xl font-bold text-dark-900 dark:text-white mb-4">Export Worklogs</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
             <div>
               <label className="label-premium">From Date</label>

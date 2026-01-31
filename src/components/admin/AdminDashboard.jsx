@@ -5,6 +5,7 @@ import { Ticket, Clock, CheckCircle, AlertTriangle, UserCheck, Download, Filter 
 import toast from 'react-hot-toast';
 import { StatsCard } from "../common/StatsCard";
 import { TicketsTable } from "../tickets/TicketsTable";
+import { useTheme } from "../../context/ThemeContext";
 import {
   PieChart,
   Pie,
@@ -21,6 +22,7 @@ import {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [tickets, setTickets] = useState([]);
   const [approvals, setApprovals] = useState([]);
   const [salesApprovals, setSalesApprovals] = useState([]);
@@ -237,24 +239,28 @@ export default function AdminDashboard() {
     { name: "Closed", value: stats.closed, color: "#6b7280" },
   ];
 
+  const chartTextColor = theme === 'dark' ? '#cbd5e1' : '#475569';
+  const chartGridColor = theme === 'dark' ? '#334155' : '#e2e8f0';
+  const tooltipStyle = theme === 'dark' ? { backgroundColor: '#053c57', borderColor: '#053c57', color: '#fff' } : {};
+
   return (
     <EngineerLayout>
       <div className="p-8 max-w-[1400px] mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-gray-600 mt-2">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+            <p className="text-gray-600 dark:text-slate-400 mt-2">
               Overview of all support tickets and system status
             </p>
           </div>
           
-          <div className="flex bg-gray-100 p-1 rounded-lg">
+          <div className="flex bg-gray-100 dark:bg-servicenow-dark p-1 rounded-lg">
             <button
               onClick={() => setActiveTab('overview')}
               className={`px-4 py-2 rounded-md font-medium transition ${
                 activeTab === 'overview' 
-                  ? 'bg-white text-indigo-600 shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white dark:bg-servicenow-light text-indigo-600 dark:text-indigo-400 shadow-sm' 
+                  : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
               Overview
@@ -263,8 +269,8 @@ export default function AdminDashboard() {
               onClick={() => setActiveTab('approvals')}
               className={`px-4 py-2 rounded-md font-medium transition ${
                 activeTab === 'approvals' 
-                  ? 'bg-white text-indigo-600 shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white dark:bg-servicenow-light text-indigo-600 dark:text-indigo-400 shadow-sm' 
+                  : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
               Approvals
@@ -280,8 +286,8 @@ export default function AdminDashboard() {
                 onClick={() => setActiveTab('sales_approvals')}
                 className={`px-4 py-2 rounded-md font-medium transition ${
                   activeTab === 'sales_approvals' 
-                    ? 'bg-white text-indigo-600 shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-white dark:bg-servicenow-light text-indigo-600 dark:text-indigo-400 shadow-sm' 
+                    : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 Sales Approvals
@@ -327,8 +333,8 @@ export default function AdminDashboard() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Tickets by Severity</h3>
+              <div className="bg-white dark:bg-servicenow-light rounded-xl p-6 shadow-sm border border-gray-200 dark:border-servicenow-dark">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Tickets by Severity</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
@@ -345,20 +351,20 @@ export default function AdminDashboard() {
                         <Cell key={index} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip />
-                    <Legend />
+                    <Tooltip contentStyle={tooltipStyle} />
+                    <Legend formatter={(value) => <span style={{ color: chartTextColor }}>{value}</span>} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Tickets by Status</h3>
+              <div className="bg-white dark:bg-servicenow-light rounded-xl p-6 shadow-sm border border-gray-200 dark:border-servicenow-dark">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Tickets by Status</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={statusData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} />
+                    <XAxis dataKey="name" stroke={chartTextColor} />
+                    <YAxis stroke={chartTextColor} />
+                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill: theme === 'dark' ? '#021e2e' : '#f8fafc' }} />
                     <Bar dataKey="value" radius={[8, 8, 0, 0]}>
                       {statusData.map((entry, index) => (
                         <Cell key={index} fill={entry.color} />
@@ -458,6 +464,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">All Tickets</h2>
               <TicketsTable
                 tickets={filteredTickets}
                 onTicketClick={(ticketId) => navigate(`/tickets/${ticketId}`)}
@@ -468,22 +475,22 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'approvals' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900">Access Requests</h2>
+          <div className="bg-white dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark overflow-hidden transition-colors">
+            <div className="p-6 border-b border-gray-200 dark:border-servicenow-dark">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Access Requests</h2>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                <thead className="bg-gray-50 dark:bg-servicenow-dark">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requester</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Ticket</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Requester</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-servicenow-light divide-y divide-gray-200 dark:divide-slate-700">
                   {approvals.length === 0 ? (
                     <tr>
                       <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
@@ -547,25 +554,25 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'sales_approvals' && (
-           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900">Sales Opportunity Approvals</h2>
+           <div className="bg-white dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark overflow-hidden transition-colors">
+            <div className="p-6 border-b border-gray-200 dark:border-servicenow-dark">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sales Opportunity Approvals</h2>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                <thead className="bg-gray-50 dark:bg-servicenow-dark">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Opportunity</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requester</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Opportunity</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Requester</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-servicenow-light divide-y divide-gray-200 dark:divide-slate-700">
                   {salesApprovals.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                      <td colSpan="5" className="px-6 py-4 text-center text-gray-500 dark:text-slate-400">
                         No sales approval requests found
                       </td>
                     </tr>
@@ -573,20 +580,20 @@ export default function AdminDashboard() {
                     salesApprovals.map((approval) => (
                       <tr key={approval.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{approval.opportunity_name}</div>
-                          <div className="text-sm text-gray-500">{approval.customer_name}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{approval.opportunity_name}</div>
+                          <div className="text-sm text-gray-500 dark:text-slate-400">{approval.customer_name}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{approval.requester_name}</div>
-                          <div className="text-sm text-gray-500">{approval.requester_email}</div>
+                          <div className="text-sm text-gray-900 dark:text-white">{approval.requester_name}</div>
+                          <div className="text-sm text-gray-500 dark:text-slate-400">{approval.requester_email}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
                           {new Date(approval.created_at).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                             approval.status === 'Approved' ? 'bg-green-100 text-green-800' : 
-                             approval.status === 'Rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                             approval.status === 'Approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 
+                             approval.status === 'Rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
                           }`}>
                             {approval.status}
                           </span>
@@ -596,20 +603,20 @@ export default function AdminDashboard() {
                             <div className="flex justify-end gap-2">
                               <button
                                 onClick={() => handleSalesApprovalAction(approval.id, 'Approved')}
-                                className="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded-md"
+                                className="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded-md dark:bg-green-900/20 dark:text-green-400 dark:hover:text-green-300"
                               >
                                 Grant
                               </button>
                               <button
                                 onClick={() => handleSalesApprovalAction(approval.id, 'Rejected')}
-                                className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md"
+                                className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md dark:bg-red-900/20 dark:text-red-400 dark:hover:text-red-300"
                               >
                                 Reject
                               </button>
                             </div>
                           )}
                           {approval.status === 'Approved' && (
-                              <span className="text-gray-400">Approved</span>
+                              <span className="text-gray-400 dark:text-slate-500">Approved</span>
                           )}
                         </td>
                       </tr>

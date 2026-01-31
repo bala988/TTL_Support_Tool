@@ -146,29 +146,31 @@ export default function TicketCreationForm() {
           <button
             onClick={() => navigate(dashboardPath)}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+            onClick={() => navigate("/engineer/dashboard")}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 dark:text-slate-400 dark:hover:text-slate-200"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </button>
 
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Create New Ticket
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-600 mt-2 dark:text-slate-400">
             Fill in the details to create a support ticket
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-white rounded-xl border p-6">
-            <h2 className="flex items-center gap-2 font-semibold mb-4">
-              <AlertCircle className="w-5 h-5 text-indigo-600" />
+          <div className="bg-white dark:bg-servicenow-light rounded-xl border dark:border-servicenow-dark p-6">
+            <h2 className="flex items-center gap-2 font-semibold mb-4 text-gray-900 dark:text-white">
+              <AlertCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               Ticket Details
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Severity <span className="text-red-500">*</span>
                 </label>
                 <select
@@ -187,7 +189,7 @@ export default function TicketCreationForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Ticket Type <span className="text-red-500">*</span>
                 </label>
                 <select
@@ -211,7 +213,7 @@ export default function TicketCreationForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Technology Domain <span className="text-red-500">*</span>
                 </label>
                 <select
@@ -251,13 +253,13 @@ export default function TicketCreationForm() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white dark:bg-servicenow-light rounded-xl border dark:border-servicenow-dark p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               Customer Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Customer Name <span className="text-red-500">*</span>
                 </label>
                 <select
@@ -300,7 +302,7 @@ export default function TicketCreationForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Serial No <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -316,7 +318,7 @@ export default function TicketCreationForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   TSG ID
                 </label>
                 <input
@@ -331,7 +333,7 @@ export default function TicketCreationForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   CSP ID
                 </label>
                 <input
@@ -347,13 +349,13 @@ export default function TicketCreationForm() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white dark:bg-servicenow-light rounded-xl border dark:border-servicenow-dark p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               Contact Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Contact Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -369,7 +371,7 @@ export default function TicketCreationForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Phone <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -385,7 +387,7 @@ export default function TicketCreationForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Email <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -402,42 +404,42 @@ export default function TicketCreationForm() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white dark:bg-servicenow-light rounded-xl border dark:border-servicenow-dark p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               Engineer Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Assigned Engineer
                 </label>
                 <input
                   type="text"
-                  className="input bg-gray-100 cursor-not-allowed"
+                  className="input bg-gray-100 dark:bg-gray-800 cursor-not-allowed text-gray-500 dark:text-gray-400"
                   value={formData.assignedEngineer}
                   readOnly
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Engineer Phone
                 </label>
                 <input
                   type="tel"
-                  className="input bg-gray-100 cursor-not-allowed"
+                  className="input bg-gray-100 dark:bg-gray-800 cursor-not-allowed text-gray-500 dark:text-gray-400"
                   value={formData.engineerPhone}
                   readOnly
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Engineer Email
                 </label>
                 <input
                   type="email"
-                  className="input bg-gray-100 cursor-not-allowed"
+                  className="input bg-gray-100 dark:bg-gray-800 cursor-not-allowed text-gray-500 dark:text-gray-400"
                   value={formData.engineerEmail}
                   readOnly
                 />
@@ -445,13 +447,13 @@ export default function TicketCreationForm() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white dark:bg-servicenow-light rounded-xl border dark:border-servicenow-dark p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               Issue Details
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Issue Subject <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -470,7 +472,7 @@ export default function TicketCreationForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Issue Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -489,7 +491,7 @@ export default function TicketCreationForm() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     OEM / TAC Involved
                   </label>
                   <select
@@ -508,7 +510,7 @@ export default function TicketCreationForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     TAC Case Number
                   </label>
                   <input
@@ -528,11 +530,11 @@ export default function TicketCreationForm() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Resolution</h2>
+          <div className="bg-white dark:bg-servicenow-light rounded-xl border dark:border-servicenow-dark p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Resolution</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Engineer Remarks
                 </label>
                 <textarea
@@ -550,7 +552,7 @@ export default function TicketCreationForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Problem Resolution
                 </label>
                 <textarea
@@ -570,6 +572,8 @@ export default function TicketCreationForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="border p-3 rounded-lg bg-gray-50">
                   <label className="block text-sm font-medium mb-2 text-gray-700">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Attachment
                   </label>
                   <div className="flex items-center gap-2">
@@ -605,7 +609,7 @@ export default function TicketCreationForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Reference URL
                   </label>
                   <input
@@ -625,13 +629,13 @@ export default function TicketCreationForm() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white dark:bg-servicenow-light rounded-xl border dark:border-servicenow-dark p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               Ticket Dates
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Open Date
                 </label>
                 <input
@@ -648,7 +652,7 @@ export default function TicketCreationForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Close Date
                 </label>
                 <input
@@ -678,7 +682,7 @@ export default function TicketCreationForm() {
             <button
               type="button"
               onClick={() => navigate("/engineer/dashboard")}
-              className="px-6 py-3 border rounded-lg"
+              className="px-6 py-3 border rounded-lg hover:bg-gray-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
             >
               Cancel
             </button>

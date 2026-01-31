@@ -62,21 +62,21 @@ export default function SignupPage({ onSignup, isInternal = false }) {
   };
 
   return (
-    <div className={`${isInternal ? 'w-full py-12' : 'min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center'} p-4`}>
-      <div className={`bg-white rounded-2xl shadow-xl w-full max-w-md p-8 ${isInternal ? 'mx-auto shadow-sm border border-gray-200' : ''}`}>
+    <div className={`${isInternal ? 'w-full py-12' : 'min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-servicenow dark:to-servicenow-dark flex items-center justify-center'} p-4`}>
+      <div className={`bg-white dark:bg-servicenow-light rounded-2xl shadow-xl w-full max-w-md p-8 ${isInternal ? 'mx-auto shadow-sm border border-gray-200 dark:border-servicenow-dark' : ''}`}>
         <div className="flex flex-col items-center mb-8">
           <div className="bg-indigo-600 p-3 rounded-xl mb-4">
             <Shield className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">{isInternal ? "Register New User" : "Create Account"}</h1>
-          <p className="text-gray-600 mt-2">{isInternal ? "Add a new member to the team" : "Join the IT support team"}</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{isInternal ? "Register New User" : "Create Account"}</h1>
+          <p className="text-gray-600 dark:text-slate-300 mt-2">{isInternal ? "Add a new member to the team" : "Join the IT support team"}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label
               htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2"
             >
               Full Name
             </label>
@@ -89,7 +89,7 @@ export default function SignupPage({ onSignup, isInternal = false }) {
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                className="w-full pl-11 pr-4 py-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition dark:bg-servicenow-dark dark:text-white dark:placeholder:text-slate-500"
                 placeholder="John Doe"
                 required
               />
@@ -99,7 +99,7 @@ export default function SignupPage({ onSignup, isInternal = false }) {
           <div>
             <label
               htmlFor="phone"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2"
             >
               Phone Number
             </label>
@@ -112,7 +112,7 @@ export default function SignupPage({ onSignup, isInternal = false }) {
                 onChange={(e) =>
                   setFormData({ ...formData, phone: e.target.value })
                 }
-                className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                className="w-full pl-11 pr-4 py-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition dark:bg-servicenow-dark dark:text-white dark:placeholder:text-slate-500"
                 placeholder="+1 (555) 000-0000"
                 required
               />
@@ -122,7 +122,7 @@ export default function SignupPage({ onSignup, isInternal = false }) {
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2"
             >
               Email Address
             </label>
@@ -135,7 +135,7 @@ export default function SignupPage({ onSignup, isInternal = false }) {
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                className="w-full pl-11 pr-4 py-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition dark:bg-servicenow-dark dark:text-white dark:placeholder:text-slate-500"
                 placeholder="you@company.com"
                 required
               />
@@ -145,7 +145,7 @@ export default function SignupPage({ onSignup, isInternal = false }) {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2"
             >
               Password
             </label>
@@ -158,7 +158,7 @@ export default function SignupPage({ onSignup, isInternal = false }) {
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
-                className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                className="w-full pl-11 pr-4 py-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition dark:bg-servicenow-dark dark:text-white dark:placeholder:text-slate-500"
                 placeholder="••••••••"
                 required
               />
@@ -168,7 +168,7 @@ export default function SignupPage({ onSignup, isInternal = false }) {
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2"
             >
               Confirm Password
             </label>
@@ -184,7 +184,7 @@ export default function SignupPage({ onSignup, isInternal = false }) {
                     confirmPassword: e.target.value,
                   })
                 }
-                className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+                className="w-full pl-11 pr-4 py-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition dark:bg-servicenow-dark dark:text-white dark:placeholder:text-slate-500"
                 placeholder="••••••••"
                 required
               />
@@ -192,11 +192,11 @@ export default function SignupPage({ onSignup, isInternal = false }) {
           </div>
 
           <div>
-            <span className="block text-sm font-medium text-gray-700 mb-2">
+            <span className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
               Role
             </span>
             <div className="flex items-center space-x-4">
-              <label className="flex items-center text-sm text-gray-700">
+              <label className="flex items-center text-sm text-gray-700 dark:text-slate-300 cursor-pointer">
                 <input
                   type="radio"
                   value="engineer"
@@ -208,7 +208,7 @@ export default function SignupPage({ onSignup, isInternal = false }) {
                 />
                 <span className="ml-2">Engineer</span>
               </label>
-              <label className="flex items-center text-sm text-gray-700">
+              <label className="flex items-center text-sm text-gray-700 dark:text-slate-300 cursor-pointer">
                 <input
                   type="radio"
                   value="sales"
@@ -225,7 +225,7 @@ export default function SignupPage({ onSignup, isInternal = false }) {
 
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition font-medium"
+            className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition font-medium dark:bg-indigo-500 dark:hover:bg-indigo-600"
           >
             {isInternal ? "Register User" : "Sign Up"}
           </button>
@@ -233,11 +233,11 @@ export default function SignupPage({ onSignup, isInternal = false }) {
 
         {!isInternal && (
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-slate-400">
               Already have an account?{' '}
               <button
                 onClick={() => navigate('/')}
-                className="text-indigo-600 hover:text-indigo-700 font-medium"
+                className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium"
               >
                 Sign in
               </button>
@@ -246,5 +246,5 @@ export default function SignupPage({ onSignup, isInternal = false }) {
         )}
       </div>
     </div>
-  )
+  );
 }

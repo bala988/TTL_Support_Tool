@@ -444,15 +444,15 @@ export default function SalesOpportunityView() {
             >
               <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition-colors
                 ${isActive ? 'bg-indigo-600 text-white' : 
-                  isCompleted ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'}`}
+                  isCompleted ? 'bg-green-500 text-white' : 'bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-gray-400'}`}
               >
                 {isCompleted ? <CheckCircle className="w-6 h-6" /> : step}
               </div>
-              <span className={`text-xs font-medium text-center ${isActive ? 'text-indigo-600' : 'text-gray-500'}`}>
+              <span className={`text-xs font-medium text-center ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'}`}>
                 {name}
               </span>
               {idx < stages.length - 1 && (
-                <div className="hidden md:block absolute top-5 left-1/2 w-full h-1 bg-gray-200 -z-10" />
+                <div className="hidden md:block absolute top-5 left-1/2 w-full h-1 bg-gray-200 dark:bg-slate-700 -z-10" />
               )}
             </div>
           );
@@ -488,6 +488,13 @@ export default function SalesOpportunityView() {
           )}
           {isUploading ? 'Uploading...' : 'Choose File'}
           <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, stage, field)} disabled={isUploading} />
+  const FileUpload = ({ label, stage, field, value }) => (
+    <div className="border border-gray-200 dark:border-slate-700 p-3 rounded-lg bg-gray-50 dark:bg-servicenow-dark/50">
+      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{label}</label>
+      <div className="flex items-center gap-2">
+        <label className="cursor-pointer bg-white dark:bg-servicenow-dark border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded text-sm hover:bg-gray-50 dark:hover:bg-servicenow transition-colors flex items-center gap-2">
+          <Upload className="w-4 h-4" /> Choose File
+          <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, stage, field)} />
         </label>
         
         {value && !isUploading ? (
@@ -507,11 +514,11 @@ export default function SalesOpportunityView() {
   // Helper for Yes/No Dropdown
   const YesNoSelect = ({ label, stage, field, value, required }) => (
     <div>
-      <label className="block text-sm font-medium mb-1 text-gray-700">
+      <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <select 
-        className={`w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 ${errors[`stage${stage}.${field}`] ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+        className={`w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-servicenow-dark dark:border-slate-600 dark:text-white ${errors[`stage${stage}.${field}`] ? 'border-red-500 bg-red-50 dark:bg-red-900/10' : 'border-gray-300'}`}
         value={value || 'No'}
         onChange={(e) => {
             handleStageDataChange(stage, field, e.target.value);
@@ -529,12 +536,12 @@ export default function SalesOpportunityView() {
 
   const ApprovalStatus = ({ label, value, onRequest }) => (
     <div>
-      <label className="block text-sm font-medium mb-1 text-gray-700">
+      <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
         {label} <span className="text-red-500">*</span>
       </label>
       <div className="flex items-center gap-4">
         <div className={`px-4 py-2 rounded-lg font-semibold text-sm border 
-          ${value === 'Yes' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+          ${value === 'Yes' ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800' : 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-servicenow-dark dark:text-gray-300 dark:border-slate-700'}`}>
           {value === 'Yes' ? 'Approved (Go)' : 'No-Go / Pending'}
         </div>
         
@@ -570,10 +577,10 @@ export default function SalesOpportunityView() {
     <EngineerLayout>
       <div className="p-6 max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
             {isEditMode ? `Opportunity: ${header.opportunity_name}` : "New Opportunity"}
           </h1>
-          <button onClick={handleSaveDraft} className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-50 text-sm">
+          <button onClick={handleSaveDraft} className="bg-white dark:bg-servicenow-dark border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-servicenow transition-colors text-sm">
             <Save className="w-4 h-4" /> Save Draft
           </button>
         </div>
@@ -582,45 +589,45 @@ export default function SalesOpportunityView() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           
           {/* Section 1: Customer & Sales Details */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <h2 className="text-lg font-semibold mb-4 border-b pb-2 flex items-center gap-2">
-              <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span>
+          <div className="bg-white dark:bg-servicenow-light p-6 rounded-xl shadow-sm border border-gray-100 dark:border-servicenow-dark">
+            <h2 className="text-lg font-semibold mb-4 border-b dark:border-slate-700 pb-2 flex items-center gap-2 text-gray-800 dark:text-white">
+              <span className="bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span>
               Customer & Sales Details
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Opportunity Name</label>
-                <input name="opportunity_name" placeholder="Enter opportunity name" value={header.opportunity_name} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Opportunity Name</label>
+                <input name="opportunity_name" placeholder="Enter opportunity name" value={header.opportunity_name} onChange={handleHeaderChange} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
-                  <input name="customer_name" placeholder="Enter customer name" value={header.customer_name} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg" />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Customer Name</label>
+                  <input name="customer_name" placeholder="Enter customer name" value={header.customer_name} onChange={handleHeaderChange} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg placeholder:text-gray-400 dark:placeholder:text-gray-500" />
                 </div>
                 <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-1">Customer Contact Person</label>
-                   <input name="customer_contact_person" placeholder="Contact person" value={header.customer_contact_person} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg" />
+                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Customer Contact Person</label>
+                   <input name="customer_contact_person" placeholder="Contact person" value={header.customer_contact_person} onChange={handleHeaderChange} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg placeholder:text-gray-400 dark:placeholder:text-gray-500" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Customer Address</label>
-                <textarea name="customer_address" placeholder="Enter address" value={header.customer_address} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg h-20 resize-none" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Customer Address</label>
+                <textarea name="customer_address" placeholder="Enter address" value={header.customer_address} onChange={handleHeaderChange} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg h-20 resize-none placeholder:text-gray-400 dark:placeholder:text-gray-500" />
               </div>
 
               <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-1">Customer Email</label>
-                 <input type="email" name="customer_email" placeholder="email@customer.com" value={header.customer_email} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg" />
+                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Customer Email</label>
+                 <input type="email" name="customer_email" placeholder="email@customer.com" value={header.customer_email} onChange={handleHeaderChange} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg placeholder:text-gray-400 dark:placeholder:text-gray-500" />
               </div>
 
-              <div className="border-t pt-4 mt-4">
-                <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">TTL Sales Info</h3>
+              <div className="border-t dark:border-slate-700 pt-4 mt-4">
+                <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">TTL Sales Info</h3>
                 <div className="space-y-3">
-                  <input name="ttl_sales_name" placeholder="TTL Sales Name" value={header.ttl_sales_name} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg" />
+                  <input name="ttl_sales_name" placeholder="TTL Sales Name" value={header.ttl_sales_name} onChange={handleHeaderChange} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg placeholder:text-gray-400 dark:placeholder:text-gray-500" />
                   <div className="grid grid-cols-2 gap-3">
-                    <input type="number" name="ttl_contact_number" placeholder="TTL Contact Number" value={header.ttl_contact_number} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg" />
-                    <input type="email" name="ttl_email" placeholder="TTL Email" value={header.ttl_email} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg" />
+                    <input type="number" name="ttl_contact_number" placeholder="TTL Contact Number" value={header.ttl_contact_number} onChange={handleHeaderChange} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg placeholder:text-gray-400 dark:placeholder:text-gray-500" />
+                    <input type="email" name="ttl_email" placeholder="TTL Email" value={header.ttl_email} onChange={handleHeaderChange} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg placeholder:text-gray-400 dark:placeholder:text-gray-500" />
                   </div>
                 </div>
               </div>
@@ -628,15 +635,15 @@ export default function SalesOpportunityView() {
           </div>
 
           {/* Section 2: Technical & Distributor Details */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <h2 className="text-lg font-semibold mb-4 border-b pb-2 flex items-center gap-2">
-              <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-xs">2</span>
+          <div className="bg-white dark:bg-servicenow-light p-6 rounded-xl shadow-sm border border-gray-100 dark:border-servicenow-dark">
+            <h2 className="text-lg font-semibold mb-4 border-b dark:border-slate-700 pb-2 flex items-center gap-2 text-gray-800 dark:text-white">
+              <span className="bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 w-6 h-6 rounded-full flex items-center justify-center text-xs">2</span>
               Technical & Distributor Details
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Technical Owner / Presales</label>
-                <select name="technical_owner" value={header.technical_owner} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg bg-white">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Technical Owner / Presales</label>
+                <select name="technical_owner" value={header.technical_owner} onChange={handleHeaderChange} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg bg-white">
                   <option value="">Select Technical Owner</option>
                   <option value="Unassigned">Unassigned</option>
                   <option value="John Doe">Ram Balaji</option>
@@ -647,8 +654,8 @@ export default function SalesOpportunityView() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Product</label>
-                  <select name="product" value={header.product} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg bg-white">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Product</label>
+                  <select name="product" value={header.product} onChange={handleHeaderChange} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg bg-white">
                     <option value="">Select Product</option>
                     <option value="NGFW">NGFW</option>
                     <option value="SASE">SASE</option>
@@ -658,8 +665,8 @@ export default function SalesOpportunityView() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">OEM</label>
-                  <select name="oem" value={header.oem} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg bg-white">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">OEM</label>
+                  <select name="oem" value={header.oem} onChange={handleHeaderChange} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg bg-white">
                     <option value="">Select OEM</option>
                     <option value="Palo Alto">Palo Alto</option>
                     <option value="Fortinet">Fortinet</option>
@@ -671,15 +678,15 @@ export default function SalesOpportunityView() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <input name="oem_contact" placeholder="OEM Contact Person" value={header.oem_contact} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg" />
-                 <input name="oem_details" placeholder="OEM Additional Details" value={header.oem_details} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg" />
+                 <input name="oem_contact" placeholder="OEM Contact Person" value={header.oem_contact} onChange={handleHeaderChange} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg placeholder:text-gray-400 dark:placeholder:text-gray-500" />
+                 <input name="oem_details" placeholder="OEM Additional Details" value={header.oem_details} onChange={handleHeaderChange} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg placeholder:text-gray-400 dark:placeholder:text-gray-500" />
               </div>
 
-              <div className="border-t pt-4 mt-4">
-                <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Distributor Info</h3>
+              <div className="border-t dark:border-slate-700 pt-4 mt-4">
+                <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">Distributor Info</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Distributor Name</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Distributor Name</label>
                     <select 
                       name="distributor_name" 
                       value={['Ingram Micro', 'Redington', 'Westcon', 'Tech Data', 'Savex', ''].includes(header.distributor_name) ? header.distributor_name : 'Others'} 
@@ -690,7 +697,7 @@ export default function SalesOpportunityView() {
                           handleHeaderChange(e);
                         }
                       }} 
-                      className="w-full border border-gray-300 p-2 rounded-lg bg-white"
+                      className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg bg-white"
                     >
                       <option value="">Select Distributor</option>
                       <option value="Ingram Micro">Ingram</option>
@@ -706,14 +713,14 @@ export default function SalesOpportunityView() {
                         placeholder="Enter Distributor Name" 
                         value={header.distributor_name === 'Others' ? '' : header.distributor_name} 
                         onChange={handleHeaderChange} 
-                        className="w-full border border-gray-300 p-2 rounded-lg mt-2" 
+                        className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg mt-2 placeholder:text-gray-400 dark:placeholder:text-gray-500" 
                       />
                     )}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <input name="distributor_contact_person" placeholder="Contact Name" value={header.distributor_contact_person} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg" />
-                    <input name="distributor_contact" placeholder="Contact No." value={header.distributor_contact} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg" />
-                    <input type="email" name="distributor_email" placeholder="Email" value={header.distributor_email} onChange={handleHeaderChange} className="w-full border border-gray-300 p-2 rounded-lg" />
+                    <input name="distributor_contact_person" placeholder="Contact Name" value={header.distributor_contact_person} onChange={handleHeaderChange} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg placeholder:text-gray-400 dark:placeholder:text-gray-500" />
+                    <input name="distributor_contact" placeholder="Contact No." value={header.distributor_contact} onChange={handleHeaderChange} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg placeholder:text-gray-400 dark:placeholder:text-gray-500" />
+                    <input type="email" name="distributor_email" placeholder="Email" value={header.distributor_email} onChange={handleHeaderChange} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg placeholder:text-gray-400 dark:placeholder:text-gray-500" />
                   </div>
                 </div>
               </div>
@@ -725,9 +732,9 @@ export default function SalesOpportunityView() {
         {renderStageBar()}
 
         {/* 3. STAGE DETAILS PANEL */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 min-h-[400px]">
+        <div className="bg-white dark:bg-servicenow-light p-6 rounded-xl shadow-sm border border-gray-100 dark:border-servicenow-dark min-h-[400px]">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-gray-800">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white">
               Stage {activeStage}: {
                 ["Qualification & Discovery", "Tech Presentation", "POC / POV", "Commercial", "Ordering", "Implementation", "Invoice"][activeStage-1]
               }
@@ -750,18 +757,18 @@ export default function SalesOpportunityView() {
           {activeStage === 1 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="col-span-full">
-                <h3 className="font-semibold text-gray-700 mb-3">Identify Decision Makers, Influencers</h3>
+                <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-3">Identify Decision Makers, Influencers</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <input placeholder="Decision Maker Name" className="border p-2 rounded" value={stageData.stage1.decision_maker_name} onChange={(e) => handleStageDataChange(1, 'decision_maker_name', e.target.value)} />
-                  <input placeholder="Influencer Name" className="border p-2 rounded" value={stageData.stage1.influencer_name} onChange={(e) => handleStageDataChange(1, 'influencer_name', e.target.value)} />
-                  <input placeholder="Purchase / Procurement" className="border p-2 rounded" value={stageData.stage1.purchase_procurement} onChange={(e) => handleStageDataChange(1, 'purchase_procurement', e.target.value)} />
+                  <input placeholder="Decision Maker Name" className="border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage1.decision_maker_name} onChange={(e) => handleStageDataChange(1, 'decision_maker_name', e.target.value)} />
+                  <input placeholder="Influencer Name" className="border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage1.influencer_name} onChange={(e) => handleStageDataChange(1, 'influencer_name', e.target.value)} />
+                  <input placeholder="Purchase / Procurement" className="border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage1.purchase_procurement} onChange={(e) => handleStageDataChange(1, 'purchase_procurement', e.target.value)} />
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-1">Map applicable cybersecurity solutions</label>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Map applicable cybersecurity solutions</label>
                 <select 
-                  className="w-full border p-2 rounded" 
+                  className="w-full border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" 
                   value={['NGFW', 'Prisma', 'XDR', 'SIEM', ''].includes(stageData.stage1.mapped_product) ? stageData.stage1.mapped_product : 'Others'} 
                   onChange={(e) => {
                     if (e.target.value === 'Others') {
@@ -781,7 +788,7 @@ export default function SalesOpportunityView() {
                 {(!['NGFW', 'Prisma', 'XDR', 'SIEM', ''].includes(stageData.stage1.mapped_product)) && (
                   <input 
                     placeholder="Enter Product Name" 
-                    className="w-full border p-2 rounded mt-2" 
+                    className="w-full border p-2 rounded mt-2 dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" 
                     value={stageData.stage1.mapped_product === 'Others' ? '' : stageData.stage1.mapped_product} 
                     onChange={(e) => handleStageDataChange(1, 'mapped_product', e.target.value)} 
                   />
@@ -789,22 +796,22 @@ export default function SalesOpportunityView() {
               </div>
 
               <div className="col-span-full">
-                 <label className="block text-sm font-medium mb-1">Identify Problem or Requirement Statement</label>
-                 <textarea className="w-full border p-2 rounded" value={stageData.stage1.problem_statement} onChange={(e) => handleStageDataChange(1, 'problem_statement', e.target.value)} />
+                 <label className="block text-sm font-medium mb-1 dark:text-gray-300">Identify Problem or Requirement Statement</label>
+                 <textarea className="w-full border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage1.problem_statement} onChange={(e) => handleStageDataChange(1, 'problem_statement', e.target.value)} />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Meet Decision Maker (Date)</label>
-                <input type="date" className="w-full border p-2 rounded" value={stageData.stage1.meeting_date_dm} onChange={(e) => handleStageDataChange(1, 'meeting_date_dm', e.target.value)} />
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Meet Decision Maker (Date)</label>
+                <input type="date" className="w-full border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage1.meeting_date_dm} onChange={(e) => handleStageDataChange(1, 'meeting_date_dm', e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Decision Maker Name (Meeting)</label>
-                <input className="w-full border p-2 rounded" value={stageData.stage1.dm_name_meeting} onChange={(e) => handleStageDataChange(1, 'dm_name_meeting', e.target.value)} />
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Decision Maker Name (Meeting)</label>
+                <input className="w-full border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage1.dm_name_meeting} onChange={(e) => handleStageDataChange(1, 'dm_name_meeting', e.target.value)} />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Prepare BANT (Date)</label>
-                <input type="date" className="w-full border p-2 rounded" value={stageData.stage1.rant_date} onChange={(e) => handleStageDataChange(1, 'rant_date', e.target.value)} />
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Prepare BANT (Date)</label>
+                <input type="date" className="w-full border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage1.rant_date} onChange={(e) => handleStageDataChange(1, 'rant_date', e.target.value)} />
               </div>
 
               <FileUpload label="Get or Fill Qualification/Questionnaire (TTL-CUST-PROD-DATE)" stage={1} field="qual_doc_upload" value={stageData.stage1.qual_doc_upload} />
@@ -827,17 +834,17 @@ export default function SalesOpportunityView() {
               <YesNoSelect label="Tech Solution Mapping with Requirement" stage={2} field="tech_solution_mapping" value={stageData.stage2.tech_solution_mapping} />
               <YesNoSelect label="Collect detailed business and technical use cases" stage={2} field="collect_use_cases" value={stageData.stage2.collect_use_cases} />
               
-              <div className="col-span-full grid grid-cols-1 md:grid-cols-3 gap-4 border p-4 rounded bg-gray-50">
-                 <h4 className="col-span-full font-medium">Align Right OEM</h4>
-                 <select className="border p-2 rounded" value={stageData.stage2.align_oem} onChange={(e) => handleStageDataChange(2, 'align_oem', e.target.value)}>
+              <div className="col-span-full grid grid-cols-1 md:grid-cols-3 gap-4 border border-gray-200 dark:border-slate-700 p-4 rounded bg-gray-50 dark:bg-servicenow-dark/50">
+                 <h4 className="col-span-full font-medium dark:text-gray-300">Align Right OEM</h4>
+                 <select className="border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage2.align_oem} onChange={(e) => handleStageDataChange(2, 'align_oem', e.target.value)}>
                     <option value="">Select OEM</option>
                     <option value="Palo Alto">Palo Alto</option>
                     <option value="F5">F5</option>
                     <option value="AWS">AWS</option>
                     <option value="Proofpoint">Proofpoint</option>
                  </select>
-                 <input placeholder="Account Manager" className="border p-2 rounded" value={stageData.stage2.oem_account_manager} onChange={(e) => handleStageDataChange(2, 'oem_account_manager', e.target.value)} />
-                 <input placeholder="Contact Email" className="border p-2 rounded" value={stageData.stage2.oem_contact_email} onChange={(e) => handleStageDataChange(2, 'oem_contact_email', e.target.value)} />
+                 <input placeholder="Account Manager" className="border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage2.oem_account_manager} onChange={(e) => handleStageDataChange(2, 'oem_account_manager', e.target.value)} />
+                 <input placeholder="Contact Email" className="border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage2.oem_contact_email} onChange={(e) => handleStageDataChange(2, 'oem_contact_email', e.target.value)} />
               </div>
 
               <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -851,8 +858,8 @@ export default function SalesOpportunityView() {
               
               <div className={`col-span-full grid grid-cols-1 md:grid-cols-2 gap-6 ${stageData.stage2.handoff_presales !== 'Yes' ? 'opacity-50 pointer-events-none' : ''}`}>
                   <div className="col-span-full">
-                     <label className="block text-sm font-medium mb-1">Customer Requirement Discovery Call (Notes)</label>
-                     <textarea className="w-full border p-2 rounded" value={stageData.stage2.cust_req_discovery} onChange={(e) => handleStageDataChange(2, 'cust_req_discovery', e.target.value)} />
+                     <label className="block text-sm font-medium mb-1 dark:text-gray-300">Customer Requirement Discovery Call (Notes)</label>
+                     <textarea className="w-full border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage2.cust_req_discovery} onChange={(e) => handleStageDataChange(2, 'cust_req_discovery', e.target.value)} />
                   </div>
 
                   <div>
@@ -912,24 +919,24 @@ export default function SalesOpportunityView() {
               </div>
               
               <div>
-                 <label className="block text-sm font-medium mb-1">POC Kickoff Date</label>
-                 <input type="date" className="w-full border p-2 rounded" value={stageData.stage3.poc_kickoff_date} onChange={(e) => handleStageDataChange(3, 'poc_kickoff_date', e.target.value)} />
+                 <label className="block text-sm font-medium mb-1 dark:text-gray-300">POC Kickoff Date</label>
+                 <input type="date" className="w-full border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage3.poc_kickoff_date} onChange={(e) => handleStageDataChange(3, 'poc_kickoff_date', e.target.value)} />
               </div>
               <div>
-                 <label className="block text-sm font-medium mb-1">POC Completion Date</label>
-                 <input type="date" className="w-full border p-2 rounded" value={stageData.stage3.poc_completion_date} onChange={(e) => handleStageDataChange(3, 'poc_completion_date', e.target.value)} />
+                 <label className="block text-sm font-medium mb-1 dark:text-gray-300">POC Completion Date</label>
+                 <input type="date" className="w-full border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage3.poc_completion_date} onChange={(e) => handleStageDataChange(3, 'poc_completion_date', e.target.value)} />
               </div>
 
               <FileUpload label="POC / Use Case Document (POC-DOC)" stage={3} field="poc_use_case_doc_final" value={stageData.stage3.poc_use_case_doc_final} />
               <FileUpload label="Solution Document (SOL-DOC)" stage={3} field="solution_doc_upload" value={stageData.stage3.solution_doc_upload} />
               
-              <div className="col-span-full border p-4 rounded bg-gray-50">
+              <div className="col-span-full border border-gray-200 dark:border-slate-700 p-4 rounded bg-gray-50 dark:bg-servicenow-dark/50">
                   <YesNoSelect label="BOQ Initial to Final Approved Versions" stage={3} field="boq_version_yn" value={stageData.stage3.boq_version_yn} />
                   {stageData.stage3.boq_version_yn === 'Yes' && (
                      <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium mb-1">Version</label>
-                            <select className="w-full border p-2 rounded" value={stageData.stage3.boq_version_number} onChange={(e) => handleStageDataChange(3, 'boq_version_number', e.target.value)}>
+                            <label className="block text-sm font-medium mb-1 dark:text-gray-300">Version</label>
+                            <select className="w-full border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage3.boq_version_number} onChange={(e) => handleStageDataChange(3, 'boq_version_number', e.target.value)}>
                                 <option value="">Select Version</option>
                                 {[...Array(10)].map((_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
                             </select>
@@ -955,7 +962,7 @@ export default function SalesOpportunityView() {
               
               <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-4">
                 <YesNoSelect label="Distributor Discounts with Margin %" stage={4} field="distributor_discount_yn" value={stageData.stage4.distributor_discount_yn} />
-                <input placeholder="Margin %" className="border p-2 rounded mt-6" value={stageData.stage4.distributor_margin_percent} onChange={(e) => handleStageDataChange(4, 'distributor_margin_percent', e.target.value)} />
+                <input placeholder="Margin %" className="border p-2 rounded mt-6 dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage4.distributor_margin_percent} onChange={(e) => handleStageDataChange(4, 'distributor_margin_percent', e.target.value)} />
               </div>
 
               <YesNoSelect label="Final PO Received along with Payment Terms" stage={4} field="final_po_payment_terms_yn" value={stageData.stage4.final_po_payment_terms_yn} />
@@ -978,8 +985,8 @@ export default function SalesOpportunityView() {
                <YesNoSelect label="B2B Ordering" stage={5} field="b2b_ordering" value={stageData.stage5.b2b_ordering} />
                
                <div>
-                 <label className="block text-sm font-medium mb-1">Product Delivery Type</label>
-                 <select className="w-full border p-2 rounded" value={stageData.stage5.product_delivery_type} onChange={(e) => handleStageDataChange(5, 'product_delivery_type', e.target.value)}>
+                 <label className="block text-sm font-medium mb-1 dark:text-gray-300">Product Delivery Type</label>
+                 <select className="w-full border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage5.product_delivery_type} onChange={(e) => handleStageDataChange(5, 'product_delivery_type', e.target.value)}>
                     <option value="">Select Type</option>
                     <option value="Door to Door">Door to Door</option>
                     <option value="Customer">Customer</option>
@@ -987,8 +994,8 @@ export default function SalesOpportunityView() {
                </div>
 
                <div>
-                 <label className="block text-sm font-medium mb-1">License Delivery</label>
-                 <select className="w-full border p-2 rounded" value={stageData.stage5.license_delivery_type} onChange={(e) => handleStageDataChange(5, 'license_delivery_type', e.target.value)}>
+                 <label className="block text-sm font-medium mb-1 dark:text-gray-300">License Delivery</label>
+                 <select className="w-full border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage5.license_delivery_type} onChange={(e) => handleStageDataChange(5, 'license_delivery_type', e.target.value)}>
                     <option value="">Select Type</option>
                     <option value="Hardware">Hardware</option>
                     <option value="Software">Software</option>
@@ -1000,13 +1007,13 @@ export default function SalesOpportunityView() {
                <YesNoSelect label="Payment Terms Negotiation" stage={5} field="payment_terms_negotiation" value={stageData.stage5.payment_terms_negotiation} />
                
                <div>
-                 <label className="block text-sm font-medium mb-1">Order Placement and Confirmation from OEM (Date)</label>
-                 <input type="date" className="w-full border p-2 rounded" value={stageData.stage5.order_placement_date} onChange={(e) => handleStageDataChange(5, 'order_placement_date', e.target.value)} />
+                 <label className="block text-sm font-medium mb-1 dark:text-gray-300">Order Placement and Confirmation from OEM (Date)</label>
+                 <input type="date" className="w-full border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage5.order_placement_date} onChange={(e) => handleStageDataChange(5, 'order_placement_date', e.target.value)} />
                </div>
 
                <div>
-                 <label className="block text-sm font-medium mb-1">Weekly Delivery Updates</label>
-                 <select className="w-full border p-2 rounded" value={stageData.stage5.weekly_delivery_updates} onChange={(e) => handleStageDataChange(5, 'weekly_delivery_updates', e.target.value)}>
+                 <label className="block text-sm font-medium mb-1 dark:text-gray-300">Weekly Delivery Updates</label>
+                 <select className="w-full border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage5.weekly_delivery_updates} onChange={(e) => handleStageDataChange(5, 'weekly_delivery_updates', e.target.value)}>
                     <option value="">Select Update</option>
                     <option value="Week 1">Week 1</option>
                     <option value="Week 2">Week 2</option>
@@ -1045,7 +1052,7 @@ export default function SalesOpportunityView() {
                  {stageData.stage6.project_plan_tech_align_yn === 'Yes' && (
                     <input 
                       placeholder="Enter Engineer Name" 
-                      className="w-full border p-2 rounded mt-2" 
+                      className="w-full border p-2 rounded mt-2 dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" 
                       value={stageData.stage6.tech_align_engineer_name} 
                       onChange={(e) => handleStageDataChange(6, 'tech_align_engineer_name', e.target.value)} 
                     />
@@ -1053,9 +1060,9 @@ export default function SalesOpportunityView() {
               </div>
               
               <div>
-                 <label className="block text-sm font-medium mb-1">Milestones Tracking</label>
+                 <label className="block text-sm font-medium mb-1 dark:text-gray-300">Milestones Tracking</label>
                  <select 
-                   className="w-full border p-2 rounded" 
+                   className="w-full border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" 
                    value={stageData.stage6.milestones_tracking_meet} 
                    onChange={(e) => handleStageDataChange(6, 'milestones_tracking_meet', e.target.value)}
                  >
@@ -1065,8 +1072,8 @@ export default function SalesOpportunityView() {
               </div>
               
               <div className="col-span-full">
-                 <label className="block text-sm font-medium mb-1">Milestones Timeline</label>
-                 <textarea className="w-full border p-2 rounded" value={stageData.stage6.milestones_timeline} onChange={(e) => handleStageDataChange(6, 'milestones_timeline', e.target.value)} />
+                 <label className="block text-sm font-medium mb-1 dark:text-gray-300">Milestones Timeline</label>
+                 <textarea className="w-full border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage6.milestones_timeline} onChange={(e) => handleStageDataChange(6, 'milestones_timeline', e.target.value)} />
               </div>
 
               <div>
@@ -1107,8 +1114,8 @@ export default function SalesOpportunityView() {
                <YesNoSelect label="Project Sign-Off Approval" stage={7} field="project_signoff_approval" value={stageData.stage7.project_signoff_approval} />
                
                <div>
-                 <label className="block text-sm font-medium mb-1">Invoice Submission Follow-up (Date)</label>
-                 <input type="date" className="w-full border p-2 rounded" value={stageData.stage7.invoice_submission_followup} onChange={(e) => handleStageDataChange(7, 'invoice_submission_followup', e.target.value)} />
+                 <label className="block text-sm font-medium mb-1 dark:text-gray-300">Invoice Submission Follow-up (Date)</label>
+                 <input type="date" className="w-full border p-2 rounded dark:bg-servicenow-dark dark:border-slate-600 dark:text-gray-200" value={stageData.stage7.invoice_submission_followup} onChange={(e) => handleStageDataChange(7, 'invoice_submission_followup', e.target.value)} />
                </div>
 
                <YesNoSelect label="Payment Confirmation from Finance" stage={7} field="payment_confirmation_finance" value={stageData.stage7.payment_confirmation_finance} />
@@ -1123,7 +1130,7 @@ export default function SalesOpportunityView() {
         <div className="flex justify-end gap-4 mt-8 pb-8 border-t pt-6">
           <button 
             onClick={handleSaveDraft} 
-            className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 flex items-center gap-2 transition-colors"
+            className="px-6 py-2.5 rounded-lg border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-50 dark:hover:bg-servicenow flex items-center gap-2 transition-colors"
           >
             <Save className="w-4 h-4" /> Save Draft
           </button>
