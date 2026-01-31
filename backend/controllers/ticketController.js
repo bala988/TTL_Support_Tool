@@ -24,12 +24,14 @@ export const createTicket = async (req, res) => {
     ];
 
     // Generate custom ticket ID
-    // Format: TTL-TechnologyDomain-CustomerName-Sequence
-    // Example: TTL-NGFW-GROWW-001
-    const domainPart = technology_domain || 'GEN';
-    // Remove spaces and special chars from customer name for the ID part
-    const customerPart = (customer_name || 'UNK').toUpperCase().replace(/[^A-Z0-9]/g, '');
-    const prefix = `TTL-${domainPart}-${customerPart}-`;
+    // Format: TTLDDMMYY0001
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yy = String(today.getFullYear()).slice(-2);
+    const dateStr = `${dd}${mm}${yy}`;
+    
+    const prefix = `TTL${dateStr}`;
 
     // Find the latest ticket number with this prefix
     const [latestTickets] = await db.query(
@@ -40,14 +42,15 @@ export const createTicket = async (req, res) => {
     let nextSeq = 1;
     if (latestTickets.length > 0 && latestTickets[0].ticket_number) {
       const lastId = latestTickets[0].ticket_number;
-      const parts = lastId.split('-');
-      const lastSeq = parseInt(parts[parts.length - 1]);
+      // Expected format: TTLDDMMYYxxxx (prefix + 4 digits)
+      const lastSeqStr = lastId.replace(prefix, '');
+      const lastSeq = parseInt(lastSeqStr);
       if (!isNaN(lastSeq)) {
         nextSeq = lastSeq + 1;
       }
     }
 
-    const ticketNumber = `${prefix}${String(nextSeq).padStart(3, '0')}`;
+    const ticketNumber = `${prefix}${String(nextSeq).padStart(4, '0')}`;
 
     const [result] = await db.query(
       `INSERT INTO tickets (
@@ -66,7 +69,7 @@ export const createTicket = async (req, res) => {
         assigned_engineer, engineer_phone, engineer_email,
         issue_subject, issue_description, oem_tac_involved, tac_case_number,
         engineer_remarks, problem_resolution, reference_url,
-        open_date || new Date(), close_date, created_by, JSON.stringify(initialTimeline)
+        open_date || new Date(), close_date || null, created_by, JSON.stringify(initialTimeline)
       ]
     );
 
@@ -75,13 +78,19 @@ export const createTicket = async (req, res) => {
     // Handle attachment
     if (req.file) {
       console.log(`Processing attachment: ${req.file.originalname}`);
+      
+      // Construct new filename: ticketno_issue_description(first 20 char)
+      const cleanDesc = (issue_description || 'issue').replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20);
+      const fileExt = path.extname(req.file.originalname);
+      const newFileName = `${ticketNumber}_${cleanDesc}${fileExt}`;
+      
       let filePath = req.file.path; // Default to temp path
 
       // Try uploading to Google Drive
       const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID_TICKETS;
       const driveResult = await uploadFileToDrive(
         req.file.path,
-        req.file.originalname,
+        newFileName,
         req.file.mimetype,
         folderId
       );
@@ -105,7 +114,7 @@ export const createTicket = async (req, res) => {
           fs.mkdirSync(targetDir, { recursive: true });
         }
 
-        const targetPath = path.join(targetDir, req.file.originalname);
+        const targetPath = path.join(targetDir, newFileName);
         // Rename (move) file from temp to target
         // check if file exists at req.file.path (it might not if upload logic messed with it, but here it should be fine)
         if (fs.existsSync(req.file.path)) {
@@ -118,7 +127,7 @@ export const createTicket = async (req, res) => {
         `INSERT INTO ticket_attachments (
           ticket_id, file_name, file_path, file_type, file_size
         ) VALUES (?, ?, ?, ?, ?)`,
-        [ticketId, req.file.originalname, filePath, req.file.mimetype, req.file.size]
+        [ticketId, newFileName, filePath, req.file.mimetype, req.file.size]
       );
     }
 
@@ -130,7 +139,8 @@ export const createTicket = async (req, res) => {
     res.status(201).json({ 
       status: "success",
       message: "Ticket created successfully", 
-      ticketId 
+      ticketId,
+      ticketNumber // Return the formatted ticket number
     });
   } catch (error) {
     console.error("Create ticket error:", error);
@@ -142,8 +152,10 @@ export const getTickets = async (req, res) => {
   try {
     const [tickets] = await db.query(`
       SELECT 
-        t.id, t.ticket_number, t.severity, t.status, t.customer_name as customer, 
-        t.technology_domain as product, t.open_date, t.assigned_engineer,
+        t.id, t.ticket_number, t.severity, t.status, t.ticket_type, t.customer_name as customer, 
+        t.customer_serial_no, t.technology_domain as product, t.open_date, t.close_date, t.assigned_engineer,
+        t.issue_subject, t.issue_description, t.oem_tac_involved, t.tac_case_number,
+        t.engineer_remarks, t.problem_resolution,
         u.name as created_by_name
       FROM tickets t
       LEFT JOIN users u ON t.created_by = u.id

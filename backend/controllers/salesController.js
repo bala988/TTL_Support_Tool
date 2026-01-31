@@ -2,6 +2,7 @@
 import { db } from "../config/db.js";
 import fs from "fs";
 import path from "path";
+import { uploadFileToDrive } from "../services/googleDriveService.js";
 
 // Helper to ensure directory exists
 const ensureDir = (dir) => {
@@ -239,7 +240,8 @@ export const updateOpportunity = async (req, res) => {
         const stage4Fields = [
           'commercial_closure', 'technical_sow_closure', 'final_po_upload', 'cust_req_doc_review_upload',
           'budgetary_quote_upload', 'negotiated_quote_upload', 'distributor_discount_yn', 'distributor_margin_percent',
-          'final_po_payment_terms_yn', 'distributor_approved_quote_upload', 'customer_po_upload', 'internal_finance_approval'
+          'final_po_payment_terms_yn', 'distributor_approved_quote_upload', 'customer_po_upload', 'internal_finance_approval',
+          'budgetary_quote_yn', 'negotiated_quote_yn', 'customer_po_yn'
         ];
         await updateStageTable('sales_stage_4', 4, stage4Fields);
 
@@ -253,7 +255,9 @@ export const updateOpportunity = async (req, res) => {
         const stage6Fields = [
           'project_plan_tracker_upload', 'project_completion_cert_upload', 'uat_signoff', 'project_plan_tech_align',
           'milestones_tracking_yn', 'milestones_timeline', 'tech_implementation_uat_upload', 'admin_training',
-          'handover_signoff_doc', 'uat_completion_doc_yn', 'project_signoff', 'closure_mail_yn'
+          'handover_signoff_doc', 'uat_completion_doc_yn', 'project_signoff', 'closure_mail_yn',
+          'project_plan_tracker_yn', 'project_completion_cert_yn', 'project_plan_tech_align_yn',
+          'tech_align_engineer_name', 'milestones_tracking_meet', 'tech_implementation_uat_yn', 'handover_signoff_yn'
         ];
         await updateStageTable('sales_stage_6', 6, stage6Fields);
 
@@ -290,23 +294,45 @@ export const uploadSalesDocument = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const targetDir = `uploads/sales/${id}`;
-    ensureDir(targetDir);
-
     let finalFileName = req.file.originalname;
     if (customName) {
       const ext = path.extname(req.file.originalname);
-      finalFileName = `${customName}${ext}`;
+      // Ensure customName doesn't already have the extension
+      finalFileName = customName.endsWith(ext) ? customName : `${customName}${ext}`;
     }
 
-    const targetPath = path.join(targetDir, finalFileName);
-    fs.renameSync(req.file.path, targetPath);
+    console.log(`Uploading file for Opportunity ${id}: ${finalFileName}`);
 
-    res.json({
-      message: "File uploaded successfully",
-      filePath: targetPath,
-      fileName: finalFileName
-    });
+    // Use specific Sales folder from env
+    const salesFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID_SALES;
+    
+    if (!salesFolderId) {
+       console.warn("GOOGLE_DRIVE_FOLDER_ID_SALES not set in .env");
+    }
+
+    const result = await uploadFileToDrive(
+      req.file.path,
+      finalFileName,
+      req.file.mimetype,
+      salesFolderId
+    );
+
+    // Clean up local temp file
+    if (fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+
+    if (result.success) {
+      res.json({
+        message: "File uploaded successfully to Google Drive",
+        filePath: result.webViewLink, // Store the link in the DB
+        fileName: finalFileName, // Return actual filename
+        fileId: result.fileId
+      });
+    } else {
+      console.error("Drive upload failed:", result.error);
+      res.status(500).json({ message: `Drive upload failed: ${result.error}` });
+    }
   } catch (error) {
     console.error("Upload error:", error);
     res.status(500).json({ message: "Server error uploading file" });

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import EngineerLayout from "../common/EngineerLayout";
 import { useNavigate } from "react-router-dom";
-import { Ticket, Clock, CheckCircle, AlertTriangle, UserCheck } from "lucide-react";
+import { Ticket, Clock, CheckCircle, AlertTriangle, UserCheck, Download, Filter } from "lucide-react";
 import toast from 'react-hot-toast';
 import { StatsCard } from "../common/StatsCard";
 import { TicketsTable } from "../tickets/TicketsTable";
@@ -29,6 +29,14 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [userEmail, setUserEmail] = useState('');
+
+  // Filters State
+  const [filterCustomer, setFilterCustomer] = useState('All');
+  const [filterProduct, setFilterProduct] = useState('All');
+  const [filterEngineer, setFilterEngineer] = useState('All');
+  const [filterStatus, setFilterStatus] = useState('All');
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");
@@ -63,6 +71,7 @@ export default function AdminDashboard() {
         const mappedTickets = ticketsData.map(t => ({
           ...t,
           openDate: t.open_date ? new Date(t.open_date).toISOString().split('T')[0] : '',
+          type: t.ticket_type,
         }));
 
         setTickets(mappedTickets);
@@ -112,7 +121,7 @@ export default function AdminDashboard() {
 
   const handleSalesApprovalAction = async (id, status) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/sales-approvals/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/sales-approvals/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
@@ -120,14 +129,87 @@ export default function AdminDashboard() {
       
       if (response.ok) {
         setSalesApprovals(salesApprovals.map(a => a.id === id ? { ...a, status } : a));
-        // Use a simple alert or console log if toast is not available, or assume toast is available since it's used elsewhere
-        // Checking imports... toast seems not imported in this file. I need to check imports.
       } else {
         const data = await response.json();
         console.error("Failed to update sales approval:", data.message);
       }
     } catch (error) {
       console.error("Error updating sales approval:", error);
+    }
+  };
+
+  // Filter Logic
+  const uniqueCustomers = ['All', ...new Set(tickets.map(t => t.customer).filter(Boolean))];
+  const uniqueProducts = ['All', ...new Set(tickets.map(t => t.product).filter(Boolean))];
+  const uniqueEngineers = ['All', ...new Set(tickets.map(t => t.assigned_engineer).filter(Boolean))];
+  const uniqueStatuses = ['All', ...new Set(tickets.map(t => t.status).filter(Boolean))];
+
+  const filteredTickets = tickets.filter(t => {
+    const matchCustomer = filterCustomer === 'All' || t.customer === filterCustomer;
+    const matchProduct = filterProduct === 'All' || t.product === filterProduct;
+    const matchEngineer = filterEngineer === 'All' || t.assigned_engineer === filterEngineer;
+    const matchStatus = filterStatus === 'All' || t.status === filterStatus;
+    
+    let matchDate = true;
+    if (filterStartDate && filterEndDate) {
+       // Create dates and reset time part to compare just the dates
+       const ticketDate = new Date(t.open_date);
+       const start = new Date(filterStartDate);
+       const end = new Date(filterEndDate);
+       end.setHours(23, 59, 59, 999); // Include the entire end date
+       
+       matchDate = ticketDate >= start && ticketDate <= end;
+    }
+    
+    return matchCustomer && matchProduct && matchEngineer && matchStatus && matchDate;
+  });
+
+  const handleExportCSV = () => {
+    if (filteredTickets.length === 0) {
+      toast.error("No tickets to export");
+      return;
+    }
+    
+    const headers = [
+      "Ticket ID", "Severity", "Ticket Type", "Status", "Technology", "Customer Name", 
+      "Serial No", "Engineer Name", "Issue Subject", "Issue Description", 
+      "OEM TAC Involved", "TAC Case No.", "Engineer Remarks", "Problem Resolution", 
+      "Open Date", "Close Date"
+    ];
+    
+    const csvContent = [
+      headers.join(","),
+      ...filteredTickets.map(t => [
+        t.ticket_number,
+        t.severity,
+        `"${(t.ticket_type || '').replace(/"/g, '""')}"`,
+        t.status,
+        `"${(t.product || '').replace(/"/g, '""')}"`,
+        `"${(t.customer || '').replace(/"/g, '""')}"`,
+        `"${(t.customer_serial_no || '').replace(/"/g, '""')}"`,
+        `"${(t.assigned_engineer || '').replace(/"/g, '""')}"`,
+        `"${(t.issue_subject || '').replace(/"/g, '""')}"`,
+        `"${(t.issue_description || '').replace(/"/g, '""')}"`,
+        `"${(t.oem_tac_involved || '').replace(/"/g, '""')}"`,
+        `"${(t.tac_case_number || '').replace(/"/g, '""')}"`,
+        `"${(t.engineer_remarks || '').replace(/"/g, '""')}"`,
+        `"${(t.problem_resolution || '').replace(/"/g, '""')}"`,
+        t.openDate,
+        t.close_date ? new Date(t.close_date).toISOString().split('T')[0] : ''
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `tickets_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Exported successfully!");
     }
   };
 
@@ -139,9 +221,9 @@ export default function AdminDashboard() {
     open: tickets.filter(t => t.status === 'Open').length,
     closed: tickets.filter(t => t.status === 'Closed').length,
     critical: tickets.filter(t => t.severity === 'Critical').length,
-    pendingApprovals: ticketApprovalsCount + salesApprovalsCount, // Combined for Overview Card
-    pendingTicketApprovals: ticketApprovalsCount, // Separate for Approvals Tab
-    pendingSalesApprovals: salesApprovalsCount, // Separate for Sales Tab
+    pendingApprovals: ticketApprovalsCount + salesApprovalsCount, 
+    pendingTicketApprovals: ticketApprovalsCount,
+    pendingSalesApprovals: salesApprovalsCount,
   };
 
   const severityData = [
@@ -294,9 +376,97 @@ export default function AdminDashboard() {
             </div>
 
             <div className="mb-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">All Tickets</h2>
+              
+              {/* Filters and Export Section */}
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex flex-wrap gap-4 items-center">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Filter className="w-4 h-4" />
+                      <span className="text-sm font-medium">Filter by:</span>
+                    </div>
+                    
+                    {/* Customer Filter */}
+                    <select
+                      value={filterCustomer}
+                      onChange={(e) => setFilterCustomer(e.target.value)}
+                      className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    >
+                      <option value="All">All Customers</option>
+                      {uniqueCustomers.filter(c => c !== 'All').map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+
+                    {/* Product Filter */}
+                    <select
+                      value={filterProduct}
+                      onChange={(e) => setFilterProduct(e.target.value)}
+                      className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    >
+                      <option value="All">All Products</option>
+                      {uniqueProducts.filter(p => p !== 'All').map(p => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+
+                    {/* Engineer Filter */}
+                    <select
+                      value={filterEngineer}
+                      onChange={(e) => setFilterEngineer(e.target.value)}
+                      className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    >
+                      <option value="All">All Engineers</option>
+                      {uniqueEngineers.filter(e => e !== 'All').map(e => (
+                        <option key={e} value={e}>{e}</option>
+                      ))}
+                    </select>
+
+                    {/* Status Filter */}
+                    <select
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    >
+                      <option value="All">All Statuses</option>
+                      {uniqueStatuses.filter(s => s !== 'All').map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+
+                    {/* Date Range Filter */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">From:</span>
+                      <input
+                        type="date"
+                        value={filterStartDate}
+                        onChange={(e) => setFilterStartDate(e.target.value)}
+                        className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      />
+                      <span className="text-sm text-gray-600">To:</span>
+                      <input
+                        type="date"
+                        value={filterEndDate}
+                        onChange={(e) => setFilterEndDate(e.target.value)}
+                        className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleExportCSV}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition shadow-sm text-sm font-medium"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export CSV
+                  </button>
+                </div>
+              </div>
+
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">All Tickets</h2>
               <TicketsTable
-                tickets={tickets}
+                tickets={filteredTickets}
                 onTicketClick={(ticketId) => navigate(`/tickets/${ticketId}`)}
                 actionLabel="View"
               />

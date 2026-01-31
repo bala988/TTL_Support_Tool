@@ -219,9 +219,15 @@ export default function SalesOpportunityView() {
     }));
   };
 
+  const [uploadingFields, setUploadingFields] = useState({});
+  const [recentUploads, setRecentUploads] = useState({});
+
   const handleFileUpload = async (e, stage, docType) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // Set loading state for this specific field
+    setUploadingFields(prev => ({ ...prev, [`stage${stage}_${docType}`]: true }));
 
     const formData = new FormData();
     formData.append('file', file);
@@ -242,6 +248,11 @@ export default function SalesOpportunityView() {
       
       if (!url) {
         toast.error("Please save the opportunity first before uploading files.");
+        setUploadingFields(prev => {
+          const newState = { ...prev };
+          delete newState[`stage${stage}_${docType}`];
+          return newState;
+        });
         return;
       }
 
@@ -252,12 +263,21 @@ export default function SalesOpportunityView() {
       const data = await res.json();
       
       if (data.fileName) {
-        // Find the correct field key for this upload
-        // We assume docType passed matches the state key
-        handleStageDataChange(stage, docType, data.fileName); 
+        // Store the URL in the data (for DB), but show filename in UI
+        handleStageDataChange(stage, docType, data.filePath); 
+        setRecentUploads(prev => ({ ...prev, [`stage${stage}_${docType}`]: data.fileName }));
+        toast.success(`File uploaded: ${data.fileName}`);
       }
     } catch (error) {
       console.error("Upload failed:", error);
+      toast.error("Upload failed");
+    } finally {
+      // Clear loading state
+      setUploadingFields(prev => {
+        const newState = { ...prev };
+        delete newState[`stage${stage}_${docType}`];
+        return newState;
+      });
     }
   };
 
@@ -442,6 +462,32 @@ export default function SalesOpportunityView() {
   };
 
   // Helper for Upload Input
+  const FileUpload = ({ label, stage, field, value }) => {
+    const isUploading = uploadingFields[`stage${stage}_${field}`];
+    const recentName = recentUploads[`stage${stage}_${field}`];
+    
+    // Helper to format display value
+    const getDisplayValue = (val) => {
+      if (recentName) return recentName;
+      if (!val) return null;
+      if (val.includes('drive.google.com') || val.startsWith('http')) {
+         return "File Uploaded";
+      }
+      return val;
+    };
+
+    return (
+    <div className="border p-3 rounded-lg bg-gray-50">
+      <label className="block text-sm font-medium mb-2 text-gray-700">{label}</label>
+      <div className="flex items-center gap-2">
+        <label className={`cursor-pointer bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded text-sm hover:bg-gray-50 flex items-center gap-2 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+          {isUploading ? (
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-indigo-500 border-t-transparent"></div>
+          ) : (
+            <Upload className="w-4 h-4" /> 
+          )}
+          {isUploading ? 'Uploading...' : 'Choose File'}
+          <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, stage, field)} disabled={isUploading} />
   const FileUpload = ({ label, stage, field, value }) => (
     <div className="border border-gray-200 dark:border-slate-700 p-3 rounded-lg bg-gray-50 dark:bg-servicenow-dark/50">
       <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{label}</label>
@@ -450,16 +496,18 @@ export default function SalesOpportunityView() {
           <Upload className="w-4 h-4" /> Choose File
           <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, stage, field)} />
         </label>
-        {value ? (
+        
+        {value && !isUploading ? (
           <span className="text-xs text-green-600 flex items-center gap-1">
-            <CheckCircle className="w-3 h-3" /> {value}
+            <CheckCircle className="w-4 h-4" /> {getDisplayValue(value)}
           </span>
-        ) : (
+        ) : !isUploading ? (
           <span className="text-xs text-gray-400">No file chosen</span>
-        )}
+        ) : null}
       </div>
     </div>
   );
+  };
 
   const [errors, setErrors] = useState({});
 

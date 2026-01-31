@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Save, AlertCircle } from "lucide-react";
+import { ArrowLeft, Save, AlertCircle, Upload, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import emailjs from '@emailjs/browser';
 import toast from 'react-hot-toast';
@@ -11,6 +11,8 @@ const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
 export default function TicketCreationForm() {
   const navigate = useNavigate();
+  const userRole = localStorage.getItem("userRole");
+  const dashboardPath = userRole === "admin" ? "/admin/dashboard" : "/engineer/dashboard";
 
   const [formData, setFormData] = useState({
     severity: "Medium",
@@ -38,8 +40,13 @@ export default function TicketCreationForm() {
     closeDate: "",
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
     
     try {
       const data = new FormData();
@@ -95,7 +102,7 @@ export default function TicketCreationForm() {
               customer_name: formData.customerName,
               customer_email: formData.email,
               issue_description: formData.issueDescription,
-              ticket_id: result.ticketId || "Pending",
+              ticket_id: result.ticketNumber || result.ticketId || "Pending",
               reply_to: "support@tutelartechlabs.com"
             };
 
@@ -119,13 +126,15 @@ export default function TicketCreationForm() {
         }
 
         toast.success("Ticket created successfully! 🎉", { duration: 3000 });
-        navigate("/engineer/dashboard");
+        navigate(dashboardPath);
       } else {
         toast.error("Error creating ticket: " + (result.message || "Unknown error"));
       }
     } catch (error) {
       console.error("Error:", error);
       toast.error("Error creating ticket");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -135,6 +144,8 @@ export default function TicketCreationForm() {
         {/* Header */}
         <div className="mb-6">
           <button
+            onClick={() => navigate(dashboardPath)}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
             onClick={() => navigate("/engineer/dashboard")}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 dark:text-slate-400 dark:hover:text-slate-200"
           >
@@ -559,33 +570,41 @@ export default function TicketCreationForm() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="border p-3 rounded-lg bg-gray-50">
+                  <label className="block text-sm font-medium mb-2 text-gray-700">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Attachment
                   </label>
-                  <div className="flex items-center gap-3">
-                    <label
-                      htmlFor="file-upload"
-                      className="cursor-pointer flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-                    >
-                      Choose File
+                  <div className="flex items-center gap-2">
+                    <label className={`cursor-pointer bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded text-sm hover:bg-gray-50 flex items-center gap-2 ${isSubmitting ? 'opacity-50 pointer-events-none' : ''}`}>
+                      {isSubmitting ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-indigo-500 border-t-transparent"></div>
+                      ) : (
+                        <Upload className="w-4 h-4" /> 
+                      )}
+                      {isSubmitting ? 'Uploading...' : 'Choose File'}
+                      <input
+                        id="file-upload"
+                        type="file"
+                        className="hidden"
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            attachment: e.target.files[0],
+                          })
+                        }
+                        disabled={isSubmitting}
+                      />
                     </label>
-                    <span className="text-sm text-gray-500">
-                      {formData.attachment
-                        ? formData.attachment.name
-                        : "No file chosen"}
-                    </span>
-                    <input
-                      id="file-upload"
-                      type="file"
-                      className="hidden"
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          attachment: e.target.files[0],
-                        })
-                      }
-                    />
+                    
+                    {formData.attachment && !isSubmitting ? (
+                      <span className="text-xs text-green-600 flex items-center gap-1">
+                        <CheckCircle className="w-4 h-4" /> {formData.attachment.name}
+                      </span>
+                    ) : !isSubmitting ? (
+                      <span className="text-xs text-gray-400">No file chosen</span>
+                    ) : null}
                   </div>
                 </div>
 

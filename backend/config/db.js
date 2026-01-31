@@ -8,7 +8,8 @@ export const db = mysql.createPool({
   port: process.env.DB_PORT || 3306,
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : "root",
-  database: process.env.DB_NAME || "tutelar_support_tool",
+
+  database: process.env.DB_NAME || "tutelar_tech_labs",
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
