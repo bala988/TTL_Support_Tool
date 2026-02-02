@@ -4,7 +4,13 @@ import {
     getMyClaims,
     getPendingClaims,
     getClaimDetails,
-    updateClaimStatus
+    updateClaimStatus,
+    updateDraft,
+    getGroupedExpenses,
+    getApprovedExpenses,
+    exportExcel,
+    exportPdf,
+    downloadReceiptsZip
 } from "../controllers/reimbursementController.js";
 import { uploadReceipt } from "../middlewares/uploadMiddleware.js";
 
@@ -17,7 +23,14 @@ router.post("/submit", uploadReceipt.any(), submitClaim);
 
 router.get("/my-claims/:employeeId", getMyClaims);
 router.get("/pending", getPendingClaims);
+router.get("/approved-expenses", getApprovedExpenses);
 router.get("/details/:claimId", getClaimDetails);
+router.get("/details/:claimId/grouped", getGroupedExpenses);
+router.get("/export/excel/:claimId", exportExcel);
+router.get("/export/pdf/:claimId", exportPdf);
+router.get("/export/zip/:claimId", downloadReceiptsZip);
+
+router.put("/draft/:id", uploadReceipt.any(), updateDraft);
 router.put("/:claimId/status", updateClaimStatus);
 
 export default router;
