@@ -21,6 +21,8 @@ export default function EngineerLayout({ children }) {
     if (path.startsWith('/tickets/')) return 'ticket-details';
     if (path === '/admin/register') return 'register-user';
     if (path.startsWith('/attendance')) return 'attendance';
+    if (path.startsWith('/employee/reimbursement')) return 'employee/reimbursement';
+    if (path.startsWith('/admin/reimbursement-approval')) return 'admin/reimbursement-approval';
     return 'engineer-dashboard';
   };
 
@@ -54,6 +56,12 @@ export default function EngineerLayout({ children }) {
       case 'team-management':
         navigate('/admin/dashboard');
         break;
+      case 'employee/reimbursement':
+        navigate('/employee/reimbursement');
+        break;
+      case 'admin/reimbursement-approval':
+        navigate('/admin/reimbursement-approval');
+        break;
       default:
         break;
     }
@@ -62,11 +70,11 @@ export default function EngineerLayout({ children }) {
   return (
     <div className="flex min-h-screen w-full bg-slate-50 dark:bg-servicenow">
       {/* Sidebar */}
-      <Sidebar 
+      <Sidebar
         userRole={userRole}
-        currentPage={getCurrentPage()} 
-        onNavigate={handleNavigate} 
-        onLogout={handleLogout} 
+        currentPage={getCurrentPage()}
+        onNavigate={handleNavigate}
+        onLogout={handleLogout}
       />
 
       {/* Main content */}

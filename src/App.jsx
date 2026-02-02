@@ -15,6 +15,8 @@ import AttendanceEmployeeDashboard from "./modules/attendance/pages/EmployeeDash
 import AttendanceAdminDashboard from "./modules/attendance/pages/AdminDashboard";
 import AttendanceProfile from "./modules/attendance/pages/Profile";
 import AdminEmployeeDetail from "./modules/attendance/pages/AdminEmployeeDetail";
+import EmployeeClaimPage from "./modules/reimbursement/pages/EmployeeClaimPage";
+import AdminReimbursementPage from "./modules/reimbursement/pages/AdminReimbursementPage";
 
 
 const SalesRoute = ({ children }) => {
@@ -41,63 +43,75 @@ import { Toaster } from 'react-hot-toast';
 export default function App() {
   return (
     <>
-    <Routes>
-      <Route path="/" element={<LoginPage />} />
-      
-      {/* Admin Registration Route */}
-      <Route path="/admin/register" element={
-        <AdminRoute>
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+
+        {/* Admin Registration Route */}
+        <Route path="/admin/register" element={
+          <AdminRoute>
+            <EngineerLayout>
+              <SignupPage isInternal={true} />
+            </EngineerLayout>
+          </AdminRoute>
+        } />
+
+        <Route path="/engineer/dashboard" element={<EngineerDashboard />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/tickets/create" element={<TicketCreationForm />} />
+        <Route path="/tickets/:id" element={<TicketDetailsView />} />
+
+        <Route path="/sales/dashboard" element={
+          <SalesRoute>
+            <SalesDashboard />
+          </SalesRoute>
+        } />
+        <Route path="/sales/create" element={
+          <SalesRoute>
+            <SalesOpportunityView />
+          </SalesRoute>
+        } />
+        <Route path="/sales/:id" element={
+          <SalesRoute>
+            <SalesOpportunityView />
+          </SalesRoute>
+        } />
+
+        {/* Attendance Routes */}
+        <Route path="/attendance" element={<Navigate to="/attendance/dashboard" />} />
+        <Route path="/attendance/dashboard" element={
           <EngineerLayout>
-            <SignupPage isInternal={true} />
+            <AttendanceEmployeeDashboard />
           </EngineerLayout>
-        </AdminRoute>
-      } />
+        } />
+        <Route path="/attendance/admin" element={
+          <EngineerLayout>
+            <AttendanceAdminDashboard />
+          </EngineerLayout>
+        } />
+        <Route path="/attendance/profile" element={
+          <EngineerLayout>
+            <AttendanceProfile />
+          </EngineerLayout>
+        } />
+        <Route path="/attendance/admin/employees/:id" element={
+          <EngineerLayout>
+            <AdminEmployeeDetail />
+          </EngineerLayout>
+        } />
 
-      <Route path="/engineer/dashboard" element={<EngineerDashboard />} />
-      <Route path="/admin/dashboard" element={<AdminDashboard />} />
-      <Route path="/tickets/create" element={<TicketCreationForm />} />
-      <Route path="/tickets/:id" element={<TicketDetailsView />} />
-      
-      <Route path="/sales/dashboard" element={
-        <SalesRoute>
-          <SalesDashboard />
-        </SalesRoute>
-      } />
-      <Route path="/sales/create" element={
-        <SalesRoute>
-          <SalesOpportunityView />
-        </SalesRoute>
-      } />
-      <Route path="/sales/:id" element={
-        <SalesRoute>
-          <SalesOpportunityView />
-        </SalesRoute>
-      } />
-
-      {/* Attendance Routes */}
-      <Route path="/attendance" element={<Navigate to="/attendance/dashboard" />} />
-      <Route path="/attendance/dashboard" element={
-        <EngineerLayout>
-          <AttendanceEmployeeDashboard />
-        </EngineerLayout>
-      } />
-      <Route path="/attendance/admin" element={
-        <EngineerLayout>
-          <AttendanceAdminDashboard />
-        </EngineerLayout>
-      } />
-      <Route path="/attendance/profile" element={
-        <EngineerLayout>
-          <AttendanceProfile />
-        </EngineerLayout>
-      } />
-      <Route path="/attendance/admin/employees/:id" element={
-        <EngineerLayout>
-          <AdminEmployeeDetail />
-        </EngineerLayout>
-      } />
-    </Routes>
-    <Toaster position="top-right" />
+        {/* Reimbursement Routes */}
+        <Route path="/employee/reimbursement" element={
+          <EngineerLayout>
+            <EmployeeClaimPage />
+          </EngineerLayout>
+        } />
+        <Route path="/admin/reimbursement-approval" element={
+          <EngineerLayout>
+            <AdminReimbursementPage />
+          </EngineerLayout>
+        } />
+      </Routes>
+      <Toaster position="top-right" />
     </>
   );
 }
