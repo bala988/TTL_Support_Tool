@@ -145,8 +145,6 @@ export default function TicketCreationForm() {
         <div className="mb-6">
           <button
             onClick={() => navigate(dashboardPath)}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
-            onClick={() => navigate("/engineer/dashboard")}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 dark:text-slate-400 dark:hover:text-slate-200"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -570,8 +568,6 @@ export default function TicketCreationForm() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="border p-3 rounded-lg bg-gray-50">
-                  <label className="block text-sm font-medium mb-2 text-gray-700">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Attachment

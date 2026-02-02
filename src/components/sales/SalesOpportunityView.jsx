@@ -477,37 +477,31 @@ export default function SalesOpportunityView() {
     };
 
     return (
-    <div className="border p-3 rounded-lg bg-gray-50">
-      <label className="block text-sm font-medium mb-2 text-gray-700">{label}</label>
-      <div className="flex items-center gap-2">
-        <label className={`cursor-pointer bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded text-sm hover:bg-gray-50 flex items-center gap-2 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
-          {isUploading ? (
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-indigo-500 border-t-transparent"></div>
-          ) : (
-            <Upload className="w-4 h-4" /> 
-          )}
-          {isUploading ? 'Uploading...' : 'Choose File'}
-          <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, stage, field)} disabled={isUploading} />
-  const FileUpload = ({ label, stage, field, value }) => (
-    <div className="border border-gray-200 dark:border-slate-700 p-3 rounded-lg bg-gray-50 dark:bg-servicenow-dark/50">
-      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{label}</label>
-      <div className="flex items-center gap-2">
-        <label className="cursor-pointer bg-white dark:bg-servicenow-dark border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded text-sm hover:bg-gray-50 dark:hover:bg-servicenow transition-colors flex items-center gap-2">
-          <Upload className="w-4 h-4" /> Choose File
-          <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, stage, field)} />
-        </label>
-        
-        {value && !isUploading ? (
-          <span className="text-xs text-green-600 flex items-center gap-1">
-            <CheckCircle className="w-4 h-4" /> {getDisplayValue(value)}
-          </span>
-        ) : !isUploading ? (
-          <span className="text-xs text-gray-400">No file chosen</span>
-        ) : null}
+      <div className="border border-gray-200 dark:border-slate-700 p-3 rounded-lg bg-gray-50 dark:bg-servicenow-dark/50">
+        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">{label}</label>
+        <div className="flex items-center gap-2">
+          <label className={`cursor-pointer bg-white dark:bg-servicenow-dark border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded text-sm hover:bg-gray-50 dark:hover:bg-servicenow transition-colors flex items-center gap-2 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+            {isUploading ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-indigo-500 border-t-transparent"></div>
+            ) : (
+              <Upload className="w-4 h-4" /> 
+            )}
+            {isUploading ? 'Uploading...' : 'Choose File'}
+            <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, stage, field)} disabled={isUploading} />
+          </label>
+          
+          {value && !isUploading ? (
+            <span className="text-xs text-green-600 flex items-center gap-1">
+              <CheckCircle className="w-4 h-4" /> {getDisplayValue(value)}
+            </span>
+          ) : !isUploading ? (
+            <span className="text-xs text-gray-400">No file chosen</span>
+          ) : null}
+        </div>
       </div>
-    </div>
-  );
+    );
   };
+
 
   const [errors, setErrors] = useState({});
 
