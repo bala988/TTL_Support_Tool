@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Plus, Trash2, Calendar, FileText, DollarSign, Clock, CheckCircle, XCircle, Eye, X } from 'lucide-react';
+import { Upload, Plus, Trash2, Calendar, FileText, DollarSign, Clock, CheckCircle, XCircle, Eye, X, Save, Edit } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -13,6 +13,7 @@ const EmployeeClaimPage = () => {
     const employeeId = localStorage.getItem("userId");
     const dateInputRef = useRef(null);
     const [selectedClaim, setSelectedClaim] = useState(null); // For detail modal
+    const [editingClaimId, setEditingClaimId] = useState(null); // For editing drafts
     const [detailsLoading, setDetailsLoading] = useState(false);
     const [claimDetails, setClaimDetails] = useState([]);
 
@@ -70,6 +71,50 @@ const EmployeeClaimPage = () => {
         }
     };
 
+    const handleEditDraft = async (claim) => {
+        try {
+            setLoading(true);
+            const res = await axios.get(`${API_URL}/api/reimbursement/details/${claim.id}`);
+
+            // Populate form
+            setReportName(claim.report_name);
+            const items = res.data.map(item => ({
+                ...item,
+                billable: item.billable === 1 || item.billable === true, // Ensure boolean
+                id: item.id // Keep ID for key
+            }));
+            setExpenseItems(items);
+
+            // Smart Auto-fill: Populate form with data from the last added item in this draft
+            if (items.length > 0) {
+                const lastItem = items[items.length - 1];
+                setCurrentItem({
+                    ...initialItemState,
+                    project_no: lastItem.project_no || '',
+                    event: lastItem.event || '',
+                    city: lastItem.city || '',
+                    domestic_intl: lastItem.domestic_intl || 'Domestic',
+                    business_purpose: lastItem.business_purpose || '',
+                    payment_type: lastItem.payment_type || '', // Auto-select dropdown
+                    expense_type: lastItem.expense_type || '', // Auto-select dropdown
+                    billable: lastItem.billable || false,      // Auto-check box
+                    // We don't copy amount/date/receipt as those usually change
+                });
+            } else {
+                setCurrentItem(initialItemState);
+            }
+
+            setEditingClaimId(claim.id);
+            setActiveTab('new');
+
+        } catch (error) {
+            console.error("Edit error:", error);
+            toast.error("Failed to load draft for editing");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
         setCurrentItem(prev => ({
@@ -102,7 +147,20 @@ const EmployeeClaimPage = () => {
         }
 
         setExpenseItems([...expenseItems, { ...currentItem, id: Date.now() }]);
-        setCurrentItem(initialItemState); // Reset form
+
+        // Auto-fill for next item (Smart Reset)
+        setCurrentItem({
+            ...initialItemState,
+            // Persist common fields
+            project_no: currentItem.project_no,
+            event: currentItem.event,
+            city: currentItem.city,
+            domestic_intl: currentItem.domestic_intl,
+            business_purpose: currentItem.business_purpose,
+            payment_type: currentItem.payment_type, // Persist Payment Method
+            expense_type: currentItem.expense_type, // Persist Expense Type
+            billable: currentItem.billable          // Persist Billable Status
+        });
         toast.success("Expense added to report");
     };
 
@@ -114,7 +172,7 @@ const EmployeeClaimPage = () => {
         return expenseItems.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
     };
 
-    const handleSubmitClaim = async () => {
+    const handleSubmitClaim = async (status = 'Submitted') => {
         if (expenseItems.length === 0) {
             toast.error("Please add at least one expense item");
             return;
@@ -130,27 +188,53 @@ const EmployeeClaimPage = () => {
             formData.append('employee_id', employeeId);
             formData.append('report_name', reportName);
             formData.append('total_amount', calculateTotal());
+            formData.append('status', status);
 
             // Clean undefined/null values for JSON
             const itemsForJson = expenseItems.map(({ receipt, id, ...rest }) => rest);
             formData.append('expense_items', JSON.stringify(itemsForJson));
 
-            // Append files. We need to map them correctly.
-            // We will append them as `receipt_0`, `receipt_1` matching the index in expenseItems
+            // Append files.
             expenseItems.forEach((item, index) => {
-                if (item.receipt) {
+                // If it's a new file (File object), append it
+                if (item.receipt instanceof File) {
                     formData.append(`receipt_${index}`, item.receipt);
+                } else if (item.receipt_path) {
+                    // If existing file from DB, we might want to pass it back or backend handles it.
+                    // For now, backend handles preserving if not replaced.
+                    // But we need to make sure itemsForJson contains receipt_path which it does.
                 }
             });
 
-            await axios.post(`${API_URL}/api/reimbursement/submit`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            let response;
+            if (editingClaimId) {
+                response = await axios.put(`${API_URL}/api/reimbursement/draft/${editingClaimId}`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                toast.success(status === 'Submitted' ? "Draft submitted successfully!" : "Draft updated successfully!");
+            } else {
+                response = await axios.post(`${API_URL}/api/reimbursement/submit`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                toast.success(status === 'Submitted' ? "Claim submitted successfully!" : "Draft saved successfully!");
+            }
 
-            toast.success("Claim submitted successfully!");
-            setExpenseItems([]);
-            setReportName('');
-            setActiveTab('history');
+            // Important: Logic to handle state after Save vs Submit
+            if (status === 'Submitted') {
+                // If submitted, clear everything and go to history
+                setExpenseItems([]);
+                setReportName('');
+                setEditingClaimId(null);
+                setActiveTab('history');
+            } else {
+                // If saved as draft, KEEP the form open but switch to "Edit Mode" using the new ID
+                if (!editingClaimId && response.data.claimId) {
+                    setEditingClaimId(response.data.claimId);
+                }
+                // Optional: Fetch fresh data to ensure syncing? 
+                // For now, keeping local state is fine, but editingClaimId MUST be set.
+            }
+
         } catch (error) {
             console.error("Submit error:", error);
             toast.error("Failed to submit claim");
@@ -159,11 +243,17 @@ const EmployeeClaimPage = () => {
         }
     };
 
+    // Helper for date max
+    const today = new Date().toISOString().split('T')[0];
+
     const getStatusColor = (status) => {
         switch (status) {
             case 'Approved': return 'text-green-500 bg-green-500/10';
             case 'Rejected': return 'text-red-500 bg-red-500/10';
-            default: return 'text-yellow-500 bg-yellow-500/10';
+            case 'Draft': return 'text-gray-500 bg-gray-500/10 border border-gray-200 dark:border-gray-600';
+            case 'Submitted': return 'text-blue-500 bg-blue-500/10';
+            case 'Pending': return 'text-yellow-500 bg-yellow-500/10';
+            default: return 'text-gray-500 bg-gray-100';
         }
     };
 
@@ -176,14 +266,14 @@ const EmployeeClaimPage = () => {
             {/* Tabs */}
             <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700">
                 <button
+                    className={`pb-2 px-4 font-medium transition ${activeTab === 'new' ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'}`}
                     onClick={() => setActiveTab('new')}
-                    className={`pb-2 px-4 transition ${activeTab === 'new' ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                 >
-                    Create New Claim
+                    {editingClaimId ? 'Edit Draft' : 'Create New Claim'}
                 </button>
                 <button
+                    className={`pb-2 px-4 font-medium transition ${activeTab === 'history' ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'}`}
                     onClick={() => setActiveTab('history')}
-                    className={`pb-2 px-4 transition ${activeTab === 'history' ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400 font-bold' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                 >
                     My Claims History
                 </button>
@@ -191,10 +281,10 @@ const EmployeeClaimPage = () => {
 
             {activeTab === 'new' ? (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* New Expense Form */}
+                    {/* Expense Entry Form */}
                     <div className="lg:col-span-2 space-y-6">
                         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-                            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Expense Details</h2>
+                            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">1. Expense Details</h2>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
@@ -206,10 +296,9 @@ const EmployeeClaimPage = () => {
                                         className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded p-2 text-gray-900 dark:text-white outline-none focus:border-indigo-500"
                                     >
                                         <option value="">Select Type</option>
+                                        <option value="Stay">Stay</option>
                                         <option value="Travel">Travel</option>
                                         <option value="Meal">Meal</option>
-                                        <option value="Accommodation">Accommodation</option>
-                                        <option value="Supplies">Supplies</option>
                                         <option value="Other">Other</option>
                                     </select>
                                 </div>
@@ -223,6 +312,7 @@ const EmployeeClaimPage = () => {
                                             name="transaction_date"
                                             value={currentItem.transaction_date}
                                             onChange={handleInputChange}
+                                            max={today}
                                             className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded p-2 text-gray-900 dark:text-white outline-none focus:border-indigo-500 [&::-webkit-calendar-picker-indicator]:hidden"
                                         />
                                         <Calendar
@@ -354,6 +444,11 @@ const EmployeeClaimPage = () => {
                                                 <FileText className="w-6 h-6" />
                                                 <span className="text-sm">{currentItem.receipt.name}</span>
                                             </div>
+                                        ) : currentItem.receipt_path ? (
+                                            <div className="flex items-center gap-2 text-blue-400">
+                                                <FileText className="w-6 h-6" />
+                                                <span className="text-sm">Existing Receipt</span>
+                                            </div>
                                         ) : (
                                             <>
                                                 <Upload className="w-8 h-8 text-gray-400 mb-2" />
@@ -425,14 +520,22 @@ const EmployeeClaimPage = () => {
                                 </div>
 
                                 <button
-                                    onClick={handleSubmitClaim}
+                                    onClick={() => handleSubmitClaim('Submitted')}
                                     disabled={expenseItems.length === 0 || loading}
                                     className={`w-full py-3 rounded-lg font-bold text-white transition ${expenseItems.length === 0 || loading
                                         ? 'bg-gray-700 cursor-not-allowed text-gray-400'
                                         : 'bg-green-600 hover:bg-green-700 shadow-lg'
                                         }`}
                                 >
-                                    {loading ? 'Submitting...' : 'Submit Claim'}
+                                    {loading ? 'Submitting...' : (editingClaimId ? 'Update & Submit' : 'Submit Claim')}
+                                </button>
+
+                                <button
+                                    onClick={() => handleSubmitClaim('Save Draft')}
+                                    disabled={loading || !reportName}
+                                    className="w-full mt-3 py-3 rounded-lg font-bold text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition flex items-center justify-center gap-2"
+                                >
+                                    <Save className="w-4 h-4" /> Save as Draft
                                 </button>
                             </div>
 
@@ -471,21 +574,33 @@ const EmployeeClaimPage = () => {
                                             </span>
                                         </td>
                                         <td className="p-4 text-center">
-                                            <button
-                                                onClick={() => handleViewDetails(claim)}
-                                                className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg text-blue-600 dark:text-blue-400 transition"
-                                                title="View Details"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                            </button>
+                                            <div className="flex items-center justify-center gap-2">
+                                                <button
+                                                    onClick={() => handleViewDetails(claim)}
+                                                    className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg text-blue-600 dark:text-blue-400 transition"
+                                                    title="View Details"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </button>
+                                                {claim.status === 'Draft' && (
+                                                    <button
+                                                        onClick={() => handleEditDraft(claim)}
+                                                        className="p-2 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50 rounded-lg text-yellow-600 dark:text-yellow-400 transition"
+                                                        title="Edit Draft"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
                             )}
                         </tbody>
                     </table>
-                </div>
-            )}
+                </div >
+            )
+            }
 
 
             {/* Details Modal */}
@@ -558,7 +673,7 @@ const EmployeeClaimPage = () => {
                     </div>
                 )
             }
-        </div >
+        </div>
     );
 };
 

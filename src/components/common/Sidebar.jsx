@@ -7,7 +7,7 @@ export default function Sidebar({ userRole = 'engineer', currentPage, onNavigate
   const { theme, toggleTheme } = useTheme();
   const userEmail = localStorage.getItem("userEmail");
   // Check specifically for the allowed sales email (regardless of role)
-  const isSalesAllowed = userEmail === 'rambalaji@tutelartechlabs.com';
+  const isSalesAllowed = userEmail?.toLowerCase() === 'rambalaji@tutelartechlabs.com';
 
   const menuItems = [
     {

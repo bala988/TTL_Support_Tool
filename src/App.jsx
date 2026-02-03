@@ -23,7 +23,7 @@ const SalesRoute = ({ children }) => {
   const role = localStorage.getItem("userRole");
   const email = localStorage.getItem("userEmail");
   // Check: role is sales OR specific email (allowing admin with this email to access)
-  if (role === 'sales' || email === 'rambalaji@tutelartechlabs.com') {
+  if (role === 'sales' || email?.toLowerCase() === 'rambalaji@tutelartechlabs.com') {
     return children;
   }
   // Redirect others to home/login

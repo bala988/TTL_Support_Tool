@@ -59,7 +59,7 @@ export default function AdminDashboard() {
         const approvalsData = await approvalsRes.json();
 
         // Fetch Sales Approvals if Ram
-        if (localStorage.getItem("userEmail") === 'rambalaji@tutelartechlabs.com') {
+        if (localStorage.getItem("userEmail")?.toLowerCase() === 'rambalaji@tutelartechlabs.com') {
           try {
             const salesRes = await fetch(`${import.meta.env.VITE_API_URL}/api/sales-approvals`);
             const salesData = await salesRes.json();
@@ -255,7 +255,7 @@ export default function AdminDashboard() {
 
   const ticketApprovalsCount = approvals.filter(a => !a.access).length;
   const salesApprovalsCount = salesApprovals.filter(a => a.status === 'Pending').length;
-  const reimbursementApprovalsCount = reimbursements.filter(r => r.status === 'Pending').length;
+  const reimbursementApprovalsCount = reimbursements.filter(r => r.status === 'Pending' || r.status === 'Submitted').length;
 
   const stats = {
     total: tickets.length,
@@ -321,7 +321,7 @@ export default function AdminDashboard() {
               )}
             </button>
 
-            {userEmail === 'rambalaji@tutelartechlabs.com' && (
+            {userEmail?.toLowerCase() === 'rambalaji@tutelartechlabs.com' && (
               <button
                 onClick={() => setActiveTab('sales_approvals')}
                 className={`px-4 py-2 rounded-md font-medium transition ${activeTab === 'sales_approvals'
@@ -338,7 +338,7 @@ export default function AdminDashboard() {
               </button>
             )}
 
-            {userEmail === 'rambalaji@tutelartechlabs.com' && (
+            {(userEmail?.toLowerCase() === 'rambalaji@tutelartechlabs.com' || userEmail?.toLowerCase() === 'rambalaji@tutelartechlabs.com') && (
               <button
                 onClick={() => setActiveTab('reimbursement_approvals')}
                 className={`px-4 py-2 rounded-md font-medium transition ${activeTab === 'reimbursement_approvals'
@@ -730,13 +730,25 @@ export default function AdminDashboard() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          {claim.status === 'Pending' && (
+                          {claim.status !== 'Approved' && claim.status !== 'Rejected' && (
                             <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => handleReimbursementAction(claim.id, 'Approved')}
+                                className="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded-md dark:bg-green-900/20 dark:text-green-400 dark:hover:text-green-300"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => handleReimbursementAction(claim.id, 'Rejected')}
+                                className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md dark:bg-red-900/20 dark:text-red-400 dark:hover:text-red-300"
+                              >
+                                Reject
+                              </button>
                               <button
                                 onClick={() => navigate('/admin/reimbursement-approval')}
                                 className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md dark:bg-indigo-900/20 dark:text-indigo-400 dark:hover:text-indigo-300"
                               >
-                                View Details to Approve
+                                Details
                               </button>
                             </div>
                           )}
