@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 export const signup = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
-    
+
     // Check if user exists
     const [existingUsers] = await db.query(
       "SELECT * FROM users WHERE email = ?",
@@ -26,7 +26,7 @@ export const signup = async (req, res) => {
       [name, email, req.body.phone, passwordHash, (role === 'sales' ? 'sales' : 'engineer')]
     );
 
-    res.status(201).json({ 
+    res.status(201).json({
       status: "success",
       message: "Signup successful"
     });
@@ -60,7 +60,7 @@ export const login = async (req, res) => {
     // Generate Token
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
-    res.json({ 
+    res.json({
       status: "success",
       token,
       user: {
@@ -74,5 +74,14 @@ export const login = async (req, res) => {
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Server error during login" });
+  }
+};
+export const getAllUsers = async (req, res) => {
+  try {
+    const [users] = await db.query("SELECT id, name, email, role FROM users ORDER BY name ASC");
+    res.json(users);
+  } catch (error) {
+    console.error("Get all users error:", error);
+    res.status(500).json({ message: "Server error fetching users" });
   }
 };

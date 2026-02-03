@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Check, X, Eye, FileText, Download, ChevronDown, ChevronRight, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -11,19 +12,20 @@ const AdminReimbursementPage = () => {
     const [selectedClaim, setSelectedClaim] = useState(null); // For detail modal
     const [detailsLoading, setDetailsLoading] = useState(false);
     const [claimDetails, setClaimDetails] = useState([]);
+    const location = useLocation();
 
     // Tabs State
-    const [activeTab, setActiveTab] = useState('pending'); // 'pending', 'approved'
+    const [activeTab, setActiveTab] = useState('approved'); // Default to 'approved'
 
-    // Approved Grouping State
+    // Approved Analysis State
     const [approvedData, setApprovedData] = useState([]);
     const [approvedLoading, setApprovedLoading] = useState(false);
-    const [groupBy, setGroupBy] = useState('date'); // 'date', 'vendor'
 
-    // Grouping State
-    const [viewMode, setViewMode] = useState('detailed'); // 'detailed', 'date', 'vendor'
-    const [groupedData, setGroupedData] = useState([]);
-    const [expandedGroups, setExpandedGroups] = useState(new Set());
+    // Approved Analysis Sub-tabs
+    const [analysisTab, setAnalysisTab] = useState('detailed'); // 'detailed', 'employees'
+    const [selectedEmployee, setSelectedEmployee] = useState(null); // For Employee Detail View
+    const [selectedItems, setSelectedItems] = useState(new Set());
+    const [allEmployees, setAllEmployees] = useState([]);
 
     const userEmail = localStorage.getItem("userEmail");
 
@@ -39,13 +41,72 @@ const AdminReimbursementPage = () => {
         );
     }
 
+    const fetchAllEmployees = async () => {
+        try {
+            const res = await axios.get(`${API_URL}/api/auth/users`);
+            setAllEmployees(res.data);
+        } catch (error) {
+            console.error("Error fetching employees:", error);
+        }
+    };
+
     useEffect(() => {
         if (activeTab === 'pending') {
             fetchPendingClaims();
         } else {
             fetchApprovedExpenses();
+            fetchAllEmployees();
         }
-    }, [activeTab, groupBy]);
+    }, [activeTab]);
+
+    useEffect(() => {
+        // Handle deep linking from Dashboard
+        if (location.state?.claimId) {
+            // If we have a claimId, we should try to load it. 
+            // Since we might be on 'approved' tab by default now, but the link might be for a pending claim or vice versa.
+            // Usually dashboard links to Pending Claims for approval.
+            // Let's assume dashboard sends us to pending.
+
+            const linkClaimId = location.state.claimId;
+            // We need to fetch this specific claim details if not in list, OR just fetch details directly.
+            // Simplified approach: Set active tab to 'pending' (if that's where we expect it) or just fetch details.
+            // If the claim is pending, we probably want to see the pending list AND the modal.
+
+            setActiveTab('pending');
+            // We need to wait for claims to load? Or just fetch this single claim context?
+            // Ideally we find it in the list. But list loads async.
+            // Let's rely on fetchPendingClaims to populate list, then find it? 
+            // Or better: Just fetch the single claim metadata for the modal header if needed, or if handleViewDetails only needs the ID?
+            // handleViewDetails needs a 'claim' object for header info (report_name, employee_name).
+
+            // Let's try to fetch the single claim first to open the modal.
+            fetchSingleClaimAndOpen(linkClaimId);
+        }
+    }, [location.state]);
+
+    const fetchSingleClaimAndOpen = async (id) => {
+        try {
+            // We might need a new endpoint or reuse pending/details?
+            // Actually, handleViewDetails calls /details/:id for items.
+            // But we need the claim metadata (total amount, names) for the modal header.
+            // Let's try to find it in the pending list if loaded, else fetch it.
+
+            // For now, let's fetch pending claims first, then find it.
+            if (claims.length === 0) await fetchPendingClaims();
+
+            // Wait a bit or chain it? use helper.
+            // Better: separate endpoint for claim metadata? 
+            // Or just fetch all pending and find() it.
+            const res = await axios.get(`${API_URL}/api/reimbursement/pending`); // We are re-fetching here to be sure.
+            setClaims(res.data);
+            const found = res.data.find(c => c.id === parseInt(id));
+            if (found) {
+                handleViewDetails(found);
+            }
+        } catch (e) {
+            console.error("Deep link error", e);
+        }
+    };
 
     const fetchPendingClaims = async () => {
         try {
@@ -63,7 +124,8 @@ const AdminReimbursementPage = () => {
     const fetchApprovedExpenses = async () => {
         try {
             setApprovedLoading(true);
-            const res = await axios.get(`${API_URL}/api/reimbursement/approved-expenses?groupBy=${groupBy}`);
+            // Fetching flat list of approved expenses
+            const res = await axios.get(`${API_URL}/api/reimbursement/approved-expenses`);
             setApprovedData(res.data);
         } catch (error) {
             console.error("Error fetching approved expenses:", error);
@@ -86,51 +148,6 @@ const AdminReimbursementPage = () => {
         }
     };
 
-    const fetchGroupedData = async (claimId, mode) => {
-        if (mode === 'detailed') return;
-        try {
-            setDetailsLoading(true);
-            const res = await axios.get(`${API_URL}/api/reimbursement/details/${claimId}/grouped?by=${mode}`);
-            setGroupedData(res.data);
-            setExpandedGroups(new Set()); // Reset expansions
-        } catch (error) {
-            console.error("Grouping error:", error);
-            toast.error("Failed to load grouped data");
-        } finally {
-            setDetailsLoading(false);
-        }
-    };
-
-    const handleViewModeChange = (mode) => {
-        setViewMode(mode);
-        if (selectedClaim) {
-            fetchGroupedData(selectedClaim.id, mode);
-        }
-    };
-
-    const toggleGroup = (key) => {
-        const newExpanded = new Set(expandedGroups);
-        if (newExpanded.has(key)) {
-            newExpanded.delete(key);
-        } else {
-            newExpanded.add(key);
-        }
-        setExpandedGroups(newExpanded);
-    };
-
-    const getGroupItems = (group) => {
-        if (viewMode === 'date') {
-            // Normalize dates to YYYY-MM-DD
-            const groupDate = new Date(group.transaction_date).toLocaleDateString('en-CA');
-            return claimDetails.filter(item =>
-                new Date(item.transaction_date).toLocaleDateString('en-CA') === groupDate
-            );
-        } else if (viewMode === 'vendor') {
-            return claimDetails.filter(item => item.vendor_name === group.vendor_name);
-        }
-        return [];
-    };
-
     const handleAction = async (claimId, status) => {
         if (!window.confirm(`Are you sure you want to ${status} this claim?`)) return;
 
@@ -150,29 +167,143 @@ const AdminReimbursementPage = () => {
         let url = "";
         switch (type) {
             case 'excel': url = `${API_URL}/api/reimbursement/export/excel/${selectedClaim.id}`; break;
-            case 'pdf': url = `${API_URL}/api/reimbursement/export/pdf/${selectedClaim.id}`; break;
-            case 'zip': url = `${API_URL}/api/reimbursement/export/zip/${selectedClaim.id}`; break;
             default: return;
         }
         window.open(url, '_blank');
     };
 
+    // Helper to get distinct employees with stats
+    const getEmployeeStats = () => {
+        const stats = {};
+
+        // Initialize with all employees
+        allEmployees.forEach(emp => {
+            if (emp.role !== 'admin') { // Filter out admins if needed, or keep all
+                stats[emp.name] = {
+                    name: emp.name,
+                    email: emp.email,
+                    count: 0,
+                    total: 0
+                };
+            }
+        });
+
+        // Fill with transaction data
+        approvedData.forEach(item => {
+            const name = item.employee_name || 'Unknown';
+            // If employee not in initial list (e.g. deleted user or data mismatch), create entry
+            if (!stats[name]) {
+                stats[name] = {
+                    name,
+                    email: item.employee_email || 'N/A', // Try to get from item if possible
+                    count: 0,
+                    total: 0
+                };
+            }
+            stats[name].count++;
+            stats[name].total += parseFloat(item.amount || 0);
+        });
+        return Object.values(stats).sort((a, b) => b.total - a.total);
+    };
+
+    const getEmployeeTransactions = () => {
+        if (!selectedEmployee) return [];
+        return approvedData.filter(item => item.employee_name === selectedEmployee);
+    };
+
+    const handleEmployeeExport = (name) => {
+        const employeeTransactions = approvedData.filter(item => item.employee_name === name);
+        if (employeeTransactions.length === 0) return;
+        const ids = employeeTransactions.map(item => item.id);
+        handleBulkExport('excel', ids);
+    };
+
+    const handleBulkExport = async (type, manualIds = null) => { // type: 'excel'
+        const idsToExport = manualIds || Array.from(selectedItems);
+        if (idsToExport.length === 0) return;
+
+        try {
+            const loadingToast = toast.loading(`Generating ${type.toUpperCase()}...`);
+
+            const response = await axios({
+                url: `${API_URL}/api/reimbursement/export/items?type=${type}`, // Ensure backend route matches
+                method: 'POST',
+                data: { itemIds: idsToExport },
+                responseType: 'blob', // Important
+            });
+
+            // Create blob link to download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `expenses_export.${type === 'excel' ? 'xlsx' : 'pdf'}`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            toast.dismiss(loadingToast);
+            toast.success("Download started");
+        } catch (error) {
+            console.error("Bulk export error:", error);
+            toast.error("Failed to export");
+        }
+    };
+
+
+    const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            const allIds = approvedData.map(item => item.id);
+            setSelectedItems(new Set(allIds));
+        } else {
+            setSelectedItems(new Set());
+        }
+    };
+
+
+
+    const handleSingleExport = async (id, type) => {
+        try {
+            const loadingToast = toast.loading(`Generating ${type.toUpperCase()}...`);
+
+            const response = await axios({
+                url: `${API_URL}/api/reimbursement/export/items?type=${type}`,
+                method: 'POST',
+                data: { itemIds: [id] },
+                responseType: 'blob',
+            });
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `expense_${id}.${type === 'excel' ? 'xlsx' : 'pdf'}`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            toast.dismiss(loadingToast);
+            toast.success("Download started");
+        } catch (error) {
+            console.error("Single export error:", error);
+            toast.error("Failed to export");
+        }
+    };
+
     return (
-        <div className="p-6 max-w-7xl mx-auto text-gray-900 dark:text-white">
+        <div className="p-6 max-w-[1600px] mx-auto text-gray-900 dark:text-white font-sans">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold">Reimbursement Approval</h1>
                 <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-                    <button
-                        onClick={() => setActiveTab('pending')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === 'pending' ? 'bg-white dark:bg-gray-700 shadow text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
-                    >
-                        Pending Claims
-                    </button>
                     <button
                         onClick={() => setActiveTab('approved')}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === 'approved' ? 'bg-white dark:bg-gray-700 shadow text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
                     >
                         Approved Analysis
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('pending')}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === 'pending' ? 'bg-white dark:bg-gray-700 shadow text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+                    >
+                        Pending Claims
                     </button>
                 </div>
             </div>
@@ -239,63 +370,243 @@ const AdminReimbursementPage = () => {
                 </div>
             ) : (
                 /* Approved Analysis View */
-                <div className="space-y-6">
-                    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <Filter className="w-5 h-5 text-gray-500" />
-                            <span className="font-medium">Group By:</span>
-                            <div className="flex bg-gray-100 dark:bg-gray-900 rounded-lg p-1">
-                                <button
-                                    onClick={() => setGroupBy('date')}
-                                    className={`px-3 py-1.5 text-sm rounded-md transition ${groupBy === 'date' ? 'bg-white dark:bg-gray-700 shadow text-indigo-600 font-medium' : 'text-gray-500'}`}
-                                >
-                                    Date
-                                </button>
-                                <button
-                                    onClick={() => setGroupBy('vendor')}
-                                    className={`px-3 py-1.5 text-sm rounded-md transition ${groupBy === 'vendor' ? 'bg-white dark:bg-gray-700 shadow text-indigo-600 font-medium' : 'text-gray-500'}`}
-                                >
-                                    Vendor
-                                </button>
-                            </div>
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden min-h-[500px]">
+                    {/* Sub-tabs for Analysis */}
+                    <div className="flex flex-col border-b border-gray-200 dark:border-gray-700">
+                        <div className="flex">
+                            <button
+                                onClick={() => { setAnalysisTab('detailed'); setSelectedEmployee(null); }}
+                                className={`px-6 py-3 text-sm font-medium transition border-b-2 ${analysisTab === 'detailed' ? 'border-indigo-600 text-indigo-600 bg-gray-50/50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                            >
+                                All Transactions
+                            </button>
+                            <button
+                                onClick={() => setAnalysisTab('employees')}
+                                className={`px-6 py-3 text-sm font-medium transition border-b-2 ${analysisTab === 'employees' ? 'border-indigo-600 text-indigo-600 bg-gray-50/50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                            >
+                                By Employee
+                            </button>
                         </div>
+
+                        {/* Bulk Action Bar - Show only in Detailed View and when items selected */}
+                        {analysisTab === 'detailed' && selectedItems.size > 0 && (
+                            <div className="px-6 py-2 bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-between animate-in slide-in-from-top-2 fade-in">
+                                <span className="text-sm font-medium text-indigo-700 dark:text-indigo-300">
+                                    {selectedItems.size} items selected
+                                </span>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleBulkExport('excel')}
+                                        className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded shadow-sm flex items-center gap-1 transition"
+                                    >
+                                        <FileText className="w-3 h-3" /> Export Excel
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {approvedLoading ? (
                         <div className="text-center py-12 text-gray-500">Loading approved data...</div>
                     ) : (
-                        <div className="space-y-4">
-                            {approvedData.map((group, idx) => (
-                                <div key={idx} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-                                    <div className="bg-gray-50 dark:bg-gray-900/50 p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                        <div className="p-0">
+                            {/* VIEW 1: Detailed List (All) */}
+                            {analysisTab === 'detailed' && (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead className="bg-gray-50 dark:bg-gray-900 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
+                                            <tr>
+                                                <th className="p-4 w-10">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedItems.size === approvedData.length && approvedData.length > 0}
+                                                        onChange={handleSelectAll}
+                                                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                    />
+                                                </th>
+                                                <th className="p-4 cursor-pointer hover:text-gray-700">Date <ChevronDown className="w-3 h-3 inline ml-1" /></th>
+                                                <th className="p-4 font-bold text-gray-800 dark:text-gray-200">Employee</th>
+                                                <th className="p-4 text-center">Details</th>
+                                                <th className="p-4 cursor-pointer hover:text-gray-700">Expense Type <ChevronDown className="w-3 h-3 inline ml-1" /></th>
+                                                <th className="p-4">Vendor Details</th>
+                                                <th className="p-4">Payment Type</th>
+                                                <th className="p-4 text-right">Requested</th>
+                                                <th className="p-4 text-center">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700 text-sm">
+                                            {approvedData.length === 0 ? (
+                                                <tr><td colSpan="9" className="p-8 text-center text-gray-500">No approved expenses found.</td></tr>
+                                            ) : (
+                                                approvedData.map((item, idx) => (
+                                                    <tr key={idx} className={`hover:bg-blue-50/50 dark:hover:bg-gray-700/30 transition group ${selectedItems.has(item.id) ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}>
+                                                        <td className="p-4">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedItems.has(item.id)}
+                                                                onChange={() => handleToggleSelect(item.id)}
+                                                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                            />
+                                                        </td>
+                                                        <td className="p-4 text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                                                            {new Date(item.transaction_date).toLocaleDateString()}
+                                                        </td>
+                                                        <td className="p-4 text-indigo-600 dark:text-indigo-400 font-medium">
+                                                            {item.employee_name}
+                                                        </td>
+                                                        <td className="p-4 text-center">
+                                                            {item.receipt_path ? (
+                                                                <a href={`${API_URL}/${item.receipt_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700 inline-block p-1 border border-blue-200 rounded bg-blue-50">
+                                                                    <FileText className="w-4 h-4" />
+                                                                </a>
+                                                            ) : (
+                                                                <span className="text-gray-300"><FileText className="w-4 h-4" /></span>
+                                                            )}
+                                                        </td>
+                                                        <td className="p-4 font-medium text-gray-900 dark:text-white">
+                                                            {item.expense_type}
+                                                        </td>
+                                                        <td className="p-4">
+                                                            <div className="text-gray-900 dark:text-white font-medium truncate max-w-[200px]" title={item.vendor_name}>{item.vendor_name || 'N/A'}</div>
+                                                            <div className="text-xs text-gray-500 uppercase">{item.city} {item.project_no ? `• ${item.project_no}` : ''}</div>
+                                                        </td>
+                                                        <td className="p-4 text-gray-600 dark:text-gray-400">
+                                                            {item.payment_type || 'Cash'}
+                                                        </td>
+                                                        <td className="p-4 text-right font-semibold text-gray-900 dark:text-white">
+                                                            INR {item.amount}
+                                                        </td>
+                                                        <td className="p-4 text-center">
+                                                            <div className="relative group/actions inline-block">
+                                                                <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                                                                    <div className="flex gap-0.5">
+                                                                        <div className="w-1 h-1 bg-current rounded-full"></div>
+                                                                        <div className="w-1 h-1 bg-current rounded-full"></div>
+                                                                        <div className="w-1 h-1 bg-current rounded-full"></div>
+                                                                    </div>
+                                                                </button>
+                                                                <div className="hidden group-hover/actions:block absolute right-0 mt-0 py-2 w-32 bg-white dark:bg-gray-800 rounded-md shadow-xl border border-gray-200 dark:border-gray-700 z-10">
+                                                                    <button
+                                                                        onClick={() => handleSingleExport(item.id, 'excel')}
+                                                                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                                                    >
+                                                                        Export Excel
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+
+                            {/* VIEW 2: Employee List or Detail */}
+                            {analysisTab === 'employees' && (
+                                <div className="p-6">
+                                    {selectedEmployee ? (
+                                        // Employee Detail View
                                         <div>
-                                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                                                {groupBy === 'date' ? new Date(group.group_key).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : group.group_key}
-                                            </h3>
-                                            <p className="text-sm text-gray-500">{group.count} expense(s)</p>
-                                        </div>
-                                        <div className="text-xl font-bold text-green-600">₹{group.total_amount}</div>
-                                    </div>
-                                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                                        {group.items.map((item) => (
-                                            <div key={item.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition flex justify-between items-center">
-                                                <div>
-                                                    <div className="font-medium text-gray-900 dark:text-white">{item.expense_type}</div>
-                                                    <div className="text-sm text-gray-500">
-                                                        {item.employee_name} • {item.report_name}
-                                                        {groupBy === 'vendor' && ` • ${new Date(item.transaction_date).toLocaleDateString()}`}
-                                                        {groupBy === 'date' && ` • ${item.vendor_name}`}
+                                            <div className="flex items-center justify-between mb-6">
+                                                <div className="flex items-center gap-4">
+                                                    <button
+                                                        onClick={() => setSelectedEmployee(null)}
+                                                        className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                                                    >
+                                                        <ChevronRight className="w-5 h-5 rotate-180" />
+                                                    </button>
+                                                    <div>
+                                                        <h2 className="text-xl font-bold">{selectedEmployee}</h2>
+                                                        <p className="text-sm text-gray-500">Transaction History</p>
                                                     </div>
                                                 </div>
-                                                <div className="font-semibold text-gray-700 dark:text-gray-300">₹{item.amount}</div>
+                                                {getEmployeeTransactions().length > 0 && (
+                                                    <button
+                                                        onClick={() => handleEmployeeExport(selectedEmployee)}
+                                                        className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded shadow-sm flex items-center gap-1 transition"
+                                                    >
+                                                        <FileText className="w-3 h-3" /> Export Excel
+                                                    </button>
+                                                )}
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                            {approvedData.length === 0 && (
-                                <div className="text-center py-12 text-gray-500 bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300">
-                                    No approved expenses found.
+
+                                            {getEmployeeTransactions().length > 0 ? (
+                                                <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                                                    <table className="w-full text-left">
+                                                        <thead className="bg-gray-50 dark:bg-gray-900 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+                                                            <tr>
+                                                                <th className="p-4">Date</th>
+                                                                <th className="p-4">Expense Type</th>
+                                                                <th className="p-4">Vendor</th>
+                                                                <th className="p-4">Report</th>
+                                                                <th className="p-4 text-right">Amount</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700 text-sm">
+                                                            {getEmployeeTransactions().map((item, idx) => (
+                                                                <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                                                                    <td className="p-4">{new Date(item.transaction_date).toLocaleDateString()}</td>
+                                                                    <td className="p-4 font-medium">{item.expense_type}</td>
+                                                                    <td className="p-4">{item.vendor_name}</td>
+                                                                    <td className="p-4 text-gray-500">{item.report_name}</td>
+                                                                    <td className="p-4 text-right font-semibold text-green-600">INR {item.amount}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-12 text-gray-500 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+                                                    <p>No transactions found for this employee.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        // Employee List View - TABLE FORMAT
+                                        <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                                            <table className="w-full text-left">
+                                                <thead className="bg-gray-50 dark:bg-gray-900 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+                                                    <tr>
+                                                        <th className="p-4">Employee Name</th>
+                                                        <th className="p-4">Email</th>
+                                                        <th className="p-4 text-center">Approved Claims</th>
+                                                        <th className="p-4 text-right">Total Amount</th>
+                                                        <th className="p-4 text-center">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700 text-sm">
+                                                    {getEmployeeStats().map((emp, idx) => (
+                                                        <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition">
+                                                            <td className="p-4 font-medium text-gray-900 dark:text-white">
+                                                                {emp.name}
+                                                            </td>
+                                                            <td className="p-4 text-gray-500 dark:text-gray-400">
+                                                                {emp.email}
+                                                            </td>
+                                                            <td className="p-4 text-center">
+                                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${emp.count > 0 ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                                                                    {emp.count}
+                                                                </span>
+                                                            </td>
+                                                            <td className="p-4 text-right font-bold text-green-600 dark:text-green-400">
+                                                                {emp.total > 0 ? `₹${emp.total.toLocaleString()}` : '-'}
+                                                            </td>
+                                                            <td className="p-4 text-center">
+                                                                <button
+                                                                    onClick={() => setSelectedEmployee(emp.name)}
+                                                                    className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 text-sm font-medium hover:underline"
+                                                                >
+                                                                    View Details
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -376,12 +687,6 @@ const AdminReimbursementPage = () => {
                             <div className="flex gap-2">
                                 <button onClick={() => handleExport('excel')} className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-green-600 dark:text-green-400 rounded-lg text-sm font-medium hover:bg-green-50 dark:hover:bg-green-900/20 transition flex items-center gap-2 shadow-sm">
                                     <FileText className="w-4 h-4" /> Excel
-                                </button>
-                                <button onClick={() => handleExport('pdf')} className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition flex items-center gap-2 shadow-sm">
-                                    <FileText className="w-4 h-4" /> PDF
-                                </button>
-                                <button onClick={() => handleExport('zip')} className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 transition flex items-center gap-2 shadow-sm">
-                                    <Download className="w-4 h-4" /> Receipts ZIP
                                 </button>
                             </div>
 

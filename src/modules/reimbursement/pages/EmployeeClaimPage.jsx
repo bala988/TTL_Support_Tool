@@ -553,7 +553,7 @@ const EmployeeClaimPage = () => {
                                 <th className="p-4">Total Amount</th>
                                 <th className="p-4">Currency</th>
                                 <th className="p-4">Status</th>
-                                <th className="p-4 text-center">Receipts</th>
+                                <th className="p-4 text-center">Details</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">

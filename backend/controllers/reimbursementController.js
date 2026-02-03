@@ -514,3 +514,94 @@ export const downloadReceiptsZip = async (req, res) => {
         res.status(500).json({ message: "ZIP generation failed" });
     }
 };
+
+export const exportItemsBulk = async (req, res) => {
+    try {
+        const { itemIds } = req.body; // Array of IDs
+        const { type } = req.query; // 'excel' or 'pdf'
+
+        if (!itemIds || itemIds.length === 0) {
+            return res.status(400).json({ message: "No items selected" });
+        }
+
+        // Fetch details including employee and report info
+        const query = `
+            SELECT 
+                ei.*,
+                ec.report_name,
+                u.name as employee_name
+            FROM expense_items ei
+            JOIN expense_claims ec ON ei.claim_id = ec.id
+            JOIN users u ON ec.employee_id = u.id
+            WHERE ei.id IN (?)
+        `;
+
+        const [items] = await db.query(query, [itemIds]);
+
+        if (items.length === 0) {
+            return res.status(404).json({ message: "Selected items not found" });
+        }
+
+        if (type === 'excel') {
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet('Selected Expenses');
+
+            // Table Header
+            sheet.addRow(['Date', 'Employee', 'Report', 'Type', 'Vendor', 'Business Purpose', 'City', 'Payment', 'Amount', 'Billable']);
+
+            // Items
+            items.forEach(item => {
+                sheet.addRow([
+                    new Date(item.transaction_date).toLocaleDateString(),
+                    item.employee_name,
+                    item.report_name,
+                    item.expense_type,
+                    item.vendor_name,
+                    item.business_purpose,
+                    item.city,
+                    item.payment_type,
+                    item.amount,
+                    item.billable ? 'Yes' : 'No'
+                ]);
+            });
+
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            res.setHeader('Content-Disposition', `attachment; filename=expenses_export.xlsx`);
+
+            await workbook.xlsx.write(res);
+            res.end();
+
+        } else if (type === 'pdf') {
+            const doc = new PDFDocument();
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename=expenses_export.pdf`);
+
+            doc.pipe(res);
+
+            // Header
+            doc.fontSize(20).text('Expense Export', { align: 'center' });
+            doc.moveDown();
+
+            // Items
+            // doc.fontSize(14).text('Selected Items:', { underline: true });
+            // doc.moveDown();
+
+            items.forEach(item => {
+                doc.fontSize(10).text(`${new Date(item.transaction_date).toLocaleDateString()} - ${item.employee_name} (${item.report_name})`);
+                doc.fontSize(12).text(`${item.expense_type} - ${item.vendor_name} - Rs.${item.amount}`);
+                doc.fontSize(8).text(`Purpose: ${item.business_purpose} | City: ${item.city}`);
+                doc.moveDown(0.5);
+                doc.moveTo(doc.x, doc.y).lineTo(500, doc.y).stroke(); // Separator line
+                doc.moveDown(0.5);
+            });
+
+            doc.end();
+        } else {
+            return res.status(400).json({ message: "Invalid export type" });
+        }
+
+    } catch (error) {
+        console.error("Bulk export error:", error);
+        res.status(500).json({ message: "Export failed" });
+    }
+};

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import EngineerLayout from "../common/EngineerLayout";
 import { useNavigate } from "react-router-dom";
+import ClaimDetailsModal from "../../modules/reimbursement/components/ClaimDetailsModal";
 import { Ticket, Clock, CheckCircle, AlertTriangle, UserCheck, Download, Filter } from "lucide-react";
 import toast from 'react-hot-toast';
 import { StatsCard } from "../common/StatsCard";
@@ -27,6 +28,7 @@ export default function AdminDashboard() {
   const [approvals, setApprovals] = useState([]);
   const [salesApprovals, setSalesApprovals] = useState([]);
   const [reimbursements, setReimbursements] = useState([]);
+  const [selectedClaim, setSelectedClaim] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [userEmail, setUserEmail] = useState('');
@@ -168,6 +170,7 @@ export default function AdminDashboard() {
         // So it likely holds all.
         setReimbursements(reimbursements.map(r => r.id === id ? { ...r, status } : r));
         toast.success(`Claim ${status} successfully`);
+        setSelectedClaim(null);
       } else {
         const data = await response.json();
         toast.error(data.message || "Failed to update claim");
@@ -745,15 +748,12 @@ export default function AdminDashboard() {
                                 Reject
                               </button>
                               <button
-                                onClick={() => navigate('/admin/reimbursement-approval')}
+                                onClick={() => setSelectedClaim(claim)}
                                 className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md dark:bg-indigo-900/20 dark:text-indigo-400 dark:hover:text-indigo-300"
                               >
                                 Details
                               </button>
                             </div>
-                          )}
-                          {claim.status !== 'Pending' && (
-                            <span className="text-gray-400 dark:text-slate-500">{claim.status}</span>
                           )}
                         </td>
                       </tr>
@@ -765,6 +765,14 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {selectedClaim && (
+        <ClaimDetailsModal
+          claim={selectedClaim}
+          onClose={() => setSelectedClaim(null)}
+          onAction={handleReimbursementAction}
+        />
+      )}
     </EngineerLayout>
   );
 }

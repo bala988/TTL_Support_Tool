@@ -10,7 +10,8 @@ import {
     getApprovedExpenses,
     exportExcel,
     exportPdf,
-    downloadReceiptsZip
+    downloadReceiptsZip,
+    exportItemsBulk
 } from "../controllers/reimbursementController.js";
 import { uploadReceipt } from "../middlewares/uploadMiddleware.js";
 
@@ -29,6 +30,7 @@ router.get("/details/:claimId/grouped", getGroupedExpenses);
 router.get("/export/excel/:claimId", exportExcel);
 router.get("/export/pdf/:claimId", exportPdf);
 router.get("/export/zip/:claimId", downloadReceiptsZip);
+router.post("/export/items", exportItemsBulk); // New bulk export endpoint
 
 router.put("/draft/:id", uploadReceipt.any(), updateDraft);
 router.put("/:claimId/status", updateClaimStatus);
