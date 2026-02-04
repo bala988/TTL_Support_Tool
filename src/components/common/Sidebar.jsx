@@ -77,7 +77,7 @@ export default function Sidebar({ userRole = 'engineer', currentPage, onNavigate
       icon: FileText,
       label: 'Expense Claims',
       page: 'employee/reimbursement', // Matches route in App.jsx
-      roles: ['engineer', 'admin']
+      roles: ['engineer', 'admin', 'sales']
     }
   ];
 

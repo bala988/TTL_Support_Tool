@@ -46,6 +46,43 @@ const initTables = async () => {
     `);
 
         console.log("Reimbursement tables checked/created");
+
+        // FIX: Ensure AUTO_INCREMENT is set and fix ID=0 issue
+        const connection = await db.getConnection();
+        try {
+            // 1. Fix expense_claims
+            const [claims0] = await connection.query("SELECT * FROM expense_claims WHERE id = 0");
+            if (claims0.length > 0) {
+                console.log("[Schema Fix] Found claim with ID 0. Updating...");
+                const [maxIdResult] = await connection.query("SELECT MAX(id) as maxId FROM expense_claims");
+                const newId = (maxIdResult[0].maxId || 0) + 1;
+                await connection.query("UPDATE expense_items SET claim_id = ? WHERE claim_id = 0", [newId]);
+                await connection.query("UPDATE expense_claims SET id = ? WHERE id = 0", [newId]);
+                console.log(`[Schema Fix] Moved Claim ID 0 to ${newId}`);
+            }
+             // Always try to modify to AUTO_INCREMENT (idempotent-ish)
+             await connection.query("ALTER TABLE expense_claims MODIFY COLUMN id INT AUTO_INCREMENT");
+
+            // 2. Fix expense_items
+            const [items0] = await connection.query("SELECT * FROM expense_items WHERE id = 0");
+            if (items0.length > 0) {
+                 console.log("[Schema Fix] Found item with ID 0. Updating...");
+                 const [maxItemIdResult] = await connection.query("SELECT MAX(id) as maxId FROM expense_items");
+                 const newItemId = (maxItemIdResult[0].maxId || 0) + 1;
+                 await connection.query("UPDATE expense_items SET id = ? WHERE id = 0", [newItemId]);
+                 console.log(`[Schema Fix] Moved Item ID 0 to ${newItemId}`);
+            }
+             await connection.query("ALTER TABLE expense_items MODIFY COLUMN id INT AUTO_INCREMENT");
+             
+             console.log("[Schema Fix] Verified AUTO_INCREMENT on reimbursement tables");
+
+        } catch (fixErr) {
+             // Ignore error if it's just "nothing to change" or similar, but log it
+             console.warn("[Schema Fix] Attempted fix but got:", fixErr.message);
+        } finally {
+            connection.release();
+        }
+
     } catch (err) {
         console.error("Error creating reimbursement tables:", err);
     }
