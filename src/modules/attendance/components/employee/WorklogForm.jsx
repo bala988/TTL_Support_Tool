@@ -19,21 +19,6 @@ const worklogSchema = z.object({
   ticketId: z.string().optional(),
 });
 
-// Generate time options in 15-minute intervals from 00:00 to 23:45
-const generateTimeOptions = () => {
-  const times = [];
-  for (let hour = 0; hour < 24; hour++) {
-    for (let minute = 0; minute < 60; minute += 15) {
-      const h = hour.toString().padStart(2, '0');
-      const m = minute.toString().padStart(2, '0');
-      times.push(`${h}:${m}`);
-    }
-  }
-  return times;
-};
-
-const timeOptions = generateTimeOptions();
-
 const WorklogForm = ({ onWorklogCreated }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isLoading, setIsLoading] = useState(false);
@@ -148,17 +133,11 @@ const WorklogForm = ({ onWorklogCreated }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <select
+              <input
+                type="time"
                 {...register('fromTime')}
-                className="input-premium pl-10"
-              >
-                <option value="">Start time</option>
-                {timeOptions.map((time) => (
-                  <option key={`from-${time}`} value={time}>
-                    {time}
-                  </option>
-                ))}
-              </select>
+                className="input-premium pl-10 w-full"
+              />
             </div>
             {errors.fromTime && (
               <p className="mt-1 text-sm text-red-600 font-medium">{errors.fromTime.message}</p>
@@ -174,17 +153,11 @@ const WorklogForm = ({ onWorklogCreated }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <select
+              <input
+                type="time"
                 {...register('toTime')}
-                className="input-premium pl-10"
-              >
-                <option value="">End time</option>
-                {timeOptions.map((time) => (
-                  <option key={`to-${time}`} value={time}>
-                    {time}
-                  </option>
-                ))}
-              </select>
+                className="input-premium pl-10 w-full"
+              />
             </div>
             {errors.toTime && (
               <p className="mt-1 text-sm text-red-600 font-medium">{errors.toTime.message}</p>
