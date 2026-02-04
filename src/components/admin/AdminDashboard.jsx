@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import EngineerLayout from "../common/EngineerLayout";
 import { useNavigate } from "react-router-dom";
+import ClaimDetailsModal from "../../modules/reimbursement/components/ClaimDetailsModal";
 import { Ticket, Clock, CheckCircle, AlertTriangle, UserCheck, Download, Filter } from "lucide-react";
 import toast from 'react-hot-toast';
 import { StatsCard } from "../common/StatsCard";
@@ -26,6 +27,8 @@ export default function AdminDashboard() {
   const [tickets, setTickets] = useState([]);
   const [approvals, setApprovals] = useState([]);
   const [salesApprovals, setSalesApprovals] = useState([]);
+  const [reimbursements, setReimbursements] = useState([]);
+  const [selectedClaim, setSelectedClaim] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [userEmail, setUserEmail] = useState('');
@@ -42,7 +45,7 @@ export default function AdminDashboard() {
     const role = localStorage.getItem("userRole");
     const email = localStorage.getItem("userEmail");
     setUserEmail(email);
-    
+
     if (role !== "admin") {
       navigate("/engineer/dashboard");
     }
@@ -58,14 +61,23 @@ export default function AdminDashboard() {
         const approvalsData = await approvalsRes.json();
 
         // Fetch Sales Approvals if Ram
-        if (localStorage.getItem("userEmail") === 'rambalaji@tutelartechlabs.com') {
-           try {
-             const salesRes = await fetch(`${import.meta.env.VITE_API_URL}/api/sales-approvals`);
-             const salesData = await salesRes.json();
-             setSalesApprovals(salesData);
-           } catch (e) {
-             console.error("Sales approval fetch error:", e);
-           }
+        if (localStorage.getItem("userEmail")?.toLowerCase() === 'rambalaji@tutelartechlabs.com') {
+          try {
+            const salesRes = await fetch(`${import.meta.env.VITE_API_URL}/api/sales-approvals`);
+            const salesData = await salesRes.json();
+            setSalesApprovals(salesData);
+          } catch (e) {
+            console.error("Sales approval fetch error:", e);
+          }
+
+          try {
+            // Fetch pending reimbursements
+            const reimbRes = await fetch(`${import.meta.env.VITE_API_URL}/api/reimbursement/pending`);
+            const reimbData = await reimbRes.json();
+            setReimbursements(reimbData);
+          } catch (e) {
+            console.error("Reimbursement fetch error:", e);
+          }
         }
 
         const mappedTickets = ticketsData.map(t => ({
@@ -126,7 +138,7 @@ export default function AdminDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       });
-      
+
       if (response.ok) {
         setSalesApprovals(salesApprovals.map(a => a.id === id ? { ...a, status } : a));
       } else {
@@ -135,6 +147,37 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error("Error updating sales approval:", error);
+    }
+  };
+
+  const handleReimbursementAction = async (id, status) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/reimbursement/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+
+      if (response.ok) {
+        // Remove from list if processed (since we usually only show pending or we can update status to show history)
+        // For dashboard quick view, maybe we just remove them or mark them. 
+        // Let's remove them from the pending list for now to keep it clean, or update status.
+        // The API might return the updated object, but let's just filter it out or update it.
+        // If we want to show history, we update. If we want to show 'Pending' only, filtering is better?
+        // But the previous tabs show 'Pending'/'Approved' states?
+        // Actually Sales Approvals tab shows all (?) or just Pending?
+        // Logic: const salesApprovalsCount = salesApprovals.filter(a => a.status === 'Pending').length;
+        // So it likely holds all.
+        setReimbursements(reimbursements.map(r => r.id === id ? { ...r, status } : r));
+        toast.success(`Claim ${status} successfully`);
+        setSelectedClaim(null);
+      } else {
+        const data = await response.json();
+        toast.error(data.message || "Failed to update claim");
+      }
+    } catch (error) {
+      console.error("Error updating reimbursement:", error);
+      toast.error("Error updating claim");
     }
   };
 
@@ -149,18 +192,18 @@ export default function AdminDashboard() {
     const matchProduct = filterProduct === 'All' || t.product === filterProduct;
     const matchEngineer = filterEngineer === 'All' || t.assigned_engineer === filterEngineer;
     const matchStatus = filterStatus === 'All' || t.status === filterStatus;
-    
+
     let matchDate = true;
     if (filterStartDate && filterEndDate) {
-       // Create dates and reset time part to compare just the dates
-       const ticketDate = new Date(t.open_date);
-       const start = new Date(filterStartDate);
-       const end = new Date(filterEndDate);
-       end.setHours(23, 59, 59, 999); // Include the entire end date
-       
-       matchDate = ticketDate >= start && ticketDate <= end;
+      // Create dates and reset time part to compare just the dates
+      const ticketDate = new Date(t.open_date);
+      const start = new Date(filterStartDate);
+      const end = new Date(filterEndDate);
+      end.setHours(23, 59, 59, 999); // Include the entire end date
+
+      matchDate = ticketDate >= start && ticketDate <= end;
     }
-    
+
     return matchCustomer && matchProduct && matchEngineer && matchStatus && matchDate;
   });
 
@@ -169,14 +212,14 @@ export default function AdminDashboard() {
       toast.error("No tickets to export");
       return;
     }
-    
+
     const headers = [
-      "Ticket ID", "Severity", "Ticket Type", "Status", "Technology", "Customer Name", 
-      "Serial No", "Engineer Name", "Issue Subject", "Issue Description", 
-      "OEM TAC Involved", "TAC Case No.", "Engineer Remarks", "Problem Resolution", 
+      "Ticket ID", "Severity", "Ticket Type", "Status", "Technology", "Customer Name",
+      "Serial No", "Engineer Name", "Issue Subject", "Issue Description",
+      "OEM TAC Involved", "TAC Case No.", "Engineer Remarks", "Problem Resolution",
       "Open Date", "Close Date"
     ];
-    
+
     const csvContent = [
       headers.join(","),
       ...filteredTickets.map(t => [
@@ -215,15 +258,17 @@ export default function AdminDashboard() {
 
   const ticketApprovalsCount = approvals.filter(a => !a.access).length;
   const salesApprovalsCount = salesApprovals.filter(a => a.status === 'Pending').length;
+  const reimbursementApprovalsCount = reimbursements.filter(r => r.status === 'Pending' || r.status === 'Submitted').length;
 
   const stats = {
     total: tickets.length,
     open: tickets.filter(t => t.status === 'Open').length,
     closed: tickets.filter(t => t.status === 'Closed').length,
     critical: tickets.filter(t => t.severity === 'Critical').length,
-    pendingApprovals: ticketApprovalsCount + salesApprovalsCount, 
+    pendingApprovals: ticketApprovalsCount + salesApprovalsCount + reimbursementApprovalsCount,
     pendingTicketApprovals: ticketApprovalsCount,
     pendingSalesApprovals: salesApprovalsCount,
+    pendingReimbursements: reimbursementApprovalsCount,
   };
 
   const severityData = [
@@ -253,25 +298,23 @@ export default function AdminDashboard() {
               Overview of all support tickets and system status
             </p>
           </div>
-          
+
           <div className="flex bg-gray-100 dark:bg-servicenow-dark p-1 rounded-lg">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`px-4 py-2 rounded-md font-medium transition ${
-                activeTab === 'overview' 
-                  ? 'bg-white dark:bg-servicenow-light text-indigo-600 dark:text-indigo-400 shadow-sm' 
-                  : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
+              className={`px-4 py-2 rounded-md font-medium transition ${activeTab === 'overview'
+                ? 'bg-white dark:bg-servicenow-light text-indigo-600 dark:text-indigo-400 shadow-sm'
+                : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
             >
               Overview
             </button>
             <button
               onClick={() => setActiveTab('approvals')}
-              className={`px-4 py-2 rounded-md font-medium transition ${
-                activeTab === 'approvals' 
-                  ? 'bg-white dark:bg-servicenow-light text-indigo-600 dark:text-indigo-400 shadow-sm' 
-                  : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
+              className={`px-4 py-2 rounded-md font-medium transition ${activeTab === 'approvals'
+                ? 'bg-white dark:bg-servicenow-light text-indigo-600 dark:text-indigo-400 shadow-sm'
+                : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
             >
               Approvals
               {stats.pendingTicketApprovals > 0 && (
@@ -280,20 +323,36 @@ export default function AdminDashboard() {
                 </span>
               )}
             </button>
-            
-            {userEmail === 'rambalaji@tutelartechlabs.com' && (
+
+            {userEmail?.toLowerCase() === 'rambalaji@tutelartechlabs.com' && (
               <button
                 onClick={() => setActiveTab('sales_approvals')}
-                className={`px-4 py-2 rounded-md font-medium transition ${
-                  activeTab === 'sales_approvals' 
-                    ? 'bg-white dark:bg-servicenow-light text-indigo-600 dark:text-indigo-400 shadow-sm' 
-                    : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
+                className={`px-4 py-2 rounded-md font-medium transition ${activeTab === 'sales_approvals'
+                  ? 'bg-white dark:bg-servicenow-light text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
               >
                 Sales Approvals
                 {stats.pendingSalesApprovals > 0 && (
                   <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
                     {stats.pendingSalesApprovals}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {(userEmail?.toLowerCase() === 'rambalaji@tutelartechlabs.com' || userEmail?.toLowerCase() === 'rambalaji@tutelartechlabs.com') && (
+              <button
+                onClick={() => setActiveTab('reimbursement_approvals')}
+                className={`px-4 py-2 rounded-md font-medium transition ${activeTab === 'reimbursement_approvals'
+                  ? 'bg-white dark:bg-servicenow-light text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+              >
+                Reimbursement
+                {stats.pendingReimbursements > 0 && (
+                  <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                    {stats.pendingReimbursements}
                   </span>
                 )}
               </button>
@@ -377,7 +436,7 @@ export default function AdminDashboard() {
 
             <div className="mb-8">
               <h2 className="text-xl font-bold text-gray-900 mb-4">All Tickets</h2>
-              
+
               {/* Filters and Export Section */}
               <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-4">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -386,7 +445,7 @@ export default function AdminDashboard() {
                       <Filter className="w-4 h-4" />
                       <span className="text-sm font-medium">Filter by:</span>
                     </div>
-                    
+
                     {/* Customer Filter */}
                     <select
                       value={filterCustomer}
@@ -512,9 +571,8 @@ export default function AdminDashboard() {
                           {new Date(approval.created_at).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            approval.access ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                          }`}>
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${approval.access ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                            }`}>
                             {approval.access ? 'Granted' : 'Pending'}
                           </span>
                         </td>
@@ -536,12 +594,12 @@ export default function AdminDashboard() {
                             </div>
                           )}
                           {!!approval.access && (
-                             <button
-                               onClick={() => handleApprovalAction(approval.id, 'revoke')}
-                               className="text-red-600 hover:text-red-900"
-                             >
-                               Revoke Access
-                             </button>
+                            <button
+                              onClick={() => handleApprovalAction(approval.id, 'revoke')}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              Revoke Access
+                            </button>
                           )}
                         </td>
                       </tr>
@@ -554,7 +612,7 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'sales_approvals' && (
-           <div className="bg-white dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark overflow-hidden transition-colors">
+          <div className="bg-white dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark overflow-hidden transition-colors">
             <div className="p-6 border-b border-gray-200 dark:border-servicenow-dark">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sales Opportunity Approvals</h2>
             </div>
@@ -591,10 +649,9 @@ export default function AdminDashboard() {
                           {new Date(approval.created_at).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                             approval.status === 'Approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 
-                             approval.status === 'Rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                          }`}>
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${approval.status === 'Approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                            approval.status === 'Rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                            }`}>
                             {approval.status}
                           </span>
                         </td>
@@ -616,7 +673,7 @@ export default function AdminDashboard() {
                             </div>
                           )}
                           {approval.status === 'Approved' && (
-                              <span className="text-gray-400 dark:text-slate-500">Approved</span>
+                            <span className="text-gray-400 dark:text-slate-500">Approved</span>
                           )}
                         </td>
                       </tr>
@@ -626,8 +683,96 @@ export default function AdminDashboard() {
               </table>
             </div>
           </div>
-         )}
+        )}
+
+        {activeTab === 'reimbursement_approvals' && (
+          <div className="bg-white dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark overflow-hidden transition-colors">
+            <div className="p-6 border-b border-gray-200 dark:border-servicenow-dark">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Reimbursement / Expense Claims</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                <thead className="bg-gray-50 dark:bg-servicenow-dark">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Report Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Employee</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-servicenow-light divide-y divide-gray-200 dark:divide-slate-700">
+                  {reimbursements.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-4 text-center text-gray-500 dark:text-slate-400">
+                        No reimbursement claims found
+                      </td>
+                    </tr>
+                  ) : (
+                    reimbursements.map((claim) => (
+                      <tr key={claim.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
+                          {new Date(claim.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{claim.report_name}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900 dark:text-white">{claim.employee_name}</div>
+                          <div className="text-sm text-gray-500 dark:text-slate-400">{claim.employee_email}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap font-bold text-green-600 dark:text-green-400">
+                          ₹{claim.total_amount}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${claim.status === 'Approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                            claim.status === 'Rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                            }`}>
+                            {claim.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          {claim.status !== 'Approved' && claim.status !== 'Rejected' && (
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => handleReimbursementAction(claim.id, 'Approved')}
+                                className="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded-md dark:bg-green-900/20 dark:text-green-400 dark:hover:text-green-300"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => handleReimbursementAction(claim.id, 'Rejected')}
+                                className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md dark:bg-red-900/20 dark:text-red-400 dark:hover:text-red-300"
+                              >
+                                Reject
+                              </button>
+                              <button
+                                onClick={() => setSelectedClaim(claim)}
+                                className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md dark:bg-indigo-900/20 dark:text-indigo-400 dark:hover:text-indigo-300"
+                              >
+                                Details
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
+
+      {selectedClaim && (
+        <ClaimDetailsModal
+          claim={selectedClaim}
+          onClose={() => setSelectedClaim(null)}
+          onAction={handleReimbursementAction}
+        />
+      )}
     </EngineerLayout>
   );
 }

@@ -7,6 +7,7 @@ import ticketRoutes from "./routes/ticketRoutes.js";
 import approvalRoutes from "./routes/approvalRoutes.js";
 import salesRoutes from "./routes/salesRoutes.js";
 import salesApprovalRoutes from "./routes/salesApprovalRoutes.js";
+import reimbursementRoutes from "./routes/reimbursementRoutes.js";
 
 import connectMongoDB from "./config/mongo.js";
 import mongoRoutes from "./routes/mongoRoutes.js";
@@ -32,6 +33,7 @@ app.use("/api/tickets", ticketRoutes);
 app.use("/api/approvals", approvalRoutes);
 app.use("/api/sales", salesRoutes);
 app.use("/api/sales-approvals", salesApprovalRoutes);
+app.use("/api/reimbursement", reimbursementRoutes);
 app.use("/api", mongoRoutes); // Mount attendance routes
 
 

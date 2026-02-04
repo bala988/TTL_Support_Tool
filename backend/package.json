@@ -9,9 +9,11 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "archiver": "^7.0.1",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
+    "exceljs": "^4.4.0",
     "express": "^4.22.1",
     "express-rate-limit": "^7.1.5",
     "fs": "^0.0.1-security",
@@ -21,6 +23,7 @@
     "mongoose": "^8.9.5",
     "multer": "^2.0.2",
     "mysql2": "^3.16.1",
+    "pdfkit": "^0.17.2",
     "zod": "^3.24.1"
   },
   "devDependencies": {
