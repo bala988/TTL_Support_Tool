@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState, useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
@@ -19,12 +19,127 @@ const worklogSchema = z.object({
   ticketId: z.string().optional(),
 });
 
+// Custom 12h Time Input Component
+const TimeInput = ({ value, onChange, className }) => {
+  const [timeStr, setTimeStr] = useState('');
+  const [period, setPeriod] = useState('AM');
+
+  // Parse initial 24h value to 12h
+  useEffect(() => {
+    if (value) {
+      const [dirsHours, dirsMinutes] = value.split(':').map(Number);
+      let h = dirsHours;
+      let p = 'AM';
+      if (h >= 12) {
+        p = 'PM';
+        if (h > 12) h -= 12;
+      }
+      if (h === 0) h = 12;
+
+      const formattedH = String(h).padStart(2, '0');
+      const formattedM = String(dirsMinutes).padStart(2, '0');
+      setTimeStr(`${formattedH}:${formattedM}`);
+      setPeriod(p);
+    } else {
+      setTimeStr('');
+      setPeriod('AM');
+    }
+  }, [value]);
+
+  const handleTimeChange = (e) => {
+    let input = e.target.value;
+    // Allow digits and colon only
+    if (!/^[\d:]*$/.test(input)) return;
+
+    // Auto-insert colon after 2 digits
+    if (input.length === 2 && !input.includes(':')) {
+      // if user is typing fast, only append if it doesn't have it
+      // check if deleting
+      if (input.length > timeStr.length) {
+        input += ':';
+      }
+    }
+
+    // Max length 5 (HH:MM)
+    if (input.length > 5) return;
+
+    setTimeStr(input);
+    updateParent(input, period);
+  };
+
+  const handleBlur = () => {
+    // Validate format on blur
+    if (timeStr.length === 5) {
+      const [h, m] = timeStr.split(':').map(Number);
+      if (h > 12 || h < 1 || m > 59) {
+        // Invalid time, maybe reset or let validation handle it?
+        // For better UX, we could clamp it but let's just trigger update
+      }
+    }
+    updateParent(timeStr, period);
+  };
+
+  const togglePeriod = () => {
+    const newPeriod = period === 'AM' ? 'PM' : 'AM';
+    setPeriod(newPeriod);
+    updateParent(timeStr, newPeriod);
+  };
+
+  const updateParent = (tStr, p) => {
+    // Convert to 24h for parent
+    if (tStr.length !== 5 || !tStr.includes(':')) {
+      // incomplete
+      return;
+    }
+
+    const [hStr, mStr] = tStr.split(':');
+    let h = parseInt(hStr, 10);
+    const m = parseInt(mStr, 10);
+
+    if (isNaN(h) || isNaN(m)) return;
+
+    if (p === 'PM' && h !== 12) h += 12;
+    if (p === 'AM' && h === 12) h = 0;
+
+    const h24 = String(h).padStart(2, '0');
+    const m24 = String(m).padStart(2, '0');
+
+    onChange(`${h24}:${m24}`);
+  };
+
+  return (
+    <div className={`relative flex items-center ${className}`}>
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <input
+        type="text"
+        value={timeStr}
+        onChange={handleTimeChange}
+        onBlur={handleBlur}
+        placeholder="09:00"
+        className="input-premium pl-10 pr-16 w-full"
+      />
+      <button
+        type="button"
+        onClick={togglePeriod}
+        className="absolute right-1 top-1 bottom-1 px-3 text-xs font-bold bg-primary-50 text-primary-700 rounded hover:bg-primary-100 transition-colors"
+      >
+        {period}
+      </button>
+    </div>
+  );
+};
+
 const WorklogForm = ({ onWorklogCreated }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isLoading, setIsLoading] = useState(false);
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
     reset,
@@ -40,8 +155,6 @@ const WorklogForm = ({ onWorklogCreated }) => {
       ticketId: '',
     },
   });
-
-  const fromTime = watch('fromTime');
 
   const onSubmit = async (data) => {
     // Validate time range
@@ -127,18 +240,16 @@ const WorklogForm = ({ onWorklogCreated }) => {
           {/* From Time */}
           <div>
             <label className="label-premium">From Time</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <input
-                type="time"
-                {...register('fromTime')}
-                className="input-premium pl-10 w-full"
-              />
-            </div>
+            <Controller
+              name="fromTime"
+              control={control}
+              render={({ field }) => (
+                <TimeInput
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
             {errors.fromTime && (
               <p className="mt-1 text-sm text-red-600 font-medium">{errors.fromTime.message}</p>
             )}
@@ -147,18 +258,16 @@ const WorklogForm = ({ onWorklogCreated }) => {
           {/* To Time */}
           <div>
             <label className="label-premium">To Time</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <input
-                type="time"
-                {...register('toTime')}
-                className="input-premium pl-10 w-full"
-              />
-            </div>
+            <Controller
+              name="toTime"
+              control={control}
+              render={({ field }) => (
+                <TimeInput
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
             {errors.toTime && (
               <p className="mt-1 text-sm text-red-600 font-medium">{errors.toTime.message}</p>
             )}
@@ -193,8 +302,6 @@ const WorklogForm = ({ onWorklogCreated }) => {
         <div>
           <label className="label-premium">Activity Description</label>
           <div className="relative">
-             {/* Textarea doesn't easily support absolute icon inside at top-left without padding adjustment, 
-                 but let's just make it premium without icon inside, or icon outside */}
             <textarea
               {...register('activity')}
               rows={4}

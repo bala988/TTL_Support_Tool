@@ -2,6 +2,7 @@ import { db } from "../config/db.js";
 import fs from "fs";
 import path from "path";
 import { uploadFileToDrive } from "../services/googleDriveService.js";
+import { sendTicketAcknowledgement } from "../services/whatsappService.js";
 
 export const createTicket = async (req, res) => {
   try {
@@ -30,7 +31,7 @@ export const createTicket = async (req, res) => {
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const yy = String(today.getFullYear()).slice(-2);
     const dateStr = `${dd}${mm}${yy}`;
-    
+
     const prefix = `TTL${dateStr}`;
 
     // Find the latest ticket number with this prefix
@@ -78,12 +79,12 @@ export const createTicket = async (req, res) => {
     // Handle attachment
     if (req.file) {
       console.log(`Processing attachment: ${req.file.originalname}`);
-      
+
       // Construct new filename: ticketno_issue_description(first 20 char)
       const cleanDesc = (issue_description || 'issue').replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20);
       const fileExt = path.extname(req.file.originalname);
       const newFileName = `${ticketNumber}_${cleanDesc}${fileExt}`;
-      
+
       let filePath = req.file.path; // Default to temp path
 
       // Try uploading to Google Drive
@@ -98,7 +99,7 @@ export const createTicket = async (req, res) => {
       if (driveResult.success) {
         console.log("Attachment uploaded to Google Drive successfully");
         filePath = driveResult.webViewLink;
-        
+
         // Delete local temp file
         try {
           fs.unlinkSync(req.file.path);
@@ -107,7 +108,7 @@ export const createTicket = async (req, res) => {
         }
       } else {
         console.warn("Google Drive upload failed, falling back to local storage. Error:", driveResult.error);
-        
+
         // Fallback: Move to permanent local storage
         const targetDir = `uploads/tickets/${ticketId}`;
         if (!fs.existsSync(targetDir)) {
@@ -118,8 +119,8 @@ export const createTicket = async (req, res) => {
         // Rename (move) file from temp to target
         // check if file exists at req.file.path (it might not if upload logic messed with it, but here it should be fine)
         if (fs.existsSync(req.file.path)) {
-            fs.renameSync(req.file.path, targetPath);
-            filePath = targetPath;
+          fs.renameSync(req.file.path, targetPath);
+          filePath = targetPath;
         }
       }
 
@@ -132,13 +133,13 @@ export const createTicket = async (req, res) => {
     }
 
     // Send WhatsApp Acknowledgement
-    // if (contact_phone) {
-    //   await sendTicketAcknowledgement(customer_name, contact_name, ticketNumber, contact_phone);
-    // }
+    if (contact_phone) {
+      await sendTicketAcknowledgement(customer_name, contact_name, ticketNumber, contact_phone);
+    }
 
-    res.status(201).json({ 
+    res.status(201).json({
       status: "success",
-      message: "Ticket created successfully", 
+      message: "Ticket created successfully",
       ticketId,
       ticketNumber // Return the formatted ticket number
     });
@@ -161,7 +162,7 @@ export const getTickets = async (req, res) => {
       LEFT JOIN users u ON t.created_by = u.id
       ORDER BY t.open_date DESC
     `);
-    
+
     res.json(tickets);
   } catch (error) {
     console.error("Get tickets error:", error);
@@ -179,7 +180,7 @@ export const getTicketById = async (req, res) => {
     }
 
     const [attachments] = await db.query(
-      "SELECT * FROM ticket_attachments WHERE ticket_id = ?", 
+      "SELECT * FROM ticket_attachments WHERE ticket_id = ?",
       [id]
     );
 
@@ -204,7 +205,7 @@ export const updateTicket = async (req, res) => {
     let query = `UPDATE tickets SET 
         status = ?, severity = ?, issue_subject = ?, issue_description = ?,
         engineer_remarks = ?, problem_resolution = ?, rough_notes = ?`;
-    
+
     const params = [status, severity, issue_subject, issue_description, engineer_remarks, problem_resolution, rough_notes];
 
     if (timeline) {
