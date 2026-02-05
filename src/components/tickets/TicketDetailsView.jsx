@@ -117,7 +117,22 @@ export default function TicketDetailsView() {
       if (ticket.openDate) {
         const openTime = getTimestamp(ticket.openDate);
         if (openTime > 0) {
-            const diff = now.getTime() - openTime;
+            let endTime = now.getTime();
+            
+            // If ticket is closed, stop timer at closeDate (or current time if closeDate missing but status closed)
+            if (ticket.status === 'Closed') {
+                 if (ticket.closeDate) {
+                     const closeTime = getTimestamp(ticket.closeDate);
+                     if (closeTime > 0) {
+                         endTime = closeTime;
+                     }
+                 } else {
+                    // Fallback if closeDate is not yet in state (optimistic update should provide it)
+                    // If no closeDate, using now would keep it ticking, so we rely on handleQuickResolve setting closeDate
+                 }
+            }
+
+            const diff = endTime - openTime;
             setOpenDuration(formatDuration(diff));
         }
       }
@@ -150,22 +165,23 @@ export default function TicketDetailsView() {
       setCustomerPendingDuration(formatDuration(pendingTime));
     };
 
-    const interval = setInterval(calculateTimers, 60000); // Update every minute
+    const interval = setInterval(calculateTimers, 1000); // Update every second
     calculateTimers(); // Initial call
 
     return () => clearInterval(interval);
   }, [ticket]);
 
   const formatDuration = (ms) => {
-    if (ms <= 0) return "0m";
-    const seconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
+    if (ms <= 0) return "0s";
+    const totalSeconds = Math.floor(ms / 1000);
+    const days = Math.floor(totalSeconds / (3600 * 24));
+    const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
 
-    if (days > 0) return `${days}d ${hours % 24}h`;
-    if (hours > 0) return `${hours}h ${minutes % 60}m`;
-    return `${minutes}m`;
+    if (days > 0) return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+    return `${minutes}m ${seconds}s`;
   };
 
   const getSeverityColor = (severity) => {
@@ -200,7 +216,8 @@ export default function TicketDetailsView() {
 
   const handleSave = async () => {
     try {
-      const now = new Date().toLocaleString("en-US", {
+      const now = new Date();
+      const nowStr = now.toLocaleString("en-US", {
         year: "numeric", month: "2-digit", day: "2-digit",
         hour: "2-digit", minute: "2-digit", hour12: true,
       });
@@ -214,7 +231,7 @@ export default function TicketDetailsView() {
       }
 
       const timelineEntry = {
-        date: now,
+        date: nowStr,
         event: eventMsg,
         user: currentUserName,
         type: "update"
@@ -242,7 +259,20 @@ export default function TicketDetailsView() {
       });
 
       if (response.ok) {
-        setTicket(prev => ({ ...prev, timeline: updatedTimeline }));
+        // Optimistically update closeDate
+        let updatedTicket = { ...ticket, timeline: updatedTimeline };
+        
+        if (ticket.status === 'Closed') {
+             // If closing, set closeDate if not already set
+             if (!ticket.closeDate) {
+                 updatedTicket.closeDate = now.toISOString();
+             }
+        } else {
+             // If re-opening (not Closed), clear closeDate
+             updatedTicket.closeDate = null;
+        }
+        
+        setTicket(updatedTicket);
         setInitialStatus(ticket.status); // Update initial status to current
         setIsEditing(false);
         setSelectedFile(null);
@@ -276,6 +306,7 @@ export default function TicketDetailsView() {
     const updatedTicket = {
       ...ticket,
       status: "Closed",
+      closeDate: now,
       timeline: [
         ...ticket.timeline,
         {
