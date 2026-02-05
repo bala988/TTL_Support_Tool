@@ -6,20 +6,20 @@ import { sendTicketAcknowledgement } from "../services/whatsappService.js";
 
 // Mapping of customer names (lowercase) to their specific Google Drive Folder IDs
 // This ensures attachments for these customers go to their dedicated folders
-const CUSTOMER_FOLDERS = {
-  'collabera': '1u8QBAQOEe7SBvbz6T-eCH7kv4RBoYpp9',
-  'flipkart': '1_jD2ChEzj96mk7y1DnLoKCvUylDGOHbx',
-  'freshworks': '1M6zgVLsp83j-N_6XurQfdwB2iWapDSps',
-  'groww': '1MGKkBBgt-yBBDSUMo4CqpLFQIwUD1giF',
-  'hexaware': '1VYMv3-tBwHIrnxS4eJfyrhmVPvRlYyyn',
-  'hexaware projects': '1KkgSzXqwk7hOGjyp2mqoYeZ06wWV7yqs',
-  'movate': '1ezCV-1POU6qiUd8eLxfm8tP4LOlWkqRo',
-  'mpl': '1MQCxWJ1BtSyYnmzPtUIOqEqgYWtf5boX',
-  'others': '1T3KTK8sovxapjTrSK_ZUVklZ_vAxESYm',
-  'quest': '175t-SDI7ak_GZHNBZBJFpuLJdBC2pfjY',
-  'swiggy': '1vc347pcfCyw-gPKOj7QabFhl1BCa1FVZ',
-  'vishwa samudra': '1xQUqBTwv2DAH5EShsS3g-QAYKNu5MT2L'
-};
+const getCustomerFolders = () => ({
+  'collabera': process.env.GOOGLE_DRIVE_FOLDER_ID_COLLABERA,
+  'flipkart': process.env.GOOGLE_DRIVE_FOLDER_ID_FLIPKART,
+  'freshworks': process.env.GOOGLE_DRIVE_FOLDER_ID_FRESHWORKS,
+  'groww': process.env.GOOGLE_DRIVE_FOLDER_ID_GROWW,
+  'hexaware': process.env.GOOGLE_DRIVE_FOLDER_ID_HEXAWARE,
+  'hexaware projects': process.env.GOOGLE_DRIVE_FOLDER_ID_HEXAWARE_PROJECTS,
+  'movate': process.env.GOOGLE_DRIVE_FOLDER_ID_MOVATE,
+  'mpl': process.env.GOOGLE_DRIVE_FOLDER_ID_MPL,
+  'others': process.env.GOOGLE_DRIVE_FOLDER_ID_OTHERS,
+  'quest': process.env.GOOGLE_DRIVE_FOLDER_ID_QUEST,
+  'swiggy': process.env.GOOGLE_DRIVE_FOLDER_ID_SWIGGY,
+  'vishwa samudra': process.env.GOOGLE_DRIVE_FOLDER_ID_VISHWA_SAMUDRA
+});
 
 // Helper function to get the correct folder ID based on customer name
 // 1. Normalizes input (lowercase, trim)
@@ -29,7 +29,8 @@ const CUSTOMER_FOLDERS = {
 const getCustomerFolderId = (customerName) => {
   if (!customerName) return process.env.GOOGLE_DRIVE_FOLDER_ID_TICKETS;
   const normalized = customerName.toLowerCase().trim();
-  return CUSTOMER_FOLDERS[normalized] || CUSTOMER_FOLDERS['others'] || process.env.GOOGLE_DRIVE_FOLDER_ID_TICKETS;
+  const folders = getCustomerFolders();
+  return folders[normalized] || folders['others'] || process.env.GOOGLE_DRIVE_FOLDER_ID_TICKETS;
 };
 
 export const createTicket = async (req, res) => {
@@ -241,6 +242,14 @@ export const updateTicket = async (req, res) => {
     if (timeline) {
       query += `, timeline = ?`;
       params.push(typeof timeline === 'string' ? timeline : JSON.stringify(timeline));
+    }
+
+    // Fix: If status is Closed, ensure close_date is set to now (if not already set)
+    // If status is NOT Closed (e.g. Re-opened), clear the close_date
+    if (status === 'Closed') {
+       query += `, close_date = IFNULL(close_date, NOW())`;
+    } else {
+       query += `, close_date = NULL`;
     }
 
     query += ` WHERE id = ?`;

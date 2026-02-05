@@ -36,6 +36,9 @@ export default function TicketCreationForm() {
     problemResolution: "",
     attachment: null,
     referenceUrl: "",
+    // Use full ISO string to include time, but for date input we only need YYYY-MM-DD
+    // However, when submitting, we should probably send the full timestamp if the backend relies on it
+    // For now, let's keep the date picker working but handle submission separately
     openDate: new Date().toISOString().split("T")[0],
     closeDate: "",
   });
@@ -74,7 +77,24 @@ export default function TicketCreationForm() {
       data.append('engineer_remarks', formData.engineerRemarks);
       data.append('problem_resolution', formData.problemResolution);
       data.append('reference_url', formData.referenceUrl);
-      data.append('open_date', formData.openDate);
+      
+      // Fix: If openDate matches today's date (YYYY-MM-DD), send the current full timestamp in LOCAL time
+      // to avoid UTC conversion issues (e.g. appearing as yesterday).
+      // We want to map it exactly to the system date/time as the user sees it.
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      
+      if (formData.openDate === todayStr) {
+          // Construct local ISO-like string (YYYY-MM-DDTHH:mm:ss.sss)
+          const offset = now.getTimezoneOffset() * 60000;
+          const localISOTime = (new Date(now - offset)).toISOString().slice(0, -1);
+          data.append('open_date', localISOTime);
+      } else {
+          // If user selected a past date, send it as is (YYYY-MM-DD).
+          // MySQL DATETIME will interpret this as YYYY-MM-DD 00:00:00 (Midnight Local)
+          data.append('open_date', formData.openDate);
+      }
+      
       data.append('close_date', formData.closeDate);
       
       const userId = localStorage.getItem("userId");
