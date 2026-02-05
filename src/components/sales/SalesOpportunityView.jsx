@@ -597,7 +597,42 @@ export default function SalesOpportunityView() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Customer Name</label>
-                  <input name="customer_name" placeholder="Enter customer name" value={header.customer_name} onChange={handleHeaderChange} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg placeholder:text-gray-400 dark:placeholder:text-gray-500" />
+                  <select
+                    name="customer_name"
+                    value={['Collabera', 'Flipkart', 'FreshWorks', 'Groww', 'Hexaware', 'Hexaware Projects', 'Movate', 'MPL', 'Quest', 'Swiggy', 'Vishwa Samudra'].includes(header.customer_name) ? header.customer_name : (header.customer_name ? 'Others' : '')}
+                    onChange={(e) => {
+                      if (e.target.value === 'Others') {
+                        handleHeaderChange({ target: { name: 'customer_name', value: 'Others' } });
+                      } else {
+                        handleHeaderChange(e);
+                      }
+                    }}
+                    className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg bg-white mb-2"
+                  >
+                    <option value="">Select Customer</option>
+                    <option value="Collabera">Collabera</option>
+                    <option value="Flipkart">Flipkart</option>
+                    <option value="FreshWorks">FreshWorks</option>
+                    <option value="Groww">Groww</option>
+                    <option value="Hexaware">Hexaware</option>
+                    <option value="Hexaware Projects">Hexaware Projects</option>
+                    <option value="Movate">Movate</option>
+                    <option value="MPL">MPL</option>
+                    <option value="Quest">Quest</option>
+                    <option value="Swiggy">Swiggy</option>
+                    <option value="Vishwa Samudra">Vishwa Samudra</option>
+                    <option value="Others">Others</option>
+                  </select>
+                  
+                  {(!['Collabera', 'Flipkart', 'FreshWorks', 'Groww', 'Hexaware', 'Hexaware Projects', 'Movate', 'MPL', 'Quest', 'Swiggy', 'Vishwa Samudra', ''].includes(header.customer_name) || header.customer_name === 'Others') && (
+                    <input 
+                      name="customer_name" 
+                      placeholder="Enter customer name" 
+                      value={header.customer_name === 'Others' ? '' : header.customer_name} 
+                      onChange={handleHeaderChange} 
+                      className="w-full border border-gray-300 dark:border-slate-600 dark:bg-servicenow-dark dark:text-white p-2 rounded-lg placeholder:text-gray-400 dark:placeholder:text-gray-500" 
+                    />
+                  )}
                 </div>
                 <div>
                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Customer Contact Person</label>

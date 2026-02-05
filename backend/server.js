@@ -11,8 +11,13 @@ import reimbursementRoutes from "./routes/reimbursementRoutes.js";
 
 import connectMongoDB from "./config/mongo.js";
 import mongoRoutes from "./routes/mongoRoutes.js";
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env from project root
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 connectMongoDB(); // Connect to MongoDB
 

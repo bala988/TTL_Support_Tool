@@ -197,8 +197,15 @@ export async function uploadFileToDrive(filePath, filename, mimeType, folderId =
 export function isGoogleDriveConfigured() {
   const credentialsPath = process.env.GOOGLE_DRIVE_CREDENTIALS_PATH;
   const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+  const attendanceFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID_ATTENDANCE;
+  const worklogFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID_WORKLOG;
   
-  if (!credentialsPath || !folderId) {
+  if (!credentialsPath) {
+    return false;
+  }
+
+  // At least one folder ID should be configured
+  if (!folderId && !attendanceFolderId && !worklogFolderId) {
     return false;
   }
 

@@ -45,7 +45,7 @@ const initTables = async () => {
       )
     `);
 
-        console.log("Reimbursement tables checked/created");
+        // console.log("Reimbursement tables checked/created");
 
         // FIX: Ensure AUTO_INCREMENT is set and fix ID=0 issue
         const connection = await db.getConnection();
@@ -74,7 +74,7 @@ const initTables = async () => {
             }
              await connection.query("ALTER TABLE expense_items MODIFY COLUMN id INT AUTO_INCREMENT");
              
-             console.log("[Schema Fix] Verified AUTO_INCREMENT on reimbursement tables");
+             // console.log("[Schema Fix] Verified AUTO_INCREMENT on reimbursement tables");
 
         } catch (fixErr) {
              // Ignore error if it's just "nothing to change" or similar, but log it

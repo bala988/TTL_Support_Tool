@@ -200,7 +200,8 @@ export const exportEmployeeCSV = async (req, res, next) => {
       
       if (isGoogleDriveConfigured()) {
         // Upload asynchronously without blocking the response
-        const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID_CSV;
+        // Use specific worklog folder for CSVs, or fall back to generic CSV folder, or default
+        const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID_WORKLOG || process.env.GOOGLE_DRIVE_FOLDER_ID_CSV;
         uploadCSVToDrive(csv, filename, folderId)
           .then(result => {
             if (result.success) {

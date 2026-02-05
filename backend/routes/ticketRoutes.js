@@ -31,7 +31,7 @@ const upload = multer({ storage });
 router.post("/create", upload.single("attachment"), createTicket);
 router.get("/dashboard", getTickets);
 router.get("/:id", getTicketById);
-router.put("/:id", updateTicket);
+router.put("/:id", upload.single("attachment"), updateTicket);
 router.put("/:id/transfer", transferTicket);
 
 export default router;

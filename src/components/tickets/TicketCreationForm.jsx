@@ -262,7 +262,7 @@ export default function TicketCreationForm() {
                 </label>
                 <select
                   className="input mb-2"
-                  value={['Hexaware', 'Collabera', 'Swiggy', 'Groww', 'Freshworks', 'Mpl', 'vishwa samudra', 'flipkart', 'forcepoint', 'f5'].includes(formData.customerName) ? formData.customerName : (formData.customerName ? 'Others' : '')}
+                  value={['Collabera', 'Flipkart', 'FreshWorks', 'Groww', 'Hexaware', 'Hexaware Projects', 'Movate', 'MPL', 'Quest', 'Swiggy', 'Vishwa Samudra'].includes(formData.customerName) ? formData.customerName : (formData.customerName ? 'Others' : '')}
                   onChange={(e) => {
                     if (e.target.value === 'Others') {
                       setFormData({ ...formData, customerName: 'Others' });
@@ -273,19 +273,21 @@ export default function TicketCreationForm() {
                   required
                 >
                   <option value="">Select Customer</option>
-                  <option value="Hexaware">Hexaware</option>
                   <option value="Collabera">Collabera</option>
-                  <option value="Swiggy">Swiggy</option>
+                  <option value="Flipkart">Flipkart</option>
+                  <option value="FreshWorks">FreshWorks</option>
                   <option value="Groww">Groww</option>
-                  <option value="Freshworks">Freshworks</option>
+                  <option value="Hexaware">Hexaware</option>
+                  <option value="Hexaware Projects">Hexaware Projects</option>
+                  <option value="Movate">Movate</option>
                   <option value="MPL">MPL</option>
+                  <option value="Quest">Quest</option>
+                  <option value="Swiggy">Swiggy</option>
                   <option value="Vishwa Samudra">Vishwa Samudra</option>
-                  <option value="flipkart">flipkart</option>
-                  {/* <option value="forcepoint">forcepoint</option>
-                  <option value="f5">f5</option> */}
                   <option value="Others">Others</option>
                 </select>
-                {(!['Hexaware', 'Collabera', 'Swiggy', 'Groww', 'Freshworks', 'Mpl', 'vishwa samudra', 'flipkart', ''].includes(formData.customerName) || formData.customerName === 'Others') && (
+
+                {(!['Collabera', 'Flipkart', 'FreshWorks', 'Groww', 'Hexaware', 'Hexaware Projects', 'Movate', 'MPL', 'Quest', 'Swiggy', 'Vishwa Samudra', ''].includes(formData.customerName) || formData.customerName === 'Others') && (
                   <input
                     type="text"
                     className="input"

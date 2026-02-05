@@ -4,6 +4,34 @@ import path from "path";
 import { uploadFileToDrive } from "../services/googleDriveService.js";
 import { sendTicketAcknowledgement } from "../services/whatsappService.js";
 
+// Mapping of customer names (lowercase) to their specific Google Drive Folder IDs
+// This ensures attachments for these customers go to their dedicated folders
+const CUSTOMER_FOLDERS = {
+  'collabera': '1u8QBAQOEe7SBvbz6T-eCH7kv4RBoYpp9',
+  'flipkart': '1_jD2ChEzj96mk7y1DnLoKCvUylDGOHbx',
+  'freshworks': '1M6zgVLsp83j-N_6XurQfdwB2iWapDSps',
+  'groww': '1MGKkBBgt-yBBDSUMo4CqpLFQIwUD1giF',
+  'hexaware': '1VYMv3-tBwHIrnxS4eJfyrhmVPvRlYyyn',
+  'hexaware projects': '1KkgSzXqwk7hOGjyp2mqoYeZ06wWV7yqs',
+  'movate': '1ezCV-1POU6qiUd8eLxfm8tP4LOlWkqRo',
+  'mpl': '1MQCxWJ1BtSyYnmzPtUIOqEqgYWtf5boX',
+  'others': '1T3KTK8sovxapjTrSK_ZUVklZ_vAxESYm',
+  'quest': '175t-SDI7ak_GZHNBZBJFpuLJdBC2pfjY',
+  'swiggy': '1vc347pcfCyw-gPKOj7QabFhl1BCa1FVZ',
+  'vishwa samudra': '1xQUqBTwv2DAH5EShsS3g-QAYKNu5MT2L'
+};
+
+// Helper function to get the correct folder ID based on customer name
+// 1. Normalizes input (lowercase, trim)
+// 2. Checks if specific folder exists for customer
+// 3. Falls back to 'others' folder if customer not found in map
+// 4. Final fallback to default TICKET folder from .env
+const getCustomerFolderId = (customerName) => {
+  if (!customerName) return process.env.GOOGLE_DRIVE_FOLDER_ID_TICKETS;
+  const normalized = customerName.toLowerCase().trim();
+  return CUSTOMER_FOLDERS[normalized] || CUSTOMER_FOLDERS['others'] || process.env.GOOGLE_DRIVE_FOLDER_ID_TICKETS;
+};
+
 export const createTicket = async (req, res) => {
   try {
     const {
@@ -88,7 +116,9 @@ export const createTicket = async (req, res) => {
       let filePath = req.file.path; // Default to temp path
 
       // Try uploading to Google Drive
-      const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID_TICKETS;
+      const folderId = getCustomerFolderId(customer_name);
+      console.log(`Uploading to folder: ${folderId} for customer: ${customer_name}`);
+      
       const driveResult = await uploadFileToDrive(
         req.file.path,
         newFileName,
@@ -210,13 +240,72 @@ export const updateTicket = async (req, res) => {
 
     if (timeline) {
       query += `, timeline = ?`;
-      params.push(JSON.stringify(timeline));
+      params.push(typeof timeline === 'string' ? timeline : JSON.stringify(timeline));
     }
 
     query += ` WHERE id = ?`;
     params.push(id);
 
     await db.query(query, params);
+
+    // Handle new attachment if provided
+    if (req.file) {
+      console.log(`Processing new attachment for ticket ${id}: ${req.file.originalname}`);
+
+      // Need ticket info for naming convention and folder selection
+      const [ticketInfo] = await db.query("SELECT ticket_number, customer_name FROM tickets WHERE id = ?", [id]);
+      
+      if (ticketInfo.length > 0) {
+        const { ticket_number, customer_name } = ticketInfo[0];
+        
+        // Construct new filename
+        const cleanDesc = (issue_description || 'update').replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20);
+        const fileExt = path.extname(req.file.originalname);
+        const newFileName = `${ticket_number}_${cleanDesc}_updated${fileExt}`;
+
+        let filePath = req.file.path;
+
+        // Try uploading to Google Drive
+        const folderId = getCustomerFolderId(customer_name);
+        console.log(`Uploading to folder: ${folderId} for customer: ${customer_name}`);
+        
+        const driveResult = await uploadFileToDrive(
+          req.file.path,
+          newFileName,
+          req.file.mimetype,
+          folderId
+        );
+
+        if (driveResult.success) {
+          console.log("Attachment uploaded to Google Drive successfully");
+          filePath = driveResult.webViewLink;
+
+          try {
+            fs.unlinkSync(req.file.path);
+          } catch (e) {
+            console.warn("Failed to delete temp file:", e);
+          }
+        } else {
+          console.warn("Drive upload failed, using local storage");
+          const targetDir = `uploads/tickets/${id}`;
+          if (!fs.existsSync(targetDir)) {
+            fs.mkdirSync(targetDir, { recursive: true });
+          }
+          const targetPath = path.join(targetDir, newFileName);
+          if (fs.existsSync(req.file.path)) {
+            fs.renameSync(req.file.path, targetPath);
+            filePath = targetPath;
+          }
+        }
+
+        await db.query(
+          `INSERT INTO ticket_attachments (
+            ticket_id, file_name, file_path, file_type, file_size
+          ) VALUES (?, ?, ?, ?, ?)`,
+          [id, newFileName, filePath, req.file.mimetype, req.file.size]
+        );
+      }
+    }
 
     res.json({ message: "Ticket updated successfully" });
   } catch (error) {

@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   ArrowRightCircle,
   StickyNote,
+  Paperclip,
 } from "lucide-react";
 
 export default function TicketDetailsView() {
@@ -22,6 +23,7 @@ export default function TicketDetailsView() {
   const [isEditing, setIsEditing] = useState(false);
   const [showTransferDropdown, setShowTransferDropdown] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedFile, setSelectedFile] = useState(null);
   const userRole = localStorage.getItem("userRole") || "engineer";
   const currentUserName = localStorage.getItem("userName");
 
@@ -207,6 +209,9 @@ export default function TicketDetailsView() {
       if (ticket.status !== initialStatus) {
         eventMsg = `Status changed to ${ticket.status}`;
       }
+      if (selectedFile) {
+        eventMsg += " (Attachment added)";
+      }
 
       const timelineEntry = {
         date: now,
@@ -217,26 +222,33 @@ export default function TicketDetailsView() {
 
       const updatedTimeline = [...ticket.timeline, timelineEntry];
 
-      const response = await fetch(`http://localhost:5000/api/tickets/${ticket.id}`, {
+      const formData = new FormData();
+      formData.append('status', ticket.status);
+      formData.append('severity', ticket.severity);
+      formData.append('issue_subject', ticket.issueSubject);
+      formData.append('issue_description', ticket.issueDescription);
+      formData.append('engineer_remarks', ticket.engineerRemarks);
+      formData.append('problem_resolution', ticket.problemResolution);
+      formData.append('rough_notes', ticket.roughNotes);
+      formData.append('timeline', JSON.stringify(updatedTimeline));
+      
+      if (selectedFile) {
+        formData.append('attachment', selectedFile);
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tickets/${ticket.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: ticket.status,
-          severity: ticket.severity,
-          issue_subject: ticket.issueSubject,
-          issue_description: ticket.issueDescription,
-          engineer_remarks: ticket.engineerRemarks,
-          problem_resolution: ticket.problemResolution,
-          rough_notes: ticket.roughNotes,
-          timeline: updatedTimeline
-        })
+        body: formData
       });
 
       if (response.ok) {
         setTicket(prev => ({ ...prev, timeline: updatedTimeline }));
         setInitialStatus(ticket.status); // Update initial status to current
         setIsEditing(false);
+        setSelectedFile(null);
         toast.success("Ticket updated successfully!");
+        // Refresh ticket to get new attachment
+        window.location.reload();
       } else {
         toast.error("Failed to update ticket");
       }
@@ -640,6 +652,72 @@ export default function TicketDetailsView() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* Attachments Section */}
+          <div className="bg-white dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Paperclip className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              Attachments
+            </h2>
+            <div className="space-y-4">
+              {ticket.attachments && ticket.attachments.length > 0 ? (
+                <div className="space-y-2">
+                  {ticket.attachments.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded text-indigo-600 dark:text-indigo-400">
+                          <Paperclip className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[200px]">
+                            {file.file_name}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-slate-400">
+                            {(file.file_size / 1024).toFixed(1)} KB
+                          </p>
+                        </div>
+                      </div>
+                      <a
+                        href={file.file_path}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+                      >
+                        View
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-slate-400 italic">No attachments</p>
+              )}
+
+              {isEditing && (
+                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                    Add New Attachment
+                  </label>
+                  <input
+                    type="file"
+                    onChange={(e) => setSelectedFile(e.target.files[0])}
+                    className="block w-full text-sm text-gray-500 dark:text-slate-400
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-full file:border-0
+                      file:text-sm file:font-semibold
+                      file:bg-indigo-50 file:text-indigo-700
+                      hover:file:bg-indigo-100
+                      dark:file:bg-indigo-900/30 dark:file:text-indigo-300
+                    "
+                  />
+                  {selectedFile && (
+                    <p className="mt-2 text-xs text-green-600 dark:text-green-400">
+                      Selected: {selectedFile.name}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
