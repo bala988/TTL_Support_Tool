@@ -11,9 +11,10 @@ import SalesOpportunityView from "./components/sales/SalesOpportunityView";
 import EngineerLayout from "./components/common/EngineerLayout";
 
 // Attendance Module Imports
+// Attendance Module Imports
 import AttendanceEmployeeDashboard from "./modules/attendance/pages/EmployeeDashboard";
 import AttendanceAdminDashboard from "./modules/attendance/pages/AdminDashboard";
-import AttendanceProfile from "./modules/attendance/pages/Profile";
+import Profile from "./components/profile/Profile"; // Updated import
 import AdminEmployeeDetail from "./modules/attendance/pages/AdminEmployeeDetail";
 import EmployeeClaimPage from "./modules/reimbursement/pages/EmployeeClaimPage";
 import AdminReimbursementPage from "./modules/reimbursement/pages/AdminReimbursementPage";
@@ -56,6 +57,11 @@ export default function App() {
         } />
 
         <Route path="/engineer/dashboard" element={<EngineerDashboard />} />
+        <Route path="/engineer/dashboard/profile" element={
+          <EngineerLayout>
+            <Profile />
+          </EngineerLayout>
+        } />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/tickets/create" element={<TicketCreationForm />} />
         <Route path="/tickets/:id" element={<TicketDetailsView />} />
@@ -88,11 +94,7 @@ export default function App() {
             <AttendanceAdminDashboard />
           </EngineerLayout>
         } />
-        <Route path="/attendance/profile" element={
-          <EngineerLayout>
-            <AttendanceProfile />
-          </EngineerLayout>
-        } />
+        {/* Profile removed from attendance routes */}
         <Route path="/attendance/admin/employees/:id" element={
           <EngineerLayout>
             <AdminEmployeeDetail />

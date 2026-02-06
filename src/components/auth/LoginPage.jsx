@@ -29,6 +29,7 @@ export default function LoginPage() {
           localStorage.setItem("userId", data.user.id);
           localStorage.setItem("userName", data.user.name);
           localStorage.setItem("userPhone", data.user.phone || "");
+          localStorage.setItem("user", JSON.stringify(data.user));
 
           if (data.user.role === "admin") {
             navigate("/admin/dashboard");

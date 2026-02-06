@@ -68,7 +68,13 @@ export const login = async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        role: user.role
+        role: user.role,
+        profilePicture: user.profile_picture,
+        homeAddress: user.home_address,
+        aadharNumber: user.aadhar_number,
+        panNumber: user.pan_number,
+        bloodGroup: user.blood_group,
+        emergencyContact: user.emergency_contact
       }
     });
   } catch (error) {
@@ -83,5 +89,36 @@ export const getAllUsers = async (req, res) => {
   } catch (error) {
     console.error("Get all users error:", error);
     res.status(500).json({ message: "Server error fetching users" });
+  }
+};
+
+
+export const getMe = async (req, res) => {
+  try {
+    const user = req.user; // Attached by verifyToken middleware
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      status: "success",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        profilePicture: user.profile_picture,
+        homeAddress: user.home_address,
+        aadharNumber: user.aadhar_number,
+        panNumber: user.pan_number,
+        bloodGroup: user.blood_group,
+        emergencyContact: user.emergency_contact
+      }
+    });
+  } catch (error) {
+    console.error("GetMe error:", error);
+    res.status(500).json({ message: "Server error fetching profile" });
   }
 };

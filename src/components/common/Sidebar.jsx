@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, TicketPlus, Shield, LogOut, Users, BookOpen, FileText, Briefcase, PieChart, UserPlus, ChevronLeft, ChevronRight, Sun, Moon, ClipboardCheck } from 'lucide-react';
+import { LayoutDashboard, TicketPlus, Shield, LogOut, Users, BookOpen, FileText, Briefcase, PieChart, UserPlus, ChevronLeft, ChevronRight, Sun, Moon, ClipboardCheck, UserCog, Pencil } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function Sidebar({ userRole = 'engineer', currentPage, onNavigate, onLogout }) {
@@ -91,6 +91,8 @@ export default function Sidebar({ userRole = 'engineer', currentPage, onNavigate
   });
 
   const userName = localStorage.getItem("userName");
+  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const profilePic = storedUser.profilePicture || storedUser.profile_picture;
 
   return (
     <div
@@ -106,15 +108,39 @@ export default function Sidebar({ userRole = 'engineer', currentPage, onNavigate
       </button>
 
       <div className={`p-6 border-b border-gray-800 dark:border-servicenow-light ${isCollapsed ? 'px-2 flex justify-center' : ''}`}>
-        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
-          <div className="bg-indigo-600 p-2 rounded-lg shrink-0">
-            <Shield className="w-6 h-6" />
+        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between gap-3'}`}>
+          <div className="flex items-center gap-3 overflow-hidden">
+             <div className="bg-indigo-600 p-2 rounded-lg shrink-0">
+               <Shield className="w-6 h-6" />
+             </div>
+             {!isCollapsed && (
+               <div className="overflow-hidden">
+                 <div className="font-bold truncate">IT Support</div>
+                 <div className="text-xs text-gray-400 capitalize truncate">{userRole} Portal</div>
+                 {userName && <div className="text-xs text-green-500 mt-1 font-medium truncate">Hello, {userName.split(' ')[0]}</div>}
+               </div>
+             )}
           </div>
+          
+          {/* Profile Icon */}
           {!isCollapsed && (
-            <div className="overflow-hidden">
-              <div className="font-bold truncate">IT Support</div>
-              <div className="text-xs text-gray-400 capitalize truncate">{userRole} Portal</div>
-              {userName && <div className="text-xs text-green-500 mt-2 font-medium truncate">Hello, {userName.split(' ')[0]}</div>}
+            <div 
+              onClick={() => onNavigate('profile')}
+              className="group relative w-12 h-12 rounded-full border-2 border-indigo-500 overflow-hidden cursor-pointer hover:border-indigo-400 transition-all shrink-0 flex items-center justify-center bg-gray-800"
+              title="Edit Profile"
+            >
+              {profilePic ? (
+                <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-lg font-bold text-white">
+                  {userName ? userName.charAt(0).toUpperCase() : 'U'}
+                </span>
+              )}
+              
+              {/* Hover Overlay */}
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Pencil className="w-4 h-4 text-white" />
+              </div>
             </div>
           )}
         </div>

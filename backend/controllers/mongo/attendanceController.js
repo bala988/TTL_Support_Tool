@@ -221,17 +221,17 @@ export const getWorklogsByRange = async (req, res, next) => {
 // @access  Private (Employee)
 export const updateProfile = async (req, res, next) => {
   try {
-    const { fullName, phoneNumber } = req.body;
+    const { fullName, phoneNumber, homeAddress, aadharNumber, panNumber, bloodGroup, emergencyContact, profilePicture } = req.body;
     
     // Update fields
     if (fullName) req.mongoUser.fullName = fullName;
     if (phoneNumber) req.mongoUser.phoneNumber = phoneNumber;
-    
-    // Note: Profile picture handling would go here if we were uploading to cloud/server
-    // For now we assume it's just text updates or base64 (which is large, but handled if passed)
-    if (req.body.profilePicture) {
-        req.mongoUser.profilePicture = req.body.profilePicture;
-    }
+    if (homeAddress) req.mongoUser.homeAddress = homeAddress;
+    if (aadharNumber) req.mongoUser.aadharNumber = aadharNumber;
+    if (panNumber) req.mongoUser.panNumber = panNumber;
+    if (bloodGroup) req.mongoUser.bloodGroup = bloodGroup;
+    if (emergencyContact) req.mongoUser.emergencyContact = emergencyContact;
+    if (profilePicture) req.mongoUser.profilePicture = profilePicture;
     
     const updatedUser = await req.mongoUser.save();
     
@@ -239,10 +239,16 @@ export const updateProfile = async (req, res, next) => {
     try {
       if (updatedUser.email) {
         await db.query(
-          "UPDATE users SET name = ?, phone = ? WHERE email = ?",
+          "UPDATE users SET name = ?, phone = ?, home_address = ?, aadhar_number = ?, pan_number = ?, blood_group = ?, emergency_contact = ?, profile_picture = ? WHERE email = ?",
           [
             updatedUser.fullName, 
             updatedUser.phoneNumber || null, 
+            updatedUser.homeAddress || null,
+            updatedUser.aadharNumber || null,
+            updatedUser.panNumber || null,
+            updatedUser.bloodGroup || null,
+            updatedUser.emergencyContact || null,
+            updatedUser.profilePicture || null,
             updatedUser.email
           ]
         );
@@ -263,7 +269,12 @@ export const updateProfile = async (req, res, next) => {
              role: updatedUser.role,
              employeeId: updatedUser.employeeId,
              phoneNumber: updatedUser.phoneNumber,
-             profilePicture: updatedUser.profilePicture
+             profilePicture: updatedUser.profilePicture,
+             homeAddress: updatedUser.homeAddress,
+             aadharNumber: updatedUser.aadharNumber,
+             panNumber: updatedUser.panNumber,
+             bloodGroup: updatedUser.bloodGroup,
+             emergencyContact: updatedUser.emergencyContact
         }
       },
     });

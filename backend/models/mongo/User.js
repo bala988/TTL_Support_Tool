@@ -30,6 +30,11 @@ const userSchema = new mongoose.Schema(
     profilePicture: {
       type: String, // Store as base64 string
     },
+    homeAddress: String,
+    aadharNumber: String,
+    panNumber: String,
+    bloodGroup: String,
+    emergencyContact: String,
     passwordHash: {
       type: String,
       required: [true, 'Password is required'],

@@ -22,6 +22,7 @@ export default function EngineerLayout({ children }) {
     if (path === '/admin/register') return 'register-user';
     if (path.startsWith('/attendance')) return 'attendance';
     if (path.startsWith('/employee/reimbursement')) return 'employee/reimbursement';
+    if (path === '/engineer/dashboard/profile') return 'profile';
     if (path.startsWith('/admin/reimbursement-approval')) return 'admin/reimbursement-approval';
     return 'engineer-dashboard';
   };
@@ -30,6 +31,9 @@ export default function EngineerLayout({ children }) {
     switch (page) {
       case 'engineer-dashboard':
         navigate('/engineer/dashboard');
+        break;
+      case 'profile':
+        navigate('/engineer/dashboard/profile');
         break;
       case 'sales-dashboard':
         navigate('/sales/dashboard');

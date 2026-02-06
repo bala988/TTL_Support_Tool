@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import EngineerLayout from "../common/EngineerLayout";
+import DashboardHeader from "../common/DashboardHeader"; // Import new header
 import { useNavigate } from "react-router-dom";
 import toast from 'react-hot-toast';
 import { Ticket, Clock, CheckCircle, AlertTriangle } from "lucide-react";
@@ -150,10 +151,10 @@ export default function EngineerDashboard() {
   return (
     <EngineerLayout>
       <div className="p-8 max-w-[1400px] mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Engineer Dashboard</h1>
-        <p className="text-gray-600 dark:text-slate-400 mt-2">
-          Welcome back! Here's your ticket overview
-        </p>
+        <DashboardHeader 
+          title="Engineer Dashboard" 
+          subtitle="Welcome back! Here's your ticket overview" 
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 my-8">
           <StatsCard
