@@ -2,9 +2,6 @@ import { format } from 'date-fns';
 import Card from '../ui/Card';
 import { Link } from 'react-router-dom';
 
-// Removed explicit logo import to avoid build errors if assets missing
-// import { COMPANY_LOGO } from '../../assets/logo';
-
 const HeaderCard = ({ user }) => {
   const today = format(new Date(), 'EEEE, MMMM d, yyyy');
 
@@ -39,8 +36,8 @@ const HeaderCard = ({ user }) => {
           </div>
         </div>
 
-        <Link to="/attendance/profile" className="group relative">
-          <div className="w-16 h-16 rounded-full border-4 border-white/30 shadow-xl overflow-hidden hover:border-white transition-all duration-300 transform hover:scale-105 bg-white/20 backdrop-blur-md flex items-center justify-center">
+        <div className="group relative">
+          <div className="w-16 h-16 rounded-full border-4 border-white/30 shadow-xl overflow-hidden bg-white/20 backdrop-blur-md flex items-center justify-center">
             {user?.profilePicture ? (
               <img 
                 src={user.profilePicture} 
@@ -48,15 +45,12 @@ const HeaderCard = ({ user }) => {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-2xl font-bold text-white group-hover:scale-110 transition-transform">
+              <span className="text-2xl font-bold text-white">
                 {user?.fullName ? user.fullName.charAt(0) : 'U'}
               </span>
             )}
           </div>
-          <div className="absolute -bottom-2 right-0 bg-primary-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            EDIT
-          </div>
-        </Link>
+        </div>
       </div>
     </Card>
   );
