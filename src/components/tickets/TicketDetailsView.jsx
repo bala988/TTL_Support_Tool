@@ -20,6 +20,9 @@ export default function TicketDetailsView() {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  // Dynamic API URL handling for local network access
+  const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
+
   const [isEditing, setIsEditing] = useState(false);
   const [showTransferDropdown, setShowTransferDropdown] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -38,7 +41,7 @@ export default function TicketDetailsView() {
   useEffect(() => {
     const fetchTicketDetails = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tickets/${id}`);
+        const response = await fetch(`${API_URL}/api/tickets/${id}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -321,7 +324,7 @@ export default function TicketDetailsView() {
     setTicket(updatedTicket);
 
     try {
-      const response = await fetch(`http://localhost:5000/api/tickets/${ticket.id}`, {
+      const response = await fetch(`${API_URL}/api/tickets/${ticket.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -369,7 +372,7 @@ export default function TicketDetailsView() {
 
     try {
       // Call update API
-      const response = await fetch(`http://localhost:5000/api/tickets/${ticket.id}`, {
+      const response = await fetch(`${API_URL}/api/tickets/${ticket.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -396,7 +399,7 @@ export default function TicketDetailsView() {
 
   const handleSaveRoughNotes = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tickets/${ticket.id}`, {
+      const response = await fetch(`${API_URL}/api/tickets/${ticket.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -424,7 +427,7 @@ export default function TicketDetailsView() {
 
   const handleTransfer = async (engineer) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/tickets/${ticket.id}/transfer`, {
+      const response = await fetch(`${API_URL}/api/tickets/${ticket.id}/transfer`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ assigned_engineer: engineer })

@@ -82,6 +82,21 @@ export const createTicket = async (req, res) => {
 
     const ticketNumber = `${prefix}${String(nextSeq).padStart(4, '0')}`;
 
+    // Fix: Ensure open_date is in valid MySQL DATETIME format (YYYY-MM-DD HH:MM:SS)
+    // If open_date is ISO string (2025-02-07T10:00:00.000Z), slice it.
+    // If it is just Date (YYYY-MM-DD), append time.
+    let formattedOpenDate = open_date ? new Date(open_date) : new Date();
+    if (isNaN(formattedOpenDate.getTime())) {
+        formattedOpenDate = new Date();
+    }
+    // Convert to MySQL format
+    const toMySQLDate = (date) => {
+        return date.toISOString().slice(0, 19).replace('T', ' ');
+    };
+    
+    // Ensure created_by is valid (handle potential empty string)
+    const creatorId = created_by && created_by !== "undefined" && created_by !== "null" ? created_by : null;
+
     const [result] = await db.query(
       `INSERT INTO tickets (
         ticket_number,
@@ -99,7 +114,7 @@ export const createTicket = async (req, res) => {
         assigned_engineer, engineer_phone, engineer_email,
         issue_subject, issue_description, oem_tac_involved, tac_case_number,
         engineer_remarks, problem_resolution, reference_url,
-        open_date || new Date(), close_date || null, created_by, JSON.stringify(initialTimeline)
+        toMySQLDate(formattedOpenDate), close_date || null, creatorId, JSON.stringify(initialTimeline)
       ]
     );
 
@@ -107,7 +122,7 @@ export const createTicket = async (req, res) => {
 
     // Handle attachment
     if (req.file) {
-      console.log(`Processing attachment: ${req.file.originalname}`);
+      console.log(`Processing attachment for ticket ${ticketNumber}: ${req.file.originalname}`);
 
       // Construct new filename: ticketno_issue_description(first 20 char)
       const cleanDesc = (issue_description || 'issue').replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20);
@@ -120,12 +135,17 @@ export const createTicket = async (req, res) => {
       const folderId = getCustomerFolderId(customer_name);
       console.log(`Uploading to folder: ${folderId} for customer: ${customer_name}`);
       
-      const driveResult = await uploadFileToDrive(
-        req.file.path,
-        newFileName,
-        req.file.mimetype,
-        folderId
-      );
+      let driveResult = { success: false };
+      try {
+          driveResult = await uploadFileToDrive(
+            req.file.path,
+            newFileName,
+            req.file.mimetype,
+            folderId
+          );
+      } catch (driveError) {
+          console.error("Drive upload exception:", driveError);
+      }
 
       if (driveResult.success) {
         console.log("Attachment uploaded to Google Drive successfully");
@@ -133,25 +153,35 @@ export const createTicket = async (req, res) => {
 
         // Delete local temp file
         try {
-          fs.unlinkSync(req.file.path);
+          if (fs.existsSync(req.file.path)) {
+             fs.unlinkSync(req.file.path);
+          }
         } catch (e) {
           console.warn("Failed to delete temp file after Drive upload:", e);
         }
       } else {
-        console.warn("Google Drive upload failed, falling back to local storage. Error:", driveResult.error);
+        console.warn("Google Drive upload failed, falling back to local storage. Error:", driveResult.error || "Unknown error");
 
         // Fallback: Move to permanent local storage
-        const targetDir = `uploads/tickets/${ticketId}`;
+        const targetDir = path.join('uploads', 'tickets', String(ticketId)); // Use path.join for cross-platform
         if (!fs.existsSync(targetDir)) {
           fs.mkdirSync(targetDir, { recursive: true });
         }
 
         const targetPath = path.join(targetDir, newFileName);
-        // Rename (move) file from temp to target
-        // check if file exists at req.file.path (it might not if upload logic messed with it, but here it should be fine)
-        if (fs.existsSync(req.file.path)) {
-          fs.renameSync(req.file.path, targetPath);
-          filePath = targetPath;
+        
+        // Copy and delete (safer than rename across partitions/mounts)
+        try {
+            if (fs.existsSync(req.file.path)) {
+                fs.copyFileSync(req.file.path, targetPath);
+                fs.unlinkSync(req.file.path);
+                filePath = targetPath;
+            } else {
+                console.error("Temp file not found for fallback move:", req.file.path);
+            }
+        } catch (moveError) {
+            console.error("Failed to move file locally:", moveError);
+            // Don't fail the request, just log it. Ticket is created.
         }
       }
 

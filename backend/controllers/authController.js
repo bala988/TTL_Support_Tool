@@ -22,8 +22,20 @@ export const signup = async (req, res) => {
 
     // Insert new user
     const [result] = await db.query(
-      "INSERT INTO users (name, email, phone, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?, NOW())",
-      [name, email, req.body.phone, passwordHash, (role === 'sales' ? 'sales' : 'engineer')]
+      "INSERT INTO users (name, email, phone, password_hash, role, profile_picture, home_address, aadhar_number, pan_number, blood_group, emergency_contact, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
+      [
+        name,
+        email,
+        req.body.phone || null,
+        passwordHash,
+        role === 'sales' ? 'sales' : 'engineer',
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
     );
 
     res.status(201).json({

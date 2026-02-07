@@ -3,6 +3,7 @@ import { db } from '../../config/db.js';
 import Attendance from '../../models/mongo/Attendance.js';
 import Worklog from '../../models/mongo/Worklog.js';
 import validateWorklogOverlap from '../../utils/validateWorklogOverlap.js';
+import bcrypt from 'bcrypt';
 
 // Validation schemas
 const attendanceSchema = z.object({
@@ -221,7 +222,7 @@ export const getWorklogsByRange = async (req, res, next) => {
 // @access  Private (Employee)
 export const updateProfile = async (req, res, next) => {
   try {
-    const { fullName, phoneNumber, homeAddress, aadharNumber, panNumber, bloodGroup, emergencyContact, profilePicture } = req.body;
+    const { fullName, phoneNumber, homeAddress, aadharNumber, panNumber, bloodGroup, emergencyContact, profilePicture, newPassword } = req.body;
     
     // Update fields
     if (fullName) req.mongoUser.fullName = fullName;
@@ -232,30 +233,49 @@ export const updateProfile = async (req, res, next) => {
     if (bloodGroup) req.mongoUser.bloodGroup = bloodGroup;
     if (emergencyContact) req.mongoUser.emergencyContact = emergencyContact;
     if (profilePicture) req.mongoUser.profilePicture = profilePicture;
+    if (newPassword) req.mongoUser.passwordHash = newPassword;
     
     const updatedUser = await req.mongoUser.save();
     
-    // Sync to MySQL (Ticketing System Database)
     try {
       if (updatedUser.email) {
-        await db.query(
-          "UPDATE users SET name = ?, phone = ?, home_address = ?, aadhar_number = ?, pan_number = ?, blood_group = ?, emergency_contact = ?, profile_picture = ? WHERE email = ?",
-          [
-            updatedUser.fullName, 
-            updatedUser.phoneNumber || null, 
-            updatedUser.homeAddress || null,
-            updatedUser.aadharNumber || null,
-            updatedUser.panNumber || null,
-            updatedUser.bloodGroup || null,
-            updatedUser.emergencyContact || null,
-            updatedUser.profilePicture || null,
-            updatedUser.email
-          ]
-        );
+        if (newPassword) {
+          const salt = await bcrypt.genSalt(10);
+          const mysqlPasswordHash = await bcrypt.hash(newPassword, salt);
+          await db.query(
+            "UPDATE users SET name = ?, phone = ?, home_address = ?, aadhar_number = ?, pan_number = ?, blood_group = ?, emergency_contact = ?, profile_picture = ?, password_hash = ? WHERE email = ?",
+            [
+              updatedUser.fullName,
+              updatedUser.phoneNumber || null,
+              updatedUser.homeAddress || null,
+              updatedUser.aadharNumber || null,
+              updatedUser.panNumber || null,
+              updatedUser.bloodGroup || null,
+              updatedUser.emergencyContact || null,
+              updatedUser.profilePicture || null,
+              mysqlPasswordHash,
+              updatedUser.email
+            ]
+          );
+        } else {
+          await db.query(
+            "UPDATE users SET name = ?, phone = ?, home_address = ?, aadhar_number = ?, pan_number = ?, blood_group = ?, emergency_contact = ?, profile_picture = ? WHERE email = ?",
+            [
+              updatedUser.fullName, 
+              updatedUser.phoneNumber || null, 
+              updatedUser.homeAddress || null,
+              updatedUser.aadharNumber || null,
+              updatedUser.panNumber || null,
+              updatedUser.bloodGroup || null,
+              updatedUser.emergencyContact || null,
+              updatedUser.profilePicture || null,
+              updatedUser.email
+            ]
+          );
+        }
       }
     } catch (mysqlError) {
       console.error('MySQL Sync Error:', mysqlError);
-      // Continue without failing the request, as MongoDB update was successful
     }
     
     res.status(200).json({

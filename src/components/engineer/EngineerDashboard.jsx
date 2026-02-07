@@ -31,7 +31,7 @@ export default function EngineerDashboard() {
   useEffect(() => {
     const fetchTickets = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/tickets/dashboard');
+        const response = await fetch(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/tickets/dashboard`);
         const data = await response.json();
         // Map API response to UI model
         const mappedTickets = data.map(t => ({
@@ -51,7 +51,7 @@ export default function EngineerDashboard() {
       const userId = localStorage.getItem("userId");
       if (!userId) return;
       try {
-        const response = await fetch(`http://localhost:5000/api/approvals/my/${userId}`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/approvals/my/${userId}`);
         const data = await response.json();
         const map = {};
         // backend returns { ticket_id, access } where access is 1 (true) or 0 (false)

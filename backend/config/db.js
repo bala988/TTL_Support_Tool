@@ -9,7 +9,7 @@ export const db = mysql.createPool({
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : "root",
 
-  database: process.env.DB_NAME || "tutelar_tech_labs",
+  database: process.env.DB_NAME || "ttl_support_tool",
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,

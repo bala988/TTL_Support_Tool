@@ -95,6 +95,23 @@ export async function uploadCSVToDrive(csvContent, filename, folderId = null) {
     console.log(`   File ID: ${response.data.id}`);
     console.log(`   View: ${response.data.webViewLink || 'N/A'}`);
 
+    // Make the file publicly readable (or at least readable by anyone with the link)
+    try {
+      // Add a small delay to ensure file propagation
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      await drive.permissions.create({
+        fileId: response.data.id,
+        requestBody: {
+          role: 'reader',
+          type: 'anyone',
+        },
+      });
+      console.log('   Permissions: File made public (reader/anyone)');
+    } catch (permError) {
+      console.warn('   ⚠️ Failed to set file permissions:', permError.message);
+    }
+
     return {
       success: true,
       fileId: response.data.id,
@@ -172,9 +189,22 @@ export async function uploadFileToDrive(filePath, filename, mimeType, folderId =
       supportsTeamDrives: true, // Legacy support
     });
 
-    console.log(`✅ File uploaded to Google Drive: ${filename}`);
-    console.log(`   File ID: ${response.data.id}`);
-    console.log(`   View: ${response.data.webViewLink || 'N/A'}`);
+    // Make the file publicly readable (or at least readable by anyone with the link)
+    try {
+      // Add a small delay to ensure file propagation
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      await drive.permissions.create({
+        fileId: response.data.id,
+        requestBody: {
+          role: 'reader',
+          type: 'anyone',
+        },
+      });
+      console.log('   Permissions: File made public (reader/anyone)');
+    } catch (permError) {
+      console.warn('   ⚠️ Failed to set file permissions:', permError.message);
+    }
 
     return {
       success: true,

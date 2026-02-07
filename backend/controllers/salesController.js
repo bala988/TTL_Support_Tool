@@ -199,10 +199,52 @@ export const updateOpportunity = async (req, res) => {
             const sUpdates = [];
             const sParams = [];
             
+            // Known date columns that must be NULL if empty string
+            const dateColumns = [
+                'meeting_date_dm', 'rant_date', 'poc_kickoff_date', 'poc_completion_date', 
+                'order_placement_date', 'milestones_timeline', 'invoice_submission_followup',
+                'milestones_tracking_meet'
+            ];
+            
+            // Known ENUM columns that might fail with empty string (Stage 2+)
+            const enumColumns = [
+                // Stage 2
+                'tqd_presentation_yn', 'oem_presentation_yn', 'flp_yn', 'handoff_presales', 
+                'tech_solution_mapping', 'collect_use_cases', 'tech_success_doc', 'use_case_signoff', 
+                'oem_approval',
+                // Stage 3
+                'poc_detailed_doc_yn', 'tech_solution_final_yn', 'boq_approval_yn', 'handoff_tech', 
+                'integration_solution_yn', 'boq_version_yn',
+                // Stage 4
+                'commercial_closure', 'technical_sow_closure', 'distributor_discount_yn',
+                'final_po_payment_terms_yn', 'internal_finance_approval',
+                // Stage 5
+                'b2b_ordering', 'product_delivery_type', 'verify_margins_yn', 'cross_verify_boq_yn', 
+                'payment_terms_negotiation', 'product_license_delivery_yn', 'delivery_confirmation_yn',
+                // Stage 6
+                'uat_signoff', 'project_plan_tech_align', 'milestones_tracking_yn',
+                'admin_training', 'uat_completion_doc_yn', 'project_signoff', 'closure_mail_yn',
+                // Stage 7
+                'invoice_submission_yn', 'payment_success', 'finance_confirmation', 'submit_project_doc_finance',
+                'project_signoff_approval', 'payment_confirmation_finance', 'thanks_mail_closure', 'recognition_internal_mail'
+            ];
+
             for (const key of allowedFields) {
               if (sData[key] !== undefined) {
+                let value = sData[key];
+                
+                // Fix: Convert empty string to NULL for date columns and ENUM columns
+                if ((dateColumns.includes(key) || enumColumns.includes(key)) && value === "") {
+                    value = null;
+                }
+
+                // Fix: Convert ISO date string to MySQL format for date columns
+                if (dateColumns.includes(key) && value && typeof value === 'string' && value.includes('T')) {
+                    value = value.slice(0, 19).replace('T', ' ');
+                }
+
                 sUpdates.push(`${key} = ?`);
-                sParams.push(sData[key]);
+                sParams.push(value);
               }
             }
             
@@ -281,7 +323,12 @@ export const updateOpportunity = async (req, res) => {
 
   } catch (error) {
     console.error("Update opportunity error:", error);
-    res.status(500).json({ message: "Server error updating opportunity" });
+    // Log detailed error for debugging
+    if (error.sqlMessage) {
+        console.error("SQL Message:", error.sqlMessage);
+        console.error("SQL:", error.sql);
+    }
+    res.status(500).json({ message: "Server error updating opportunity", error: error.message });
   }
 };
 
@@ -303,11 +350,12 @@ export const uploadSalesDocument = async (req, res) => {
 
     console.log(`Uploading file for Opportunity ${id}: ${finalFileName}`);
 
-    // Use specific Sales folder from env
-    const salesFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID_SALES;
+    // Use specific Sales folder from env or fallback to provided ID
+    const salesFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID_SALES || '1TK_F4T9GhbqU3HoT_r4BI1gXFFsbpeVo';
+    console.log(`Sales Upload: Using folder ID: ${salesFolderId}`);
     
     if (!salesFolderId) {
-       console.warn("GOOGLE_DRIVE_FOLDER_ID_SALES not set in .env");
+       console.warn("GOOGLE_DRIVE_FOLDER_ID_SALES not set in .env. Files might end up in root or default folder.");
     }
 
     const result = await uploadFileToDrive(

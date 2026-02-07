@@ -14,6 +14,9 @@ export default function TicketCreationForm() {
   const userRole = localStorage.getItem("userRole");
   const dashboardPath = userRole === "admin" ? "/admin/dashboard" : "/engineer/dashboard";
 
+  // Dynamic API URL handling for local network access
+  const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
+
   const [formData, setFormData] = useState({
     severity: "Medium",
     ticketType: "Incident",
@@ -106,7 +109,7 @@ export default function TicketCreationForm() {
         data.append('attachment', formData.attachment);
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tickets/create`, {
+      const response = await fetch(`${API_URL}/api/tickets/create`, {
         method: 'POST',
         body: data
       });

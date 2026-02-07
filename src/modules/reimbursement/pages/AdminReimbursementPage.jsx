@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Check, X, Eye, FileText, Download, ChevronDown, ChevronRight, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
 
 const AdminReimbursementPage = () => {
     const [claims, setClaims] = useState([]);

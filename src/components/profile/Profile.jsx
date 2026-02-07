@@ -31,7 +31,8 @@ const Profile = () => {
       aadharNumber: "",
       panNumber: "",
       bloodGroup: "",
-      emergencyContact: ""
+      emergencyContact: "",
+      newPassword: ""
     }
   });
 
@@ -41,7 +42,7 @@ const Profile = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/me`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/auth/me`, {
            headers: {
              'Authorization': `Bearer ${token}`
            }
@@ -132,6 +133,7 @@ const Profile = () => {
         bloodGroup: data.bloodGroup,
         emergencyContact: data.emergencyContact,
         profilePicture: profilePreview,
+        newPassword: data.newPassword ? data.newPassword : undefined
       };
 
       const response = await userAPI.updateProfile(payload);
@@ -366,6 +368,16 @@ const Profile = () => {
                    <AlertCircle className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
                 </div>
                  {errors.emergencyContact && <span className="text-xs text-red-500 mt-1">{errors.emergencyContact.message}</span>}
+              </div>
+              {/* Update Password */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Update Password</label>
+                <input
+                  {...register("newPassword")}
+                  type="password"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  placeholder="Enter new password"
+                />
               </div>
             </div>
           </Card>

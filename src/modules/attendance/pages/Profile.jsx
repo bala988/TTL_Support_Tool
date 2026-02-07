@@ -22,6 +22,7 @@ const Profile = () => {
     defaultValues: {
       fullName: user?.fullName || '',
       phoneNumber: user?.phoneNumber || '',
+      newPassword: ''
     },
   });
 
@@ -58,6 +59,7 @@ const Profile = () => {
         fullName: data.fullName,
         phoneNumber: data.phoneNumber,
         profilePicture: previewImage !== user.profilePicture ? previewImage : undefined,
+        newPassword: data.newPassword ? data.newPassword : undefined,
       };
 
       // Since we don't have a profile update endpoint in employeeAPI yet, we might need to add it 
@@ -201,6 +203,15 @@ const Profile = () => {
                 </div>
 
                 <div className="pt-4 flex gap-4">
+                  <div className="flex-1">
+                    <label className="label-premium block mb-2">Update Password</label>
+                    <input
+                      {...register('newPassword')}
+                      type="password"
+                      className="input-premium w-full"
+                      placeholder="Enter new password"
+                    />
+                  </div>
                   <Button
                     type="submit"
                     variant="primary"

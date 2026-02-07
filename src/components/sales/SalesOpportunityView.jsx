@@ -9,6 +9,9 @@ export default function SalesOpportunityView() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = !!id;
+  
+  // Dynamic API URL handling for local network access
+  const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
 
   const [loading, setLoading] = useState(false);
   const [activeStage, setActiveStage] = useState(1);
@@ -106,7 +109,7 @@ export default function SalesOpportunityView() {
     if (approvalStatus === 'Pending' && id) {
       interval = setInterval(async () => {
         try {
-           const res = await fetch(`${import.meta.env.VITE_API_URL}/api/sales-approvals/status/${id}`);
+           const res = await fetch(`${API_URL}/api/sales-approvals/status/${id}`);
            const data = await res.json();
            
            if (data.status && data.status !== 'Pending') {
@@ -132,7 +135,7 @@ export default function SalesOpportunityView() {
   const fetchOpportunity = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/sales/${id}`);
+      const res = await fetch(`${API_URL}/api/sales/${id}`);
       const data = await res.json();
       
       // Populate Header
@@ -182,7 +185,7 @@ export default function SalesOpportunityView() {
 
       // Fetch Approval Status
       try {
-        const appRes = await fetch(`${import.meta.env.VITE_API_URL}/api/sales-approvals/status/${id}`);
+        const appRes = await fetch(`${API_URL}/api/sales-approvals/status/${id}`);
         const appData = await appRes.json();
         setApprovalStatus(appData.status);
         
@@ -243,7 +246,7 @@ export default function SalesOpportunityView() {
 
     try {
       const url = isEditMode 
-        ? `http://localhost:5000/api/sales/${id}/upload`
+        ? `${API_URL}/api/sales/${id}/upload`
         : null; 
       
       if (!url) {
@@ -288,7 +291,7 @@ export default function SalesOpportunityView() {
     }
     
     try {
-       const res = await fetch('http://localhost:5000/api/sales-approvals/request', {
+       const res = await fetch(`${API_URL}/api/sales-approvals/request`, {
          method: 'POST',
          headers: { 'Content-Type': 'application/json' },
          body: JSON.stringify({ 
@@ -325,8 +328,8 @@ export default function SalesOpportunityView() {
 
   const saveOpportunity = async (payload, isNextStage = false) => {
     const url = isEditMode 
-      ? `${import.meta.env.VITE_API_URL}/api/sales/${id}` 
-      : `${import.meta.env.VITE_API_URL}/api/sales`;
+      ? `${API_URL}/api/sales/${id}` 
+      : `${API_URL}/api/sales`;
     const method = isEditMode ? 'PUT' : 'POST';
 
     try {
