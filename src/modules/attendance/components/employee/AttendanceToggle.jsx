@@ -21,7 +21,7 @@ const AttendanceToggle = ({ onAttendanceMarked, refreshTrigger }) => {
   }, [onAttendanceMarked, refreshTrigger]); // Re-check if parent triggers update via prop change (if applicable) or just on mount/interval
 
   const triggerCelebration = () => {
-    const duration = 3000;
+    const duration = 1000;
     const end = Date.now() + duration;
 
     // Launch confetti from both sides
