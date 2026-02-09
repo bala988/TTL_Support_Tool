@@ -375,7 +375,7 @@ export default function TicketCreationForm() {
 
           <div className="bg-white dark:bg-servicenow-light rounded-xl border dark:border-servicenow-dark p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-              Contact Details
+              Customer Contact Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
@@ -421,7 +421,7 @@ export default function TicketCreationForm() {
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  placeholder="contact@tutelartechlabs.com"
+                  placeholder="customer@company.com"
                   required
                 />
               </div>
