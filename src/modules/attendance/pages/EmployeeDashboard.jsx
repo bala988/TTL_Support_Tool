@@ -8,7 +8,7 @@ import WorklogHistory from '../components/employee/WorklogHistory';
 import Button from '../components/ui/Button';
 
 const EmployeeDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('daily'); // 'daily', 'calendar', 'history'
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -20,11 +20,6 @@ const EmployeeDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-servicenow-dark dark:to-servicenow-dark p-6">
       
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-end mb-4">
-          <Button variant="outline" onClick={logout} className="text-sm">
-            Logout
-          </Button>
-        </div>
 
         <HeaderCard user={user} />
 

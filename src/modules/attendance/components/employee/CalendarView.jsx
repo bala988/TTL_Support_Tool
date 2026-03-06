@@ -88,7 +88,7 @@ const CalendarView = ({ refreshTrigger }) => {
   return (
     <div className="space-y-6">
       <Card>
-        <h2 className="text-2xl font-bold text-dark-900 mb-4">Calendar View</h2>
+        <h2 className="text-2xl font-bold text-dark-900 dark:text-white mb-4">Calendar View</h2>
         <div className="calendar-container">
           <FullCalendar
             plugins={[dayGridPlugin, interactionPlugin]}
@@ -107,18 +107,18 @@ const CalendarView = ({ refreshTrigger }) => {
         <div className="mt-4 flex gap-4 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 bg-green-500 rounded"></div>
-            <span className="text-dark-600">Attendance Marked</span>
+            <span className="text-dark-600 dark:text-slate-300">Attendance Marked</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 bg-blue-500 rounded"></div>
-            <span className="text-dark-600">Worklogs Added</span>
+            <span className="text-dark-600 dark:text-slate-300">Worklogs Added</span>
           </div>
         </div>
       </Card>
 
       <Card className="animate-fade-in">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-dark-900">
+          <h3 className="text-xl font-bold text-dark-900 dark:text-white">
             {selectedDate 
               ? `Worklogs for ${format(new Date(selectedDate), 'MMMM d, yyyy')}`
               : `All Worklogs (${format(new Date(), 'MMMM yyyy')})`
@@ -138,28 +138,28 @@ const CalendarView = ({ refreshTrigger }) => {
         </div>
 
         {displayedLogs.length === 0 ? (
-          <p className="text-dark-600 text-center py-4">No worklogs found</p>
+          <p className="text-dark-600 dark:text-slate-300 text-center py-4">No worklogs found</p>
         ) : (
           <div className="space-y-3">
             {displayedLogs.map((log) => (
               <div
                 key={log._id}
-                className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200"
+                className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-servicenow-dark dark:to-servicenow-light rounded-xl border-2 border-blue-200 dark:border-slate-700"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                     <span className="text-xs font-bold bg-blue-200 text-blue-800 px-2 py-0.5 rounded">
+                     <span className="text-xs font-bold bg-blue-200 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 px-2 py-0.5 rounded">
                         {format(new Date(log.date), 'MMM d')}
                      </span>
-                     <span className="text-sm font-semibold text-blue-900">
+                     <span className="text-sm font-semibold text-blue-900 dark:text-blue-100">
                       {log.fromTime} - {log.toTime}
                     </span>
                   </div>
-                  <span className="text-sm text-blue-700">
+                  <span className="text-sm text-blue-700 dark:text-blue-300">
                     {Math.floor(log.durationMinutes / 60)}h {log.durationMinutes % 60}m
                   </span>
                 </div>
-                <p className="text-dark-700">{log.activity}</p>
+                <p className="text-dark-700 dark:text-slate-300">{log.activity}</p>
               </div>
             ))}
           </div>

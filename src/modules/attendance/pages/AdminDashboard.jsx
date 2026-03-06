@@ -9,7 +9,6 @@ import Button from '../components/ui/Button';
 import Loading from '../components/ui/Loading';
 
 const AdminDashboard = () => {
-  const { logout } = useAuth();
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
   const [filteredEmployees, setFilteredEmployees] = useState([]);
@@ -65,11 +64,6 @@ const AdminDashboard = () => {
     setFilteredEmployees(filtered);
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
   const handleViewEmployee = (employeeId) => {
     navigate(`/attendance/admin/employees/${employeeId}`);
   };
@@ -113,12 +107,6 @@ const AdminDashboard = () => {
             <h1 className="text-4xl font-bold text-gradient mb-2">Admin Dashboard</h1>
             <p className="text-dark-600 dark:text-slate-400 text-lg">Tutelar Tech Labs - Employee Management</p>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <svg className="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Logout
-          </Button>
         </div>
 
         {/* Stats Cards */}
