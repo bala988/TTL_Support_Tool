@@ -144,12 +144,12 @@ const AttendanceToggle = ({ onAttendanceMarked, refreshTrigger }) => {
             <select
               value={workLocation}
               onChange={(e) => setWorkLocation(e.target.value)}
-              className="px-4 py-3 rounded-xl border border-gray-200 bg-white text-dark-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all shadow-sm cursor-pointer hover:border-primary-300"
+              className="px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-servicenow-light text-dark-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all shadow-sm cursor-pointer hover:border-primary-300 dark:hover:border-primary-500"
             >
-              <option value="" disabled>Select Location</option>
-              <option value="Work from Home">Work from Home</option>
-              <option value="Office">Office</option>
-              <option value="Client">Client</option>
+              <option value="" disabled className="bg-white dark:bg-servicenow-light text-dark-900 dark:text-white">Select Location</option>
+              <option value="Work from Home" className="bg-white dark:bg-servicenow-light text-dark-900 dark:text-white">Work from Home</option>
+              <option value="Office" className="bg-white dark:bg-servicenow-light text-dark-900 dark:text-white">Office</option>
+              <option value="Client" className="bg-white dark:bg-servicenow-light text-dark-900 dark:text-white">Client</option>
             </select>
 
             <button
