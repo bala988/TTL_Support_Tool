@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: '0.0.0.0', // Listen on all local IPs
-    port: 5173,
+    port: 5050, 
+    allowedHosts: ['localhost', 'ticket.tutelartechlabs.com', 'tutelartechlabs.com'] // Allow requests from these hosts
   }
 })
