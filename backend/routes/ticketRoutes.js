@@ -7,7 +7,9 @@ import {
   getTickets,
   getTicketById,
   updateTicket,
-  transferTicket
+  transferTicket,
+  deleteAttachment,
+  sendFeedbackEmail
 } from "../controllers/ticketController.js";
 
 const router = express.Router();
@@ -33,5 +35,7 @@ router.get("/dashboard", getTickets);
 router.get("/:id", getTicketById);
 router.put("/:id", upload.single("attachment"), updateTicket);
 router.put("/:id/transfer", transferTicket);
+router.delete("/:ticketId/attachments/:attachmentId", deleteAttachment);
+router.post("/:id/feedback-email", upload.single("feedback"), sendFeedbackEmail);
 
 export default router;

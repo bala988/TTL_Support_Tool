@@ -27,6 +27,13 @@ export default function EngineerDashboard() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [myApprovals, setMyApprovals] = useState({});
+  // Filters for My Assigned Tickets
+  const [filterCustomer, setFilterCustomer] = useState('All');
+  const [filterProduct, setFilterProduct] = useState('All');
+  const [filterStatus, setFilterStatus] = useState('All');
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
+  const [searchTicketId, setSearchTicketId] = useState('');
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -112,6 +119,29 @@ export default function EngineerDashboard() {
   const userName = localStorage.getItem("userName");
   const myTickets = tickets.filter(t => t.assignedEngineer === userName);
   const otherTickets = tickets.filter(t => t.assignedEngineer !== userName);
+
+  // Unique lists for filter dropdowns (from my tickets)
+  const uniqueCustomers = ['All', ...new Set(myTickets.map(t => t.customer).filter(Boolean))];
+  const uniqueProducts = ['All', ...new Set(myTickets.map(t => t.product).filter(Boolean))];
+  const uniqueStatuses = ['All', ...new Set(myTickets.map(t => t.status).filter(Boolean))];
+
+  // Apply filter to my tickets
+  const filteredMyTickets = myTickets.filter(t => {
+    const matchCustomer = filterCustomer === 'All' || t.customer === filterCustomer;
+    const matchProduct = filterProduct === 'All' || t.product === filterProduct;
+    const matchStatus = filterStatus === 'All' || t.status === filterStatus;
+    const s = searchTicketId.trim().toLowerCase();
+    const matchSearch = s === '' || (String(t.ticket_number || '').toLowerCase().includes(s)) || String(t.id).includes(s);
+    let matchDate = true;
+    if (filterStartDate && filterEndDate) {
+      const ticketDate = new Date(t.open_date || t.openDate);
+      const start = new Date(filterStartDate);
+      const end = new Date(filterEndDate);
+      end.setHours(23, 59, 59, 999);
+      matchDate = ticketDate >= start && ticketDate <= end;
+    }
+    return matchCustomer && matchProduct && matchStatus && matchDate && matchSearch;
+  });
 
   // Filter tickets that are either assigned to the user or have access granted
   const accessibleTickets = tickets.filter(t => {
@@ -248,8 +278,67 @@ export default function EngineerDashboard() {
               Create New Ticket
             </button>
           </div>
+          {/* Filters */}
+          <div className="bg-white dark:bg-servicenow-light p-4 rounded-xl border border-gray-200 dark:border-servicenow-dark shadow-sm mb-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex flex-wrap gap-4 items-center">
+                <select
+                  value={filterCustomer}
+                  onChange={(e) => setFilterCustomer(e.target.value)}
+                  className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                >
+                  <option value="All">All Customers</option>
+                  {uniqueCustomers.filter(c => c !== 'All').map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+                <select
+                  value={filterProduct}
+                  onChange={(e) => setFilterProduct(e.target.value)}
+                  className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                >
+                  <option value="All">All Products</option>
+                  {uniqueProducts.filter(p => p !== 'All').map(p => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                >
+                  <option value="All">All Statuses</option>
+                  {uniqueStatuses.filter(s => s !== 'All').map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={searchTicketId}
+                  onChange={(e) => setSearchTicketId(e.target.value)}
+                  placeholder="Search Ticket ID"
+                  className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2"
+                />
+                <input
+                  type="date"
+                  value={filterStartDate}
+                  onChange={(e) => setFilterStartDate(e.target.value)}
+                  className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+                <span className="text-sm text-gray-500">to</span>
+                <input
+                  type="date"
+                  value={filterEndDate}
+                  onChange={(e) => setFilterEndDate(e.target.value)}
+                  className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+          </div>
           <TicketsTable
-            tickets={myTickets}
+            tickets={filteredMyTickets}
             onTicketClick={(ticketId) => navigate(`/tickets/${ticketId}`)}
             actionLabel="View"
           />

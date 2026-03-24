@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Save, AlertCircle, Upload, CheckCircle } from "lucide-react";
+import { ArrowLeft, Save, AlertCircle, Upload, CheckCircle, Plus, Minus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import emailjs from '@emailjs/browser';
 import toast from 'react-hot-toast';
@@ -23,8 +23,7 @@ export default function TicketCreationForm() {
     technologyDomain: "Network Security",
     customerName: "",
     customerId: "",
-    tsgId: "",
-    cspId: "",
+    uniqueId: "",
     contactName: "",
     phone: "",
     email: "",
@@ -38,7 +37,7 @@ export default function TicketCreationForm() {
     engineerRemarks: "",
     problemResolution: "",
     attachment: null,
-    referenceUrl: "",
+    referenceUrls: [""],
     // Use full ISO string to include time, but for date input we only need YYYY-MM-DD
     // However, when submitting, we should probably send the full timestamp if the backend relies on it
     // For now, let's keep the date picker working but handle submission separately
@@ -55,16 +54,25 @@ export default function TicketCreationForm() {
     setIsSubmitting(true);
 
     try {
+      // Frontend validation for 10-digit phone number
+      const phoneDigits = String(formData.phone || '').replace(/\D/g, '');
+      if (phoneDigits.length !== 10) {
+        toast.error("Please enter a valid 10-digit mobile number");
+        setIsSubmitting(false);
+        return;
+      }
+
       const data = new FormData();
       data.append('severity', formData.severity);
       data.append('ticket_type', formData.ticketType);
       data.append('technology_domain', formData.technologyDomain);
       data.append('customer_name', formData.customerName);
       data.append('customer_serial_no', formData.customerId);
-      data.append('tsg_id', formData.tsgId);
-      data.append('csp_id', formData.cspId);
+      // Merge CSP ID and TSG ID into a single Unique ID by sending to both fields for compatibility
+      data.append('tsg_id', formData.uniqueId);
+      data.append('csp_id', formData.uniqueId);
       data.append('contact_name', formData.contactName);
-      data.append('contact_phone', formData.phone);
+      data.append('contact_phone', phoneDigits);
       data.append('contact_email', formData.email);
 
       // Ensure assigned_engineer is set to the current user (creator)
@@ -79,7 +87,9 @@ export default function TicketCreationForm() {
       data.append('tac_case_number', formData.tacCaseNumber);
       data.append('engineer_remarks', formData.engineerRemarks);
       data.append('problem_resolution', formData.problemResolution);
-      data.append('reference_url', formData.referenceUrl);
+      // Multiple reference URLs support: join as pipe-separated string
+      const cleanedUrls = (formData.referenceUrls || []).map(u => (u || '').trim()).filter(Boolean);
+      data.append('reference_url', cleanedUrls.join(' | '));
 
       // Fix: If openDate matches today's date (YYYY-MM-DD), send the current full timestamp in LOCAL time
       // to avoid UTC conversion issues (e.g. appearing as yesterday).
@@ -344,31 +354,16 @@ export default function TicketCreationForm() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                  TSG ID
+                  Unique ID
                 </label>
                 <input
                   type="text"
                   className="input"
-                  value={formData.tsgId}
+                  value={formData.uniqueId}
                   onChange={(e) =>
-                    setFormData({ ...formData, tsgId: e.target.value })
+                    setFormData({ ...formData, uniqueId: e.target.value })
                   }
-                  placeholder="Enter TSG ID"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                  CSP ID
-                </label>
-                <input
-                  type="text"
-                  className="input"
-                  value={formData.cspId}
-                  onChange={(e) =>
-                    setFormData({ ...formData, cspId: e.target.value })
-                  }
-                  placeholder="Enter CSP ID"
+                  placeholder="Enter Unique ID"
                 />
               </div>
             </div>
@@ -403,10 +398,11 @@ export default function TicketCreationForm() {
                   type="tel"
                   className="input"
                   value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                  placeholder="+ (555) 030-0200"
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                    setFormData({ ...formData, phone: digits });
+                  }}
+                  placeholder="10-digit mobile number"
                   required
                 />
               </div>
@@ -633,20 +629,50 @@ export default function TicketCreationForm() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                    Reference URL
+                    Reference URL(s)
                   </label>
-                  <input
-                    type="url"
-                    className="input"
-                    value={formData.referenceUrl}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        referenceUrl: e.target.value,
-                      })
-                    }
-                    placeholder="https://example.com/reference"
-                  />
+                  <div className="space-y-2">
+                    {(formData.referenceUrls || []).map((url, idx) => (
+                      <div key={idx} className="flex gap-2">
+                        <input
+                          type="url"
+                          className="input flex-1"
+                          value={url}
+                          onChange={(e) => {
+                            const next = [...formData.referenceUrls];
+                            next[idx] = e.target.value;
+                            setFormData({ ...formData, referenceUrls: next });
+                          }}
+                          placeholder="https://example.com/reference"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = [...formData.referenceUrls];
+                            next.splice(idx, 1);
+                            setFormData({ ...formData, referenceUrls: next.length ? next : [""] });
+                          }}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-red-300 text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-200 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/20 transition-colors"
+                          aria-label="Remove URL"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = [...(formData.referenceUrls || [])];
+                            next.splice(idx + 1, 0, "");
+                            setFormData({ ...formData, referenceUrls: next });
+                          }}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-indigo-300 text-indigo-700 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-900/20 transition-colors"
+                          aria-label="Add URL"
+                          title="Add URL"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

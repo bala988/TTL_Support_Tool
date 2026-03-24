@@ -19,13 +19,14 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-export const sendEmail = async ({ to, subject, html }) => {
+export const sendEmail = async ({ to, subject, html, attachments = [] }) => {
     try {
         const mailOptions = {
             from: `"Expense-Approval" <${process.env.EMAIL_USER}>`,
             to,
             subject,
-            html
+            html,
+            attachments
         };
 
         const info = await transporter.sendMail(mailOptions);

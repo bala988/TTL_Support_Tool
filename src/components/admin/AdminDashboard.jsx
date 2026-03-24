@@ -40,6 +40,7 @@ export default function AdminDashboard() {
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
+  const [searchTicketId, setSearchTicketId] = useState('');
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");
@@ -195,19 +196,20 @@ export default function AdminDashboard() {
     const matchProduct = filterProduct === 'All' || t.product === filterProduct;
     const matchEngineer = filterEngineer === 'All' || t.assigned_engineer === filterEngineer;
     const matchStatus = filterStatus === 'All' || t.status === filterStatus;
+    const s = searchTicketId.trim().toLowerCase();
+    const matchSearch = s === '' || (String(t.ticket_number || '').toLowerCase().includes(s)) || String(t.id).includes(s);
 
     let matchDate = true;
     if (filterStartDate && filterEndDate) {
-      // Create dates and reset time part to compare just the dates
       const ticketDate = new Date(t.open_date);
       const start = new Date(filterStartDate);
       const end = new Date(filterEndDate);
-      end.setHours(23, 59, 59, 999); // Include the entire end date
+      end.setHours(23, 59, 59, 999);
 
       matchDate = ticketDate >= start && ticketDate <= end;
     }
 
-    return matchCustomer && matchProduct && matchEngineer && matchStatus && matchDate;
+    return matchCustomer && matchProduct && matchEngineer && matchStatus && matchDate && matchSearch;
   });
 
   const handleExportCSV = () => {
@@ -516,13 +518,22 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <button
-                    onClick={handleExportCSV}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition shadow-sm text-sm font-medium"
-                  >
-                    <Download className="w-4 h-4" />
-                    Export CSV
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      value={searchTicketId}
+                      onChange={(e) => setSearchTicketId(e.target.value)}
+                      placeholder="Search Ticket ID"
+                      className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2"
+                    />
+                    <button
+                      onClick={handleExportCSV}
+                      className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition shadow-sm text-sm font-medium"
+                    >
+                      <Download className="w-4 h-4" />
+                      Export CSV
+                    </button>
+                  </div>
                 </div>
               </div>
 

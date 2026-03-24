@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { uploadFileToDrive } from "../services/googleDriveService.js";
 import { sendTicketAcknowledgement } from "../services/whatsappService.js";
+import { sendEmail } from "../utils/mailer.js";
 
 // Mapping of customer names (lowercase) to their specific Google Drive Folder IDs
 // This ensures attachments for these customers go to their dedicated folders
@@ -43,6 +44,12 @@ export const createTicket = async (req, res) => {
       engineer_remarks, problem_resolution, reference_url,
       open_date, close_date, created_by
     } = req.body;
+
+    // Validate contact phone - must be exactly 10 digits to avoid server errors
+    const phoneDigits = String(contact_phone || '').replace(/\D/g, '');
+    if (phoneDigits.length !== 10) {
+      return res.status(400).json({ message: "Invalid contact phone. Enter a 10-digit mobile number." });
+    }
 
     const initialTimeline = [
       {
@@ -224,7 +231,7 @@ export const getTickets = async (req, res) => {
         t.id, t.ticket_number, t.severity, t.status, t.ticket_type, t.customer_name as customer, 
         t.customer_serial_no, t.technology_domain as product, t.open_date, t.close_date, t.assigned_engineer,
         t.issue_subject, t.issue_description, t.oem_tac_involved, t.tac_case_number,
-        t.engineer_remarks, t.problem_resolution,
+        t.engineer_remarks, t.problem_resolution, t.timeline,
         u.name as created_by_name
       FROM tickets t
       LEFT JOIN users u ON t.created_by = u.id
@@ -380,6 +387,83 @@ export const updateTicket = async (req, res) => {
   } catch (error) {
     console.error("Update ticket error:", error);
     res.status(500).json({ message: "Server error updating ticket" });
+  }
+};
+
+export const sendFeedbackEmail = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { to, subject, message } = req.body;
+    const [tickets] = await db.query("SELECT ticket_number, contact_email, customer_name FROM tickets WHERE id = ?", [id]);
+    if (tickets.length === 0) {
+      return res.status(404).json({ message: "Ticket not found" });
+    }
+    const ticket = tickets[0];
+    const recipient = to && to.trim() ? to.trim() : ticket.contact_email;
+    const emailSubject = subject && subject.trim() ? subject.trim() : `Feedback for Ticket ${ticket.ticket_number || id}`;
+    const html = `<div><p>${message || "Please find the feedback attachment for your reference."}</p><p>Ticket: ${ticket.ticket_number || id}</p></div>`;
+
+    let attachmentPath = null;
+    let attachmentName = null;
+    if (req.file) {
+      const ext = path.extname(req.file.originalname);
+      const cleanName = `Feedback_${ticket.ticket_number || id}${ext}`;
+      const targetDir = path.join('uploads', 'tickets', String(id), 'feedback');
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+      }
+      const dest = path.join(targetDir, cleanName);
+      fs.copyFileSync(req.file.path, dest);
+      try { fs.unlinkSync(req.file.path); } catch (_) {}
+      attachmentPath = dest;
+      attachmentName = cleanName;
+
+      await db.query(
+        `INSERT INTO ticket_attachments (ticket_id, file_name, file_path, file_type, file_size) VALUES (?, ?, ?, ?, ?)`,
+        [id, cleanName, dest, req.file.mimetype, req.file.size]
+      );
+    }
+
+    const attachments = attachmentPath ? [{ filename: attachmentName, path: attachmentPath, contentType: req.file.mimetype }] : [];
+    await sendEmail({ to: recipient, subject: emailSubject, html, attachments });
+
+    res.json({ message: "Feedback email sent" });
+  } catch (error) {
+    console.error("Feedback email error:", error);
+    res.status(500).json({ message: "Server error sending feedback email" });
+  }
+};
+
+// Delete an attachment record and remove local file if present
+export const deleteAttachment = async (req, res) => {
+  try {
+    const { ticketId, attachmentId } = req.params;
+    // Fetch attachment info
+    const [rows] = await db.query(
+      "SELECT file_path FROM ticket_attachments WHERE id = ? AND ticket_id = ?",
+      [attachmentId, ticketId]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Attachment not found" });
+    }
+    const filePath = rows[0].file_path || '';
+
+    // Delete DB record
+    await db.query("DELETE FROM ticket_attachments WHERE id = ? AND ticket_id = ?", [attachmentId, ticketId]);
+
+    // If local file, try to delete (ignore errors)
+    try {
+      if (filePath && !/^https?:\/\//i.test(filePath) && fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (e) {
+      console.warn("Failed to delete local attachment file:", e);
+    }
+
+    res.json({ message: "Attachment deleted" });
+  } catch (error) {
+    console.error("Delete attachment error:", error);
+    res.status(500).json({ message: "Server error deleting attachment" });
   }
 };
 

@@ -35,6 +35,9 @@ export default function TicketDetailsView() {
   const [newUpdate, setNewUpdate] = useState("");
   const [isRoughNotesEditing, setIsRoughNotesEditing] = useState(false);
   const [hasSharedAccess, setHasSharedAccess] = useState(false);
+  const [feedbackFile, setFeedbackFile] = useState(null);
+  const [feedbackPreviewUrl, setFeedbackPreviewUrl] = useState(null);
+  const [isUploadingFeedback, setIsUploadingFeedback] = useState(false);
 
   const [initialStatus, setInitialStatus] = useState("");
   const [openDuration, setOpenDuration] = useState("");
@@ -177,15 +180,22 @@ export default function TicketDetailsView() {
         const openTime = getTimestamp(ticket.openDate);
         if (openTime > 0) {
             let endTime = now.getTime();
-            
-            // If ticket is closed, stop timer at closeDate
+            // If ticket is closed, prefer closeDate; fall back to timeline "Closed" event if available
             if (ticket.status === 'Closed') {
-                 if (ticket.closeDate) {
-                     const closeTime = getTimestamp(ticket.closeDate);
-                     if (closeTime > 0) {
-                         endTime = closeTime;
-                     }
-                 }
+              if (ticket.closeDate) {
+                const closeTime = getTimestamp(ticket.closeDate);
+                if (closeTime > 0) {
+                  endTime = closeTime;
+                }
+              } else if (Array.isArray(ticket.timeline)) {
+                const closedEvent = [...ticket.timeline]
+                  .reverse()
+                  .find(e => String(e.event || '').includes('Status changed to Closed'));
+                if (closedEvent) {
+                  const closedTs = getTimestamp(closedEvent.date);
+                  if (closedTs > 0) endTime = closedTs;
+                }
+              }
             }
 
             let diff = endTime - openTime;
@@ -220,9 +230,17 @@ export default function TicketDetailsView() {
         }
       });
 
-      // If currently pending, add time since start
-      if (ticket.status === "Pending from Customer" && lastPendingStart) {
-         pendingTime += now.getTime() - lastPendingStart;
+      // Finalize any pending segment robustly:
+      // - If still pending, add until now
+      // - If closed and we have closeDate, add until closeDate
+      // - Otherwise, add until now as a safe fallback
+      if (lastPendingStart) {
+        let endTs = now.getTime();
+        if (ticket.status === 'Closed' && ticket.closeDate) {
+          const c = getTimestamp(ticket.closeDate);
+          if (c > 0) endTs = c;
+        }
+        pendingTime += Math.max(0, endTs - lastPendingStart);
       }
 
       setCustomerPendingDuration(formatDuration(pendingTime));
@@ -329,7 +347,7 @@ export default function TicketDetailsView() {
           finalTicketState.closeDate = nowStr;
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/tickets/${ticket.id}`, {
+      const response = await fetch(`${API_URL}/api/tickets/${ticket.id}`, {
         method: 'PUT',
         body: formData
       });
@@ -421,7 +439,9 @@ export default function TicketDetailsView() {
           issue_description: ticket.issueDescription,
           engineer_remarks: ticket.engineerRemarks,
           problem_resolution: ticket.problemResolution,
-          rough_notes: ticket.roughNotes
+          rough_notes: ticket.roughNotes,
+          close_date: now,
+          timeline: updatedTicket.timeline
         })
       });
 
@@ -814,14 +834,44 @@ export default function TicketDetailsView() {
                           </p>
                         </div>
                       </div>
-                      <a
-                        href={file.file_path}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
-                      >
-                        View
-                      </a>
+                      <div className="flex items-center gap-3">
+                        <a
+                          href={file.file_path}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+                        >
+                          View
+                        </a>
+                        {canEdit && (
+                          <button
+                            onClick={async () => {
+                              if (!window.confirm("Delete this attachment?")) return;
+                              try {
+                                const resp = await fetch(`${API_URL}/api/tickets/${ticket.id}/attachments/${file.id}`, {
+                                  method: 'DELETE'
+                                });
+                                if (resp.ok) {
+                                  setTicket(prev => ({
+                                    ...prev,
+                                    attachments: prev.attachments.filter(a => a.id !== file.id)
+                                  }));
+                                  toast.success("Attachment deleted");
+                                } else {
+                                  const data = await resp.json().catch(() => ({}));
+                                  toast.error(data.message || "Failed to delete attachment");
+                                }
+                              } catch (e) {
+                                console.error("Delete attachment error:", e);
+                                toast.error("Error deleting attachment");
+                              }
+                            }}
+                            className="text-sm text-red-600 hover:text-red-700"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -855,6 +905,108 @@ export default function TicketDetailsView() {
               )}
             </div>
           </div>
+
+        {ticket.status === 'Closed' && (
+          <div className="bg-white dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Paperclip className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              Customer Feedback Proof
+            </h2>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Attach Proof (PDF/Image)</label>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={(e) => {
+                    const f = e.target.files[0];
+                    setFeedbackFile(f || null);
+                    if (feedbackPreviewUrl) {
+                      try { URL.revokeObjectURL(feedbackPreviewUrl); } catch (_) {}
+                    }
+                    setFeedbackPreviewUrl(f ? URL.createObjectURL(f) : null);
+                  }}
+                  className="block w-full text-sm text-gray-500 dark:text-slate-400
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-indigo-50 file:text-indigo-700
+                    hover:file:bg-indigo-100
+                    dark:file:bg-indigo-900/30 dark:file:text-indigo-300
+                  "
+                />
+              </div>
+              {feedbackFile && feedbackPreviewUrl && (
+                <div className="mt-2">
+                  <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">Preview</p>
+                  {feedbackFile.type?.startsWith('image/') ? (
+                    <img src={feedbackPreviewUrl} alt="Feedback Preview" className="max-h-64 rounded border" />
+                  ) : feedbackFile.type === 'application/pdf' ? (
+                    <embed src={feedbackPreviewUrl} type="application/pdf" className="w-full h-64 border rounded" />
+                  ) : (
+                    <p className="text-xs text-gray-500 dark:text-slate-400">Preview not available for this file type.</p>
+                  )}
+                </div>
+              )}
+              <div className="flex justify-end">
+                <button
+                  onClick={async () => {
+                    if (!feedbackFile) {
+                      toast.error('Please choose a file first');
+                      return;
+                    }
+                    try {
+                      setIsUploadingFeedback(true);
+                      const nowStr = new Date().toISOString();
+                      const timelineEntry = {
+                        date: nowStr,
+                        event: "Feedback proof attached",
+                        user: currentUserName,
+                        type: "update"
+                      };
+                      const updatedTimeline = [...ticket.timeline, timelineEntry];
+                      const fd = new FormData();
+                      fd.append('status', ticket.status);
+                      fd.append('severity', ticket.severity);
+                      fd.append('issue_subject', ticket.issueSubject);
+                      fd.append('issue_description', ticket.issueDescription);
+                      fd.append('engineer_remarks', ticket.engineerRemarks);
+                      fd.append('problem_resolution', ticket.problemResolution);
+                      fd.append('rough_notes', ticket.roughNotes);
+                      fd.append('timeline', JSON.stringify(updatedTimeline));
+                      fd.append('attachment', feedbackFile);
+                      const resp = await fetch(`${API_URL}/api/tickets/${ticket.id}`, {
+                        method: 'PUT',
+                        body: fd
+                      });
+                      if (resp.ok) {
+                        toast.success('Proof uploaded');
+                        setFeedbackFile(null);
+                        if (feedbackPreviewUrl) {
+                          try { URL.revokeObjectURL(feedbackPreviewUrl); } catch (_) {}
+                          setFeedbackPreviewUrl(null);
+                        }
+                        await fetchTicketDetails();
+                      } else {
+                        const data = await resp.json().catch(() => ({}));
+                        toast.error(data.message || 'Failed to upload');
+                      }
+                    } catch (e) {
+                      console.error(e);
+                      toast.error('Error uploading proof');
+                    } finally {
+                      setIsUploadingFeedback(false);
+                    }
+                  }}
+                  disabled={isUploadingFeedback || !feedbackFile}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {isUploadingFeedback ? 'Uploading...' : 'Upload Proof'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
           <div className="bg-white dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark p-6 space-y-4">
             <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold">
@@ -1080,7 +1232,7 @@ export default function TicketDetailsView() {
                 placeholder="Type your notes here..."
               />
             ) : (
-              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 min-h-[150px] text-sm text-gray-700 whitespace-pre-wrap">
+              <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 min-h-[150px] text-sm text-gray-700 whitespace-pre-wrap break-words">
                 {ticket.roughNotes || "No notes yet..."}
               </div>
             )}
