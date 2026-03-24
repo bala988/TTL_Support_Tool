@@ -96,7 +96,7 @@ export const login = async (req, res) => {
 };
 export const getAllUsers = async (req, res) => {
   try {
-    const [users] = await db.query("SELECT id, name, email, role FROM users ORDER BY name ASC");
+    const [users] = await db.query("SELECT id, name, email, phone, role FROM users ORDER BY name ASC");
     res.json(users);
   } catch (error) {
     console.error("Get all users error:", error);

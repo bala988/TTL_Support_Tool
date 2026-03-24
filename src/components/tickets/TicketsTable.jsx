@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { getTimestamp, formatDuration } from "../../utils/time";
 
-export function TicketsTable({ tickets, onTicketClick, actionLabel = "View", onActionClick }) {
+export function TicketsTable({ tickets, onTicketClick, actionLabel = "View", onActionClick, itemsPerPage = 20 }) {
   // Live refresh every second to keep timers updated
   const [tick, setTick] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(id);
@@ -49,57 +51,7 @@ export function TicketsTable({ tickets, onTicketClick, actionLabel = "View", onA
     }
   };
 
-  const getTimestamp = (dateStr) => {
-    if (!dateStr) return 0;
-    if (dateStr instanceof Date) {
-      const t = dateStr.getTime();
-      return isNaN(t) ? 0 : t;
-    }
-    if (typeof dateStr === 'number') {
-      return dateStr;
-    }
-    const s = String(dateStr).trim();
-    // ISO format: 2026-03-20T10:00:00.000Z
-    if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
-      const d = new Date(s);
-      return isNaN(d.getTime()) ? 0 : d.getTime();
-    }
-    // MySQL DATETIME: 2026-03-20 10:00:00 (treat as UTC to avoid tz drift)
-    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(s)) {
-      const d = new Date(s.replace(' ', 'T') + 'Z');
-      return isNaN(d.getTime()) ? 0 : d.getTime();
-    }
-    // Locale: MM/DD/YYYY, HH:MM(:SS)? AM/PM
-    const localeMatch = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4}),\s*(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)$/i);
-    if (localeMatch) {
-      const mm = parseInt(localeMatch[1], 10) - 1;
-      const dd = parseInt(localeMatch[2], 10);
-      const yyyy = parseInt(localeMatch[3], 10);
-      let hh = parseInt(localeMatch[4], 10);
-      const min = parseInt(localeMatch[5], 10);
-      const sec = localeMatch[6] ? parseInt(localeMatch[6], 10) : 0;
-      const ampm = localeMatch[7].toUpperCase();
-      if (ampm === 'PM' && hh < 12) hh += 12;
-      if (ampm === 'AM' && hh === 12) hh = 0;
-      const d = new Date(yyyy, mm, dd, hh, min, sec);
-      const t = d.getTime();
-      return isNaN(t) ? 0 : t;
-    }
-    const d = new Date(s);
-    return isNaN(d.getTime()) ? 0 : d.getTime();
-  };
-
-  const formatDuration = (ms) => {
-    if (ms <= 0) return "0s";
-    const totalSeconds = Math.floor(ms / 1000);
-    const days = Math.floor(totalSeconds / (3600 * 24));
-    const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    if (days > 0) return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-    if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
-    return `${minutes}m ${seconds}s`;
-  };
+  
 
   const computeDurations = (t) => {
     const now = Date.now();
@@ -202,6 +154,12 @@ export function TicketsTable({ tickets, onTicketClick, actionLabel = "View", onA
     }
   }
 
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil((tickets?.length || 0) / itemsPerPage));
+  const clampedPage = Math.min(Math.max(currentPage, 1), totalPages);
+  const startIndex = (clampedPage - 1) * itemsPerPage;
+  const pageTickets = (tickets || []).slice(startIndex, startIndex + itemsPerPage);
+
   return (
     <div className="bg-white dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark overflow-hidden transition-colors">
       <div className="overflow-x-auto">
@@ -215,13 +173,10 @@ export function TicketsTable({ tickets, onTicketClick, actionLabel = "View", onA
                 Severity
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-slate-400 uppercase tracking-wider">
-                Type
+                Subject
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-slate-400 uppercase tracking-wider">
                 Customer
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-slate-400 uppercase tracking-wider">
-                Product
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-slate-400 uppercase tracking-wider">
                 Open Date
@@ -236,6 +191,12 @@ export function TicketsTable({ tickets, onTicketClick, actionLabel = "View", onA
                 Resolution Time
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-slate-400 uppercase tracking-wider">
+                Type
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-slate-400 uppercase tracking-wider">
+                Product
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-600 dark:text-slate-400 uppercase tracking-wider">
                 Status
               </th>
               <th className="px-6 py-4 text-right text-xs font-medium text-gray-600 dark:text-slate-400 uppercase tracking-wider">
@@ -244,7 +205,7 @@ export function TicketsTable({ tickets, onTicketClick, actionLabel = "View", onA
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
-            {tickets.map((ticket) => (
+            {pageTickets.map((ticket) => (
               <tr
                 key={ticket.id}
                 className="hover:bg-gray-50 dark:hover:bg-servicenow-dark cursor-pointer transition-colors"
@@ -263,13 +224,12 @@ export function TicketsTable({ tickets, onTicketClick, actionLabel = "View", onA
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-700 dark:text-slate-300">
-                  {ticket.type || ticket.ticket_type}
+                  <span title={(ticket.issue_description || '').trim()}>
+                    {ticket.issue_subject || ticket.issueSubject || '-'}
+                  </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-700 dark:text-slate-300">
                   {ticket.customer}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-700 dark:text-slate-300">
-                  {ticket.product}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-700 dark:text-slate-300">
                   {ticket.openDate}
@@ -296,6 +256,12 @@ export function TicketsTable({ tickets, onTicketClick, actionLabel = "View", onA
                   }`}>
                     {String(ticket.status) === 'Closed' ? _d.resolution : 'Not yet resolved'}
                   </span>
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-700 dark:text-slate-300">
+                  {ticket.type || ticket.ticket_type}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-700 dark:text-slate-300">
+                  {ticket.product}
                 </td>
                 <td className="px-6 py-4">
                   <span
@@ -325,6 +291,40 @@ export function TicketsTable({ tickets, onTicketClick, actionLabel = "View", onA
             ))}
           </tbody>
         </table>
+      </div>
+      {/* Pagination Controls */}
+      <div className="flex items-center justify-between p-4 border-t dark:border-slate-700">
+        <div className="text-sm text-gray-500 dark:text-slate-400">
+          Page {clampedPage} of {totalPages}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={clampedPage <= 1}
+            className="px-3 py-1 text-sm rounded-md border border-gray-300 dark:border-slate-600 disabled:opacity-50"
+          >
+            Prev
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+            <button
+              key={n}
+              onClick={() => setCurrentPage(n)}
+              className={`px-3 py-1 text-sm rounded-md border ${n === clampedPage
+                ? 'bg-indigo-600 text-white border-indigo-600'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:text-slate-300'}`
+              }
+            >
+              {n}
+            </button>
+          ))}
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={clampedPage >= totalPages}
+            className="px-3 py-1 text-sm rounded-md border border-gray-300 dark:border-slate-600 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   )
