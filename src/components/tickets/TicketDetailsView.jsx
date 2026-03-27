@@ -93,6 +93,7 @@ export default function TicketDetailsView() {
           engineerRemarks: t.engineer_remarks || "No remarks yet",
           problemResolution: t.problem_resolution || "Pending resolution",
           roughNotes: t.rough_notes || "",
+          referenceUrl: t.reference_url || "",
           openDate: t.open_date,
           closeDate: t.close_date,
           timeline: timelineData,
@@ -852,6 +853,34 @@ export default function TicketDetailsView() {
                     </div>
                   )}
                 </div>
+                {ticket.referenceUrl && (
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Reference URL(s)</label>
+                    <div className="space-y-1">
+                      {ticket.referenceUrl.split('|').map((url, idx) => {
+                        const trimmed = url.trim();
+                        if (!trimmed) return null;
+                        const isLink = trimmed.startsWith('http://') || trimmed.startsWith('https://');
+                        return (
+                          <div key={idx}>
+                            {isLink ? (
+                              <a
+                                href={trimmed}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary-600 dark:text-primary-400 hover:underline text-sm break-all"
+                              >
+                                {trimmed}
+                              </a>
+                            ) : (
+                              <p className="text-gray-900 dark:text-white text-sm break-all">{trimmed}</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
