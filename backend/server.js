@@ -11,6 +11,8 @@ import reimbursementRoutes from "./routes/reimbursementRoutes.js";
 
 import connectMongoDB from "./config/mongo.js";
 import mongoRoutes from "./routes/mongoRoutes.js";
+import customerRoutes from "./routes/customerRoutes.js";
+import assetRoutes from "./routes/assetRoutes.js";
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -39,6 +41,8 @@ app.use("/api/approvals", approvalRoutes);
 app.use("/api/sales", salesRoutes);
 app.use("/api/sales-approvals", salesApprovalRoutes);
 app.use("/api/reimbursement", reimbursementRoutes);
+app.use("/api/customers", customerRoutes);
+app.use("/api/assets", assetRoutes);
 app.use("/api", mongoRoutes); // Mount attendance routes
 
 

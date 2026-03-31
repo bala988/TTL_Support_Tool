@@ -24,7 +24,12 @@ export default function EngineerLayout({ children }) {
     if (path.startsWith('/employee/reimbursement')) return 'employee/reimbursement';
     if (path === '/engineer/dashboard/profile') return 'profile';
     if (path.startsWith('/admin/reimbursement-approval')) return 'admin/reimbursement-approval';
-    if (path.startsWith('/admin/activity')) return 'admin/activity';
+    if (path === '/admin/activity') return 'admin/activity';
+    if (path === '/leave/apply') return 'leave/apply';
+    if (path === '/leave/my') return 'leave/my';
+    if (path === '/admin/leave-approval') return 'admin/leave-approval';
+    if (path === '/admin/customers') return 'admin/customers';
+    if (path === '/admin/employees') return 'admin/employees';
     return 'engineer-dashboard';
   };
 
@@ -69,6 +74,13 @@ export default function EngineerLayout({ children }) {
         break;
       case 'admin/activity':
         navigate('/admin/activity');
+        break;
+      case 'leave/my':
+      case 'leave/apply':
+      case 'admin/leave-approval':
+      case 'admin/customers':
+      case 'admin/employees':
+        navigate(`/${page}`);
         break;
       default:
         break;

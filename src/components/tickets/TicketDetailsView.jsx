@@ -15,6 +15,9 @@ import {
   ArrowRightCircle,
   StickyNote,
   Paperclip,
+  Plus,
+  Minus,
+  ExternalLink,
 } from "lucide-react";
 
 export default function TicketDetailsView() {
@@ -303,12 +306,11 @@ export default function TicketDetailsView() {
       formData.append('engineer_remarks', ticket.engineerRemarks);
       formData.append('problem_resolution', ticket.problemResolution);
       formData.append('rough_notes', ticket.roughNotes);
+      formData.append('reference_url', ticket.referenceUrl);
       formData.append('timeline', JSON.stringify(updatedTimeline));
 
       // Ensure close_date is sent if status is Closed
       if (ticket.status === 'Closed') {
-        // If local ticket already has closeDate (from immediate status change or existing), use it.
-        // Otherwise use nowStr.
         const closeDateToSend = ticket.closeDate || nowStr;
         formData.append('close_date', closeDateToSend);
       }
@@ -418,6 +420,7 @@ export default function TicketDetailsView() {
           engineer_remarks: ticket.engineerRemarks,
           problem_resolution: ticket.problemResolution,
           rough_notes: ticket.roughNotes,
+          reference_url: ticket.referenceUrl,
           close_date: now,
           timeline: updatedTicket.timeline
         })
@@ -466,6 +469,7 @@ export default function TicketDetailsView() {
           engineer_remarks: ticket.engineerRemarks,
           problem_resolution: ticket.problemResolution,
           rough_notes: ticket.roughNotes,
+          reference_url: ticket.referenceUrl,
           timeline: updatedTimeline
         })
       });
@@ -492,7 +496,8 @@ export default function TicketDetailsView() {
           issue_description: ticket.issueDescription,
           engineer_remarks: ticket.engineerRemarks,
           problem_resolution: ticket.problemResolution,
-          rough_notes: ticket.roughNotes
+          rough_notes: ticket.roughNotes,
+          reference_url: ticket.referenceUrl
         })
       });
 
@@ -853,34 +858,71 @@ export default function TicketDetailsView() {
                     </div>
                   )}
                 </div>
-                {ticket.referenceUrl && (
-                  <div className="col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Reference URL(s)</label>
-                    <div className="space-y-1">
-                      {ticket.referenceUrl.split('|').map((url, idx) => {
-                        const trimmed = url.trim();
-                        if (!trimmed) return null;
-                        const isLink = trimmed.startsWith('http://') || trimmed.startsWith('https://');
-                        return (
-                          <div key={idx}>
-                            {isLink ? (
-                              <a
-                                href={trimmed}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary-600 dark:text-primary-400 hover:underline text-sm break-all"
-                              >
-                                {trimmed}
-                              </a>
-                            ) : (
-                              <p className="text-gray-900 dark:text-white text-sm break-all">{trimmed}</p>
-                            )}
-                          </div>
-                        );
-                      })}
+                
+                {/* Reference URLs */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Reference URL(s)</label>
+                  {isEditing ? (
+                    <div className="space-y-2">
+                      {(ticket.referenceUrl ? ticket.referenceUrl.split(' | ') : [""]).map((url, idx, arr) => (
+                        <div key={idx} className="flex gap-2">
+                          <input
+                            type="url"
+                            className="input flex-1"
+                            value={url}
+                            onChange={(e) => {
+                              const next = [...arr];
+                              next[idx] = e.target.value;
+                              setTicket({ ...ticket, referenceUrl: next.join(' | ') });
+                            }}
+                            placeholder="https://example.com/reference"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next = [...arr];
+                              next.splice(idx, 1);
+                              setTicket({ ...ticket, referenceUrl: (next.length ? next : [""]).join(' | ') });
+                            }}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/20"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next = [...arr];
+                              next.splice(idx + 1, 0, "");
+                              setTicket({ ...ticket, referenceUrl: next.join(' | ') });
+                            }}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-primary-300 text-primary-700 hover:bg-primary-50 dark:border-primary-800 dark:text-primary-300 dark:hover:bg-primary-900/20"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {ticket.referenceUrl ? (
+                        ticket.referenceUrl.split(' | ').filter(Boolean).map((url, idx) => (
+                          <a
+                            key={idx}
+                            href={url.startsWith('http') ? url : `https://${url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 rounded-full text-xs font-medium border border-primary-100 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            {url.length > 30 ? url.substring(0, 30) + "..." : url}
+                          </a>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500 dark:text-slate-500 italic">No reference URLs provided</p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1175,9 +1217,9 @@ export default function TicketDetailsView() {
                   <div key={index} className="flex gap-4">
                     <div className="flex flex-col items-center">
                       <div className={`w-3 h-3 rounded-full ${entry.type === 'create' ? 'bg-blue-500' :
-                          entry.type === 'assign' ? 'bg-purple-500' :
-                            entry.type === 'update' ? 'bg-orange-500' :
-                              'bg-green-500'
+                        entry.type === 'assign' ? 'bg-purple-500' :
+                          entry.type === 'update' ? 'bg-orange-500' :
+                            'bg-green-500'
                         }`} />
                       {index !== arr.length - 1 && (
                         <div className="w-0.5 h-full bg-gray-200 dark:bg-slate-700 my-1" />

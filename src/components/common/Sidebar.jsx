@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, TicketPlus, Shield, LogOut, Users, BookOpen, FileText, Briefcase, PieChart, UserPlus, ChevronLeft, ChevronRight, Sun, Moon, ClipboardCheck, UserCog, Pencil, Activity } from 'lucide-react';
+import { LayoutDashboard, TicketPlus, Shield, LogOut, Users, BookOpen, FileText, Briefcase, PieChart, UserPlus, ChevronLeft, ChevronRight, Sun, Moon, ClipboardCheck, UserCog, Pencil, Activity, CalendarDays, CalendarCheck } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function Sidebar({ userRole = 'engineer', currentPage, onNavigate, onLogout }) {
@@ -70,20 +70,29 @@ export default function Sidebar({ userRole = 'engineer', currentPage, onNavigate
     {
       icon: Users,
       label: 'Team Management',
-      page: 'team-management',
-      roles: ['admin']
-    },
-    {
-      icon: UserPlus,
-      label: 'Register User',
-      page: 'register-user',
-      roles: ['admin']
+      roles: ['admin'],
+      subItems: [
+        { label: 'Customer Management', page: 'admin/customers' },
+        { label: 'Employee Management', page: 'admin/employees' },
+      ]
     },
     {
       icon: FileText,
       label: 'Expense Claims',
       page: 'employee/reimbursement', // Matches route in App.jsx
       roles: ['engineer', 'admin', 'sales']
+    },
+    {
+      icon: CalendarDays,
+      label: 'Leave',
+      page: 'leave/my',
+      roles: ['engineer', 'admin', 'sales']
+    },
+    {
+      icon: CalendarCheck,
+      label: 'Leave Approvals',
+      page: 'admin/leave-approval',
+      roles: ['admin']
     }
   ];
 
@@ -152,31 +161,51 @@ export default function Sidebar({ userRole = 'engineer', currentPage, onNavigate
         </div>
       </div>
 
-      <nav className="flex-1 p-4 space-y-2 overflow-x-hidden">
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
         {visibleMenuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = currentPage === item.page;
+          const hasSubItems = item.subItems && item.subItems.length > 0;
+          const isSubItemActive = hasSubItems && item.subItems.some(sub => currentPage === sub.page);
+          const isActive = currentPage === item.page || isSubItemActive;
 
           return (
-            <button
-              key={item.page}
-              onClick={() => {
-                if (item.external) {
-                  window.location.href = item.url(userEmail);
-                } else {
-                  onNavigate(item.page);
-                }
-              }}
-              title={isCollapsed ? item.label : ""}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'
-                } py-3 rounded-lg transition ${isActive
-                  ? 'bg-primary-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white dark:hover:bg-servicenow-light'
-                }`}
-            >
-              <Icon className="w-5 h-5 shrink-0" />
-              {!isCollapsed && <span className="font-medium whitespace-nowrap">{item.label}</span>}
-            </button>
+            <div key={item.label}>
+              <button
+                onClick={() => {
+                  if (item.external) {
+                    window.location.href = item.url(userEmail);
+                  } else if (item.page) {
+                    onNavigate(item.page);
+                  }
+                }}
+                title={isCollapsed ? item.label : ""}
+                className={`w-full flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'
+                  } py-3 rounded-lg transition ${isActive
+                    ? 'bg-primary-600 text-white'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white dark:hover:bg-servicenow-light'
+                  }`}
+              >
+                <Icon className="w-5 h-5 shrink-0" />
+                {!isCollapsed && <span className="font-medium whitespace-nowrap">{item.label}</span>}
+              </button>
+
+              {hasSubItems && !isCollapsed && (
+                <div className="mt-1 ml-9 space-y-1">
+                  {item.subItems.map((sub) => (
+                    <button
+                      key={sub.page}
+                      onClick={() => onNavigate(sub.page)}
+                      className={`w-full text-left px-4 py-2 rounded-md transition text-sm ${currentPage === sub.page
+                          ? 'bg-primary-600/20 text-primary-400 font-medium'
+                          : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                        }`}
+                    >
+                      {sub.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>

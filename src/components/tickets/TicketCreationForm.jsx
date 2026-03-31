@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Save, AlertCircle, Upload, CheckCircle, Plus, Minus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import emailjs from '@emailjs/browser';
@@ -22,7 +22,7 @@ export default function TicketCreationForm() {
     ticketType: "Incident",
     technologyDomain: "Network Security",
     customerName: "",
-    customerId: "",
+    customerId: "", // This will hold the selected serial_no
     uniqueId: "",
     contactName: "",
     phone: "",
@@ -38,14 +38,101 @@ export default function TicketCreationForm() {
     problemResolution: "",
     attachment: null,
     referenceUrls: [""],
-    // Use full ISO string to include time, but for date input we only need YYYY-MM-DD
-    // However, when submitting, we should probably send the full timestamp if the backend relies on it
-    // For now, let's keep the date picker working but handle submission separately
     openDate: new Date().toISOString().split("T")[0],
     closeDate: "",
   });
 
+  const [customers, setCustomers] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [isOtherSelected, setIsOtherSelected] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fetch customers from DB
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_URL}/api/customers`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setCustomers(data);
+        }
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+      }
+    };
+    fetchCustomers();
+  }, []);
+
+  const handleCustomerChange = (e) => {
+    const customerName = e.target.value;
+    const selected = customers.find(c => c.name === customerName);
+    
+    if (selected) {
+      setIsOtherSelected(false);
+      setSelectedCustomer(selected);
+      setFormData(prev => ({
+        ...prev,
+        customerName: selected.name,
+        customerId: "", // Reset to force selection from dropdown
+        uniqueId: "",
+        contactName: "",
+        phone: "",
+        email: ""
+      }));
+    } else if (customerName === "Others") {
+      setIsOtherSelected(true);
+      setSelectedCustomer(null);
+      setFormData(prev => ({ 
+        ...prev, 
+        customerName: "",
+        customerId: "",
+        uniqueId: "",
+        contactName: "",
+        phone: "",
+        email: ""
+      }));
+    } else {
+      setIsOtherSelected(false);
+      setSelectedCustomer(null);
+      setFormData(prev => ({ ...prev, customerName }));
+    }
+  };
+
+  const handleSerialChange = (e) => {
+    const serialNo = e.target.value;
+    if (isOtherSelected) {
+      setFormData(prev => ({ ...prev, customerId: serialNo }));
+      return;
+    }
+
+    const serialObj = selectedCustomer?.serials?.find(s => s.serial_no === serialNo);
+    setFormData(prev => ({
+      ...prev,
+      customerId: serialNo,
+      uniqueId: serialObj?.unique_id || ""
+    }));
+  };
+
+  const handleContactChange = (e) => {
+    const contactName = e.target.value;
+    if (isOtherSelected) {
+      setFormData(prev => ({ ...prev, contactName }));
+      return;
+    }
+
+    const contactObj = selectedCustomer?.contacts?.find(c => c.contact_name === contactName);
+    setFormData(prev => ({
+      ...prev,
+      contactName: contactName,
+      phone: contactObj?.phone || "",
+      email: contactObj?.email || ""
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,7 +144,7 @@ export default function TicketCreationForm() {
       // Frontend validation for 10-digit phone number
       const phoneDigits = String(formData.phone || '').replace(/\D/g, '');
       if (phoneDigits.length !== 10) {
-        toast.error("Please enter a valid 10-digit mobile number");
+        toast.error("Please enter a valid 10-digit mobile number for the contact");
         setIsSubmitting(false);
         return;
       }
@@ -296,40 +383,23 @@ export default function TicketCreationForm() {
                   Customer Name <span className="text-red-500">*</span>
                 </label>
                 <select
-                  className="input mb-2"
-                  value={['Collabera', 'Flipkart', 'FreshWorks', 'Groww', 'Hexaware', 'Hexaware Projects', 'Movate', 'MPL', 'Quest', 'Swiggy', 'Vishwa Samudra'].includes(formData.customerName) ? formData.customerName : (formData.customerName ? 'Others' : '')}
-                  onChange={(e) => {
-                    if (e.target.value === 'Others') {
-                      setFormData({ ...formData, customerName: 'Others' });
-                    } else {
-                      setFormData({ ...formData, customerName: e.target.value });
-                    }
-                  }}
+                  className="input"
+                  value={isOtherSelected ? "Others" : formData.customerName}
+                  onChange={handleCustomerChange}
                   required
                 >
                   <option value="">Select Customer</option>
-                  <option value="Collabera">Collabera</option>
-                  <option value="Flipkart">Flipkart</option>
-                  <option value="FreshWorks">FreshWorks</option>
-                  <option value="Groww">Groww</option>
-                  <option value="Hexaware">Hexaware</option>
-                  <option value="Hexaware Projects">Hexaware Projects</option>
-                  <option value="Movate">Movate</option>
-                  <option value="MPL">MPL</option>
-                  <option value="Quest">Quest</option>
-                  <option value="Swiggy">Swiggy</option>
-                  <option value="Vishwa Samudra">Vishwa Samudra</option>
+                  {customers.map(c => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
                   <option value="Others">Others</option>
                 </select>
-
-                {(!['Collabera', 'Flipkart', 'FreshWorks', 'Groww', 'Hexaware', 'Hexaware Projects', 'Movate', 'MPL', 'Quest', 'Swiggy', 'Vishwa Samudra', ''].includes(formData.customerName) || formData.customerName === 'Others') && (
+                {isOtherSelected && (
                   <input
                     type="text"
-                    className="input"
-                    value={formData.customerName === 'Others' ? '' : formData.customerName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, customerName: e.target.value })
-                    }
+                    className="input mt-2"
+                    value={formData.customerName}
+                    onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
                     placeholder="Enter customer name"
                     required
                   />
@@ -340,16 +410,28 @@ export default function TicketCreationForm() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Serial No <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  className="input"
-                  value={formData.customerId}
-                  onChange={(e) =>
-                    setFormData({ ...formData, customerId: e.target.value })
-                  }
-                  placeholder="CUS-1XXXX"
-                  required
-                />
+                {!isOtherSelected && selectedCustomer ? (
+                  <select
+                    className="input"
+                    value={formData.customerId}
+                    onChange={handleSerialChange}
+                    required
+                  >
+                    <option value="">Select Serial No</option>
+                    {selectedCustomer.serials?.map((s, idx) => (
+                      <option key={idx} value={s.serial_no}>{s.serial_no}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={formData.customerId}
+                    onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
+                    className="input"
+                    placeholder="CUS-1XXXX"
+                    required
+                  />
+                )}
               </div>
 
               <div>
@@ -358,12 +440,13 @@ export default function TicketCreationForm() {
                 </label>
                 <input
                   type="text"
-                  className="input"
                   value={formData.uniqueId}
                   onChange={(e) =>
                     setFormData({ ...formData, uniqueId: e.target.value })
                   }
+                  className="input"
                   placeholder="Enter Unique ID"
+                  readOnly={!isOtherSelected && !!selectedCustomer}
                 />
               </div>
             </div>
@@ -378,16 +461,28 @@ export default function TicketCreationForm() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Contact Name <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  className="input"
-                  value={formData.contactName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, contactName: e.target.value })
-                  }
-                  placeholder="Enter contact person"
-                  required
-                />
+                {!isOtherSelected && selectedCustomer ? (
+                  <select
+                    className="input"
+                    value={formData.contactName}
+                    onChange={handleContactChange}
+                    required
+                  >
+                    <option value="">Select Contact Person</option>
+                    {selectedCustomer.contacts?.map((c, idx) => (
+                      <option key={idx} value={c.contact_name}>{c.contact_name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={formData.contactName}
+                    onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
+                    className="input"
+                    placeholder="Enter contact person"
+                    required
+                  />
+                )}
               </div>
 
               <div>
@@ -396,14 +491,14 @@ export default function TicketCreationForm() {
                 </label>
                 <input
                   type="tel"
-                  className="input"
                   value={formData.phone}
-                  onChange={(e) => {
-                    const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
-                    setFormData({ ...formData, phone: digits });
-                  }}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
+                  className="input"
                   placeholder="10-digit mobile number"
                   required
+                  readOnly={!isOtherSelected && !!selectedCustomer && formData.contactName !== ""}
                 />
               </div>
 
@@ -413,17 +508,19 @@ export default function TicketCreationForm() {
                 </label>
                 <input
                   type="email"
-                  className="input"
                   value={formData.email}
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
+                  className="input"
                   placeholder="customer@company.com"
                   required
+                  readOnly={!isOtherSelected && !!selectedCustomer && formData.contactName !== ""}
                 />
               </div>
             </div>
           </div>
+
 
           <div className="bg-white dark:bg-servicenow-light rounded-xl border dark:border-servicenow-dark p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">

@@ -11,6 +11,8 @@ import AdminDashboard from "./components/admin/AdminDashboard";
 import SalesDashboard from "./components/sales/SalesDashboard";
 import SalesOpportunityView from "./components/sales/SalesOpportunityView";
 import EngineerLayout from "./components/common/EngineerLayout";
+import CustomerManagement from "./pages/admin/CustomerManagement";
+import EmployeeManagement from "./pages/admin/EmployeeManagement";
 
 // Attendance Module Imports
 import AttendanceEmployeeDashboard from "./modules/attendance/pages/EmployeeDashboard";
@@ -20,6 +22,9 @@ import AdminEmployeeDetail from "./modules/attendance/pages/AdminEmployeeDetail"
 import EmployeeClaimPage from "./modules/reimbursement/pages/EmployeeClaimPage";
 import AdminReimbursementPage from "./modules/reimbursement/pages/AdminReimbursementPage";
 import AdminActivityPage from "./modules/attendance/pages/AdminActivityPage";
+import ApplyLeave from "./modules/attendance/pages/ApplyLeave";
+import MyLeaves from "./modules/attendance/pages/MyLeaves";
+import AdminLeaveList from "./modules/attendance/pages/AdminLeaveList";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 export default function App() {
@@ -27,13 +32,16 @@ export default function App() {
     <>
       <Routes>
         <Route path="/" element={<LoginPage />} />
-
-        {/* Admin Registration Route */}
-        <Route path="/admin/register" element={
+        
+        <Route path="/admin/customers" element={
           <ProtectedRoute roles={['admin']}>
-            <EngineerLayout>
-              <SignupPage isInternal={true} />
-            </EngineerLayout>
+            <CustomerManagement />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/admin/employees" element={
+          <ProtectedRoute roles={['admin']}>
+            <EmployeeManagement />
           </ProtectedRoute>
         } />
 
@@ -125,6 +133,29 @@ export default function App() {
           <ProtectedRoute roles={['admin']}>
             <EngineerLayout>
               <AdminActivityPage />
+            </EngineerLayout>
+          </ProtectedRoute>
+        } />
+
+        {/* Leave Routes */}
+        <Route path="/leave/apply" element={
+          <ProtectedRoute>
+            <EngineerLayout>
+              <ApplyLeave />
+            </EngineerLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/leave/my" element={
+          <ProtectedRoute>
+            <EngineerLayout>
+              <MyLeaves />
+            </EngineerLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/leave-approval" element={
+          <ProtectedRoute roles={['admin']}>
+            <EngineerLayout>
+              <AdminLeaveList />
             </EngineerLayout>
           </ProtectedRoute>
         } />

@@ -247,7 +247,7 @@ export const getTickets = async (req, res) => {
         t.id, t.ticket_number, t.severity, t.status, t.ticket_type, t.customer_name as customer, 
         t.customer_serial_no, t.technology_domain as product, t.open_date, t.close_date, t.assigned_engineer,
         t.issue_subject, t.issue_description, t.oem_tac_involved, t.tac_case_number,
-        t.engineer_remarks, t.problem_resolution, t.timeline,
+        t.engineer_remarks, t.problem_resolution, t.reference_url, t.timeline,
         u.name as created_by_name
       FROM tickets t
       LEFT JOIN users u ON t.created_by = u.id
@@ -327,7 +327,7 @@ export const updateTicket = async (req, res) => {
     const {
       status, severity, issue_subject, issue_description,
       engineer_remarks, problem_resolution, timeline, rough_notes,
-      oem_tac_involved, tac_case_number,
+      oem_tac_involved, tac_case_number, reference_url,
       close_date
     } = req.body;
 
@@ -340,9 +340,9 @@ export const updateTicket = async (req, res) => {
     let query = `UPDATE tickets SET 
         status = ?, severity = ?, issue_subject = ?, issue_description = ?,
         engineer_remarks = ?, problem_resolution = ?, rough_notes = ?,
-        oem_tac_involved = ?, tac_case_number = ?`;
+        oem_tac_involved = ?, tac_case_number = ?, reference_url = ?`;
 
-    const params = [status, severity, issue_subject, issue_description, parsedEngRemarks, parsedProbRes, parsedRoughNotes, parsedOemTac, parsedTacCase];
+    const params = [status, severity, issue_subject, issue_description, parsedEngRemarks, parsedProbRes, parsedRoughNotes, parsedOemTac, parsedTacCase, reference_url];
 
     if (timeline) {
       query += `, timeline = ?`;
