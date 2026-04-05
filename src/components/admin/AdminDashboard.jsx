@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import EngineerLayout from "../common/EngineerLayout";
 import { useNavigate } from "react-router-dom";
 import ClaimDetailsModal from "../../modules/reimbursement/components/ClaimDetailsModal";
-import { Ticket, Clock, CheckCircle, AlertTriangle, UserCheck, Download, Filter } from "lucide-react";
+import AdminLeaveList from "../../modules/attendance/pages/AdminLeaveList";
+import AdminRegularizationList from "../../modules/attendance/pages/AdminRegularizationList";
+import { Ticket, Clock, CheckCircle, AlertTriangle, UserCheck, Download, Filter, ChevronDown } from "lucide-react";
 import toast from 'react-hot-toast';
 import { StatsCard } from "../common/StatsCard";
 import { TicketsTable } from "../tickets/TicketsTable";
@@ -31,6 +33,8 @@ export default function AdminDashboard() {
   const [selectedClaim, setSelectedClaim] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [approvalType, setApprovalType] = useState('ticket_requests');
+  const [showApprovalDropdown, setShowApprovalDropdown] = useState(false);
   const [userEmail, setUserEmail] = useState('');
 
   // Filters State
@@ -293,6 +297,18 @@ export default function AdminDashboard() {
   const chartGridColor = theme === 'dark' ? '#334155' : '#e2e8f0';
   const tooltipStyle = theme === 'dark' ? { backgroundColor: '#053c57', borderColor: '#053c57', color: '#fff' } : {};
 
+  // Approval type labels for the dropdown
+  const approvalTypes = [
+    { key: 'ticket_requests', label: 'Ticket Requests', count: ticketApprovalsCount },
+    { key: 'leave', label: 'Leave Approvals', count: 0 },
+    { key: 'attendance', label: 'Attendance Approvals', count: 0 },
+    { key: 'sales', label: 'Sales Approvals', count: salesApprovalsCount },
+    { key: 'reimbursement', label: 'Reimbursement', count: reimbursementApprovalsCount },
+  ];
+
+  const currentApprovalLabel = approvalTypes.find(a => a.key === approvalType)?.label || 'Approvals';
+  const totalPendingApprovals = approvalTypes.reduce((sum, a) => sum + a.count, 0);
+
   return (
     <EngineerLayout>
       <div className="p-8 max-w-[1400px] mx-auto">
@@ -304,66 +320,73 @@ export default function AdminDashboard() {
             </p>
           </div>
 
-          <div className="flex bg-gray-100 dark:bg-servicenow-dark p-1 rounded-lg">
+          <div className="flex bg-gray-100 dark:bg-servicenow-dark p-1 rounded-lg items-center gap-1">
+            {/* Overview Tab */}
             <button
               onClick={() => setActiveTab('overview')}
-              className={`px-4 py-2 rounded-md font-medium transition ${activeTab === 'overview'
+              className={`px-5 py-2.5 rounded-md font-medium transition ${activeTab === 'overview'
                 ? 'bg-white dark:bg-servicenow-light text-primary-600 dark:text-primary-400 shadow-sm'
                 : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
             >
               Overview
             </button>
-            <button
-              onClick={() => setActiveTab('approvals')}
-              className={`px-4 py-2 rounded-md font-medium transition ${activeTab === 'approvals'
-                ? 'bg-white dark:bg-servicenow-light text-primary-600 dark:text-primary-400 shadow-sm'
-                : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-            >
-              Approvals
-              {stats.pendingTicketApprovals > 0 && (
-                <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                  {stats.pendingTicketApprovals}
-                </span>
+
+            {/* Approvals Tab with Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setActiveTab('approvals');
+                  setShowApprovalDropdown(!showApprovalDropdown);
+                }}
+                className={`px-5 py-2.5 rounded-md font-medium transition flex items-center gap-2 ${activeTab === 'approvals'
+                  ? 'bg-white dark:bg-servicenow-light text-primary-600 dark:text-primary-400 shadow-sm'
+                  : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+              >
+                Approvals
+                {totalPendingApprovals > 0 && (
+                  <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                    {totalPendingApprovals}
+                  </span>
+                )}
+                <ChevronDown className={`w-4 h-4 transition-transform ${showApprovalDropdown && activeTab === 'approvals' ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Dropdown Menu */}
+              {showApprovalDropdown && activeTab === 'approvals' && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-servicenow-light rounded-xl shadow-2xl border border-gray-200 dark:border-servicenow-dark z-50 overflow-hidden animate-fade-in">
+                  {approvalTypes.map((type) => (
+                    <button
+                      key={type.key}
+                      onClick={() => {
+                        setApprovalType(type.key);
+                        setShowApprovalDropdown(false);
+                      }}
+                      className={`w-full px-4 py-3 text-left text-sm font-medium flex items-center justify-between transition-all ${
+                        approvalType === type.key
+                          ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-l-4 border-primary-500'
+                          : 'text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-servicenow border-l-4 border-transparent'
+                      }`}
+                    >
+                      <span>{type.label}</span>
+                      {type.count > 0 && (
+                        <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                          {type.count}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
               )}
-            </button>
-
-            {userEmail?.toLowerCase() === 'rambalaji@tutelartechlabs.com' && (
-              <button
-                onClick={() => setActiveTab('sales_approvals')}
-                className={`px-4 py-2 rounded-md font-medium transition ${activeTab === 'sales_approvals'
-                  ? 'bg-white dark:bg-servicenow-light text-primary-600 dark:text-primary-400 shadow-sm'
-                  : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-              >
-                Sales Approvals
-                {stats.pendingSalesApprovals > 0 && (
-                  <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                    {stats.pendingSalesApprovals}
-                  </span>
-                )}
-              </button>
-            )}
-
-            {(userEmail?.toLowerCase() === 'rambalaji@tutelartechlabs.com' || userEmail?.toLowerCase() === 'rambalaji@tutelartechlabs.com') && (
-              <button
-                onClick={() => setActiveTab('reimbursement_approvals')}
-                className={`px-4 py-2 rounded-md font-medium transition ${activeTab === 'reimbursement_approvals'
-                  ? 'bg-white dark:bg-servicenow-light text-primary-600 dark:text-primary-400 shadow-sm'
-                  : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-              >
-                Reimbursement
-                {stats.pendingReimbursements > 0 && (
-                  <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                    {stats.pendingReimbursements}
-                  </span>
-                )}
-              </button>
-            )}
+            </div>
           </div>
         </div>
+
+        {/* Close dropdown when clicking outside */}
+        {showApprovalDropdown && (
+          <div className="fixed inset-0 z-40" onClick={() => setShowApprovalDropdown(false)} />
+        )}
 
         {activeTab === 'overview' && (
           <>
@@ -548,227 +571,250 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'approvals' && (
-          <div className="bg-gradient-to-r from-[#91C4A4]/15 to-[#94BBE9]/15 backdrop-blur-md dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark overflow-hidden transition-colors">
-            <div className="p-6 border-b border-gray-200 dark:border-servicenow-dark">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Access Requests</h2>
+          <div>
+            {/* Sub-header showing current approval type */}
+            <div className="mb-6 flex items-center gap-3">
+              <div className="w-2 h-8 bg-primary-500 rounded-full"></div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{currentApprovalLabel}</h2>
             </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
-                <thead className="bg-gray-50 dark:bg-servicenow-dark">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Ticket</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Requester</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-servicenow-light divide-y divide-gray-200 dark:divide-slate-700">
-                  {approvals.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                        No access requests found
-                      </td>
-                    </tr>
-                  ) : (
-                    approvals.map((approval) => (
-                      <tr key={approval.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">#{approval.ticket_id}</div>
-                          <div className="text-sm text-gray-500">{approval.issue_subject}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{approval.requester_name}</div>
-                          <div className="text-sm text-gray-500">{approval.requester_email}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(approval.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${approval.access ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                            }`}>
-                            {approval.access ? 'Granted' : 'Pending'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          {!approval.access && (
-                            <div className="flex justify-end gap-2">
-                              <button
-                                onClick={() => handleApprovalAction(approval.id, 'grant')}
-                                className="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded-md"
-                              >
-                                Grant
-                              </button>
-                              <button
-                                onClick={() => handleApprovalAction(approval.id, 'reject')}
-                                className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md"
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          )}
-                          {!!approval.access && (
-                            <button
-                              onClick={() => handleApprovalAction(approval.id, 'revoke')}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              Revoke Access
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
 
-        {activeTab === 'sales_approvals' && (
-          <div className="bg-gradient-to-r from-[#91C4A4]/15 to-[#94BBE9]/15 backdrop-blur-md dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark overflow-hidden transition-colors">
-            <div className="p-6 border-b border-gray-200 dark:border-servicenow-dark">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sales Opportunity Approvals</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
-                <thead className="bg-gray-50 dark:bg-servicenow-dark">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Opportunity</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Requester</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-servicenow-light divide-y divide-gray-200 dark:divide-slate-700">
-                  {salesApprovals.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="px-6 py-4 text-center text-gray-500 dark:text-slate-400">
-                        No sales approval requests found
-                      </td>
-                    </tr>
-                  ) : (
-                    salesApprovals.map((approval) => (
-                      <tr key={approval.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{approval.opportunity_name}</div>
-                          <div className="text-sm text-gray-500 dark:text-slate-400">{approval.customer_name}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 dark:text-white">{approval.requester_name}</div>
-                          <div className="text-sm text-gray-500 dark:text-slate-400">{approval.requester_email}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
-                          {new Date(approval.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${approval.status === 'Approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                            approval.status === 'Rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                            }`}>
-                            {approval.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          {approval.status === 'Pending' && (
-                            <div className="flex justify-end gap-2">
-                              <button
-                                onClick={() => handleSalesApprovalAction(approval.id, 'Approved')}
-                                className="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded-md dark:bg-green-900/20 dark:text-green-400 dark:hover:text-green-300"
-                              >
-                                Grant
-                              </button>
-                              <button
-                                onClick={() => handleSalesApprovalAction(approval.id, 'Rejected')}
-                                className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md dark:bg-red-900/20 dark:text-red-400 dark:hover:text-red-300"
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          )}
-                          {approval.status === 'Approved' && (
-                            <span className="text-gray-400 dark:text-slate-500">Approved</span>
-                          )}
-                        </td>
+            {/* Ticket Requests */}
+            {approvalType === 'ticket_requests' && (
+              <div className="bg-gradient-to-r from-[#91C4A4]/15 to-[#94BBE9]/15 backdrop-blur-md dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark overflow-hidden transition-colors">
+                <div className="p-6 border-b border-gray-200 dark:border-servicenow-dark">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Access Requests</h2>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                    <thead className="bg-gray-50 dark:bg-servicenow-dark">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Ticket</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Requester</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+                    </thead>
+                    <tbody className="bg-white dark:bg-servicenow-light divide-y divide-gray-200 dark:divide-slate-700">
+                      {approvals.length === 0 ? (
+                        <tr>
+                          <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                            No access requests found
+                          </td>
+                        </tr>
+                      ) : (
+                        approvals.map((approval) => (
+                          <tr key={approval.id}>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">#{approval.ticket_id}</div>
+                              <div className="text-sm text-gray-500">{approval.issue_subject}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">{approval.requester_name}</div>
+                              <div className="text-sm text-gray-500">{approval.requester_email}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {new Date(approval.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${approval.access ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                {approval.access ? 'Granted' : 'Pending'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              {!approval.access && (
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => handleApprovalAction(approval.id, 'grant')}
+                                    className="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded-md"
+                                  >
+                                    Grant
+                                  </button>
+                                  <button
+                                    onClick={() => handleApprovalAction(approval.id, 'reject')}
+                                    className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md"
+                                  >
+                                    Reject
+                                  </button>
+                                </div>
+                              )}
+                              {!!approval.access && (
+                                <button
+                                  onClick={() => handleApprovalAction(approval.id, 'revoke')}
+                                  className="text-red-600 hover:text-red-900"
+                                >
+                                  Revoke Access
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
-        {activeTab === 'reimbursement_approvals' && (
-          <div className="bg-gradient-to-r from-[#91C4A4]/15 to-[#94BBE9]/15 backdrop-blur-md dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark overflow-hidden transition-colors">
-            <div className="p-6 border-b border-gray-200 dark:border-servicenow-dark">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Reimbursement / Expense Claims</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
-                <thead className="bg-gray-50 dark:bg-servicenow-dark">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Claim ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Report Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Employee</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-servicenow-light divide-y divide-gray-200 dark:divide-slate-700">
-                  {reimbursements.length === 0 ? (
-                    <tr>
-                      <td colSpan="6" className="px-6 py-4 text-center text-gray-500 dark:text-slate-400">
-                        No reimbursement claims found
-                      </td>
-                    </tr>
-                  ) : (
-                    reimbursements.map((claim) => (
-                      <tr key={claim.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
-                          {new Date(claim.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap font-mono text-xs text-primary-600 dark:text-primary-400">
-                          {claim.claim_number || '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{claim.report_name}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 dark:text-white">{claim.employee_name}</div>
-                          <div className="text-sm text-gray-500 dark:text-slate-400">{claim.employee_email}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap font-bold text-green-600 dark:text-green-400">
-                          ₹{claim.total_amount}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${claim.status === 'Approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                            claim.status === 'Rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
-                              'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                            }`}>
-                            {claim.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
-                          {claim.status === 'Submitted' && (
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => setSelectedClaim(claim)}
-                                className="text-primary-600 hover:text-primary-900 bg-primary-50 px-3 py-1 rounded-md dark:bg-primary-900/20 dark:text-primary-400 dark:hover:text-primary-300"
-                              >
-                                Details
-                              </button>
-                            </div>
-                          )}
-                        </td>
+            {/* Leave Approvals — Embedded Component */}
+            {approvalType === 'leave' && (
+              <AdminLeaveList embedded />
+            )}
+
+            {/* Attendance Approvals — Embedded Component */}
+            {approvalType === 'attendance' && (
+              <AdminRegularizationList embedded />
+            )}
+
+            {/* Sales Approvals */}
+            {approvalType === 'sales' && (
+              <div className="bg-gradient-to-r from-[#91C4A4]/15 to-[#94BBE9]/15 backdrop-blur-md dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark overflow-hidden transition-colors">
+                <div className="p-6 border-b border-gray-200 dark:border-servicenow-dark">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sales Opportunity Approvals</h2>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                    <thead className="bg-gray-50 dark:bg-servicenow-dark">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Opportunity</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Requester</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    </thead>
+                    <tbody className="bg-white dark:bg-servicenow-light divide-y divide-gray-200 dark:divide-slate-700">
+                      {salesApprovals.length === 0 ? (
+                        <tr>
+                          <td colSpan="5" className="px-6 py-4 text-center text-gray-500 dark:text-slate-400">
+                            No sales approval requests found
+                          </td>
+                        </tr>
+                      ) : (
+                        salesApprovals.map((approval) => (
+                          <tr key={approval.id}>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">{approval.opportunity_name}</div>
+                              <div className="text-sm text-gray-500 dark:text-slate-400">{approval.customer_name}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900 dark:text-white">{approval.requester_name}</div>
+                              <div className="text-sm text-gray-500 dark:text-slate-400">{approval.requester_email}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
+                              {new Date(approval.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${approval.status === 'Approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                                approval.status === 'Rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                                }`}>
+                                {approval.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              {approval.status === 'Pending' && (
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => handleSalesApprovalAction(approval.id, 'Approved')}
+                                    className="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded-md dark:bg-green-900/20 dark:text-green-400 dark:hover:text-green-300"
+                                  >
+                                    Grant
+                                  </button>
+                                  <button
+                                    onClick={() => handleSalesApprovalAction(approval.id, 'Rejected')}
+                                    className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md dark:bg-red-900/20 dark:text-red-400 dark:hover:text-red-300"
+                                  >
+                                    Reject
+                                  </button>
+                                </div>
+                              )}
+                              {approval.status === 'Approved' && (
+                                <span className="text-gray-400 dark:text-slate-500">Approved</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Reimbursement Approvals */}
+            {approvalType === 'reimbursement' && (
+              <div className="bg-gradient-to-r from-[#91C4A4]/15 to-[#94BBE9]/15 backdrop-blur-md dark:bg-servicenow-light rounded-xl shadow-sm border border-gray-200 dark:border-servicenow-dark overflow-hidden transition-colors">
+                <div className="p-6 border-b border-gray-200 dark:border-servicenow-dark">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Reimbursement / Expense Claims</h2>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                    <thead className="bg-gray-50 dark:bg-servicenow-dark">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Claim ID</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Report Name</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Employee</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-servicenow-light divide-y divide-gray-200 dark:divide-slate-700">
+                      {reimbursements.length === 0 ? (
+                        <tr>
+                          <td colSpan="7" className="px-6 py-4 text-center text-gray-500 dark:text-slate-400">
+                            No reimbursement claims found
+                          </td>
+                        </tr>
+                      ) : (
+                        reimbursements.map((claim) => (
+                          <tr key={claim.id}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
+                              {new Date(claim.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap font-mono text-xs text-primary-600 dark:text-primary-400">
+                              {claim.claim_number || '-'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">{claim.report_name}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900 dark:text-white">{claim.employee_name}</div>
+                              <div className="text-sm text-gray-500 dark:text-slate-400">{claim.employee_email}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap font-bold text-green-600 dark:text-green-400">
+                              ₹{claim.total_amount}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${claim.status === 'Approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                                claim.status === 'Rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
+                                  'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                                }`}>
+                                {claim.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">
+                              {claim.status === 'Submitted' && (
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => setSelectedClaim(claim)}
+                                    className="text-primary-600 hover:text-primary-900 bg-primary-50 px-3 py-1 rounded-md dark:bg-primary-900/20 dark:text-primary-400 dark:hover:text-primary-300"
+                                  >
+                                    Details
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

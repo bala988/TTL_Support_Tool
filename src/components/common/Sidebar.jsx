@@ -43,13 +43,6 @@ export default function Sidebar({ userRole = 'engineer', currentPage, onNavigate
       restricted: true
     },
     {
-      icon: ClipboardCheck,
-      label: 'Expense Approvals',
-      page: 'admin/reimbursement-approval',
-      roles: ['admin'],
-      restricted: true
-    },
-    {
       icon: TicketPlus,
       label: 'Create Ticket',
       page: 'create-ticket',
@@ -87,12 +80,6 @@ export default function Sidebar({ userRole = 'engineer', currentPage, onNavigate
       label: 'Leave',
       page: 'leave/my',
       roles: ['engineer', 'admin', 'sales']
-    },
-    {
-      icon: CalendarCheck,
-      label: 'Leave Approvals',
-      page: 'admin/leave-approval',
-      roles: ['admin']
     }
   ];
 

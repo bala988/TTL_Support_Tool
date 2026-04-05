@@ -28,6 +28,7 @@ export default function EngineerLayout({ children }) {
     if (path === '/leave/apply') return 'leave/apply';
     if (path === '/leave/my') return 'leave/my';
     if (path === '/admin/leave-approval') return 'admin/leave-approval';
+    if (path === '/admin/attendance-approval') return 'admin/attendance-approval';
     if (path === '/admin/customers') return 'admin/customers';
     if (path === '/admin/employees') return 'admin/employees';
     return 'engineer-dashboard';
@@ -78,6 +79,7 @@ export default function EngineerLayout({ children }) {
       case 'leave/my':
       case 'leave/apply':
       case 'admin/leave-approval':
+      case 'admin/attendance-approval':
       case 'admin/customers':
       case 'admin/employees':
         navigate(`/${page}`);

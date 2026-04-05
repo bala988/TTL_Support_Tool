@@ -96,6 +96,21 @@ export const punchOut = async (req, res, next) => {
 export const getTodayPunch = async (req, res, next) => {
   try {
     const today = getISTDateString();
+
+    // First: auto-close any stale open punches from previous days
+    const stalePunches = await PunchClock.find({
+      userId: req.mongoUser._id,
+      punchOut: null,
+      missedPunchOut: { $ne: true },
+      date: { $lt: today },
+    });
+
+    for (const stale of stalePunches) {
+      stale.totalMinutes = 0;
+      stale.missedPunchOut = true;
+      await stale.save();
+    }
+
     const punch = await PunchClock.findOne({ userId: req.mongoUser._id, date: today });
 
     res.status(200).json({
@@ -138,6 +153,7 @@ export const getWeeklySummary = async (req, res, next) => {
     }).sort({ date: 1 });
 
     const now = new Date();
+    const today = getISTDateString();
 
     for (let i = 0; i < 7; i++) {
         const d = new Date(monday);
@@ -146,16 +162,29 @@ export const getWeeklySummary = async (req, res, next) => {
         const punch = punches.find(p => p.date === dateStr);
 
         let hours = 0;
+        let status = null;
         if (punch) {
-          if (punch.totalMinutes > 0) {
+          if (punch.missedPunchOut) {
+            // Missed punch out — show 0 hours
+            hours = 0;
+            status = 'Not Punched Out';
+          } else if (punch.totalMinutes > 0) {
             hours = parseFloat((punch.totalMinutes / 60).toFixed(1));
+            status = 'completed';
           } else if (punch.punchIn && !punch.punchOut) {
-            // Currently working — calculate live hours using original UTC 'now'
-            const elapsed = (now - new Date(punch.punchIn)) / (1000 * 60 * 60);
-            hours = parseFloat(Math.max(0, elapsed).toFixed(1));
+            // Currently working today — calculate live hours
+            if (dateStr === today) {
+              const elapsed = (now - new Date(punch.punchIn)) / (1000 * 60 * 60);
+              hours = parseFloat(Math.max(0, elapsed).toFixed(1));
+              status = 'active';
+            } else {
+              // Past day with no punch out — treat as missed
+              hours = 0;
+              status = 'Not Punched Out';
+            }
           }
         }
-        weekData.push({ day: days[i], date: dateStr, hours });
+        weekData.push({ day: days[i], date: dateStr, hours, status });
     }
 
     const totalHours = weekData.reduce((sum, d) => sum + d.hours, 0);

@@ -6,11 +6,12 @@ import WeeklyWorkChart from '../components/employee/WeeklyWorkChart';
 import WorklogForm from '../components/employee/WorklogForm';
 import CalendarView from '../components/employee/CalendarView';
 import WorklogHistory from '../components/employee/WorklogHistory';
+import RegularizationForm from '../components/employee/RegularizationForm';
 import Button from '../components/ui/Button';
 
 const EmployeeDashboard = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('daily'); // 'daily', 'calendar', 'history'
+  const [activeTab, setActiveTab] = useState('daily'); // 'daily', 'calendar', 'history', 'regularize'
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleRefresh = () => {
@@ -65,6 +66,16 @@ const EmployeeDashboard = () => {
           >
             History
           </button>
+          <button
+            onClick={() => setActiveTab('regularize')}
+            className={`px-6 py-2 rounded-lg font-semibold transition-all duration-200 ${
+              activeTab === 'regularize'
+                ? 'bg-primary-600 text-white shadow-lg transform scale-105'
+                : 'text-dark-600 dark:text-slate-300 hover:bg-primary-50 dark:hover:bg-servicenow'
+            }`}
+          >
+            Regularize
+          </button>
         </div>
 
         {/* Tab Content */}
@@ -108,6 +119,10 @@ const EmployeeDashboard = () => {
 
           {activeTab === 'history' && (
             <WorklogHistory refreshTrigger={refreshTrigger} />
+          )}
+
+          {activeTab === 'regularize' && (
+            <RegularizationForm refreshTrigger={refreshTrigger} onSuccess={handleRefresh} />
           )}
         </div>
       </div>

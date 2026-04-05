@@ -56,15 +56,17 @@ const WeeklyWorkChart = ({ refreshTrigger }) => {
   const tooltipBg = theme === 'dark' ? '#1e293b' : '#fff';
   const tooltipBorder = theme === 'dark' ? '#334155' : '#e2e8f0';
 
-  const getBarColor = (hours) => {
-    if (hours >= 8) return '#22c55e';
-    if (hours >= 5) return '#f59e0b';
-    if (hours > 0) return '#f97316';
+  const getBarColor = (entry) => {
+    if (entry.status === 'Not Punched Out') return '#ef4444'; // Red for missed punch out
+    if (entry.hours >= 8) return '#22c55e';
+    if (entry.hours >= 5) return '#f59e0b';
+    if (entry.hours > 0) return '#f97316';
     return theme === 'dark' ? '#334155' : '#e2e8f0';
   };
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
+      const entry = weekData.find(d => d.day === label);
       const hours = payload[0].value;
       return (
         <div
@@ -72,7 +74,11 @@ const WeeklyWorkChart = ({ refreshTrigger }) => {
           style={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}` }}
         >
           <span className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>
-            {label}: <strong>{hours}h</strong>
+            {label}: {entry?.status === 'Not Punched Out' ? (
+              <strong className="text-red-500">Not Punched Out</strong>
+            ) : (
+              <strong>{hours}h</strong>
+            )}
           </span>
         </div>
       );
@@ -85,7 +91,7 @@ const WeeklyWorkChart = ({ refreshTrigger }) => {
   // Ensure bars show at least a tiny amount for visual consistency
   const chartData = weekData.map(d => ({
     ...d,
-    displayHours: d.hours || 0,
+    displayHours: d.status === 'Not Punched Out' ? 0.3 : (d.hours || 0), // Show tiny bar for missed punch outs
   }));
 
   return (
@@ -163,7 +169,7 @@ const WeeklyWorkChart = ({ refreshTrigger }) => {
               <Tooltip content={<CustomTooltip />} cursor={{ fill: theme === 'dark' ? '#1e293b' : '#f8fafc', radius: 4 }} />
               <Bar dataKey="displayHours" radius={[6, 6, 0, 0]} maxBarSize={36}>
                 {chartData.map((entry, index) => (
-                  <Cell key={index} fill={getBarColor(entry.hours)} />
+                  <Cell key={index} fill={getBarColor(entry)} />
                 ))}
               </Bar>
             </BarChart>
