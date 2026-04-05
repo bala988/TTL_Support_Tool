@@ -35,7 +35,7 @@ const AdminReimbursementPage = () => {
     const userEmail = localStorage.getItem("userEmail");
 
     // Double check email protection on frontend (backend handles it too logically, but good for UX)
-    if (userEmail !== 'rambalaji@tutelartechlabs.com') {
+    if (userEmail !== import.meta.env.VITE_SUPER_ADMIN_EMAIL) {
         return (
             <div className="min-h-screen flex items-center justify-center text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-900">
                 <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-xl border border-red-200 dark:border-red-800 shadow-lg">
