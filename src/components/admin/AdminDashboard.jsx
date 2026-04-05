@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { StatsCard } from "../common/StatsCard";
 import { TicketsTable } from "../tickets/TicketsTable";
 import { useTheme } from "../../context/ThemeContext";
+import { isSuperAdmin } from "../../utils/superAdmin";
 import {
   PieChart,
   Pie,
@@ -66,7 +67,7 @@ export default function AdminDashboard() {
         const approvalsData = await approvalsRes.json();
 
         // Fetch Sales Approvals if Ram
-        if (localStorage.getItem("userEmail")?.toLowerCase() === 'rambalaji@tutelartechlabs.com') {
+        if (isSuperAdmin(localStorage.getItem("userEmail"))) {
           try {
             const salesRes = await fetch(`${import.meta.env.VITE_API_URL}/api/sales-approvals`);
             const salesData = await salesRes.json();
@@ -102,7 +103,7 @@ export default function AdminDashboard() {
     fetchData();
     const interval = setInterval(() => {
       // Poll for pending reimbursements only if user is admin
-      if (localStorage.getItem("userEmail")?.toLowerCase() === 'rambalaji@tutelartechlabs.com') {
+      if (isSuperAdmin(localStorage.getItem("userEmail"))) {
         fetch(`${import.meta.env.VITE_API_URL}/api/reimbursement/pending?_t=${Date.now()}`)
           .then(res => res.json())
           .then(data => setReimbursements(data))

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { LayoutDashboard, TicketPlus, Shield, LogOut, Users, BookOpen, FileText, Briefcase, PieChart, UserPlus, ChevronLeft, ChevronRight, Sun, Moon, ClipboardCheck, UserCog, Pencil, Activity, CalendarDays, CalendarCheck } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { isSuperAdmin } from '../../utils/superAdmin';
 
 export default function Sidebar({ userRole = 'engineer', currentPage, onNavigate, onLogout }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const userEmail = localStorage.getItem("userEmail");
-  // Check specifically for the allowed sales email (regardless of role)
-  const isSalesAllowed = userEmail?.toLowerCase() === 'rambalaji@tutelartechlabs.com';
+  const isSalesAllowed = isSuperAdmin(userEmail);
 
   const menuItems = [
     {
