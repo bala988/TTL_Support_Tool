@@ -28,6 +28,12 @@ import {
   getAllLeaves,
   reviewLeave,
 } from '../controllers/mongo/leaveController.js';
+import {
+  applyRegularization,
+  getMyRegularizations,
+  getAllRegularizations,
+  reviewRegularization,
+} from '../controllers/mongo/regularizationController.js';
 import { verifyToken } from '../middlewares/authMiddleware.js'; // Main App Auth
 import { syncMongoUser } from '../middlewares/mongoSync.js'; // Sync Middleware
 
@@ -56,6 +62,10 @@ router.get('/punch/weekly', getWeeklySummary);
 router.post('/leave/apply', applyLeave);
 router.get('/leave/my', getMyLeaves);
 
+// --- Regularization Routes (Employee) ---
+router.post('/regularization/apply', applyRegularization);
+router.get('/regularization/my', getMyRegularizations);
+
 // --- Admin Routes ---
 const requireAdmin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
@@ -76,5 +86,9 @@ router.get('/admin/stats', requireAdmin, getDashboardStats);
 // --- Leave Routes (Admin) ---
 router.get('/admin/leaves', requireAdmin, getAllLeaves);
 router.put('/admin/leave/:id/review', requireAdmin, reviewLeave);
+
+// --- Regularization Routes (Admin) ---
+router.get('/admin/regularizations', requireAdmin, getAllRegularizations);
+router.put('/admin/regularization/:id/review', requireAdmin, reviewRegularization);
 
 export default router;

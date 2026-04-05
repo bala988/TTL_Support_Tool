@@ -25,6 +25,7 @@ import AdminActivityPage from "./modules/attendance/pages/AdminActivityPage";
 import ApplyLeave from "./modules/attendance/pages/ApplyLeave";
 import MyLeaves from "./modules/attendance/pages/MyLeaves";
 import AdminLeaveList from "./modules/attendance/pages/AdminLeaveList";
+import AdminRegularizationList from "./modules/attendance/pages/AdminRegularizationList";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 export default function App() {
@@ -156,6 +157,13 @@ export default function App() {
           <ProtectedRoute roles={['admin']}>
             <EngineerLayout>
               <AdminLeaveList />
+            </EngineerLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/attendance-approval" element={
+          <ProtectedRoute roles={['admin']}>
+            <EngineerLayout>
+              <AdminRegularizationList />
             </EngineerLayout>
           </ProtectedRoute>
         } />

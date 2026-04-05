@@ -28,6 +28,10 @@ const punchClockSchema = new mongoose.Schema(
       enum: ['Work from Home', 'Office', 'Client'],
       required: true,
     },
+    missedPunchOut: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
