@@ -1442,12 +1442,6 @@ export default function TicketDetailsView() {
                 Add to Worklog
               </button>
               <button
-                onClick={() => toast.info("Escalation flow not implemented in this demo")}
-                className="w-full inline-flex items-center justify-center px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium"
-              >
-                Escalate Ticket
-              </button>
-              <button
                 onClick={() => window.print()}
                 className="w-full inline-flex items-center justify-center px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium"
               >
