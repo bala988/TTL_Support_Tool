@@ -28,12 +28,21 @@ export default function EngineerDashboard() {
   const [loading, setLoading] = useState(true);
   const [myApprovals, setMyApprovals] = useState({});
   // Filters for My Assigned Tickets
-  const [filterCustomer, setFilterCustomer] = useState('All');
-  const [filterProduct, setFilterProduct] = useState('All');
-  const [filterStatus, setFilterStatus] = useState('All');
-  const [filterStartDate, setFilterStartDate] = useState('');
-  const [filterEndDate, setFilterEndDate] = useState('');
-  const [searchTicketId, setSearchTicketId] = useState('');
+  const [filterCustomer, setFilterCustomer] = useState(() => sessionStorage.getItem('eng_filterCustomer') || 'All');
+  const [filterProduct, setFilterProduct] = useState(() => sessionStorage.getItem('eng_filterProduct') || 'All');
+  const [filterStatus, setFilterStatus] = useState(() => sessionStorage.getItem('eng_filterStatus') || 'All');
+  const [filterStartDate, setFilterStartDate] = useState(() => sessionStorage.getItem('eng_filterStartDate') || '');
+  const [filterEndDate, setFilterEndDate] = useState(() => sessionStorage.getItem('eng_filterEndDate') || '');
+  const [searchTicketId, setSearchTicketId] = useState(() => sessionStorage.getItem('eng_searchTicketId') || '');
+
+  useEffect(() => {
+    sessionStorage.setItem('eng_filterCustomer', filterCustomer);
+    sessionStorage.setItem('eng_filterProduct', filterProduct);
+    sessionStorage.setItem('eng_filterStatus', filterStatus);
+    sessionStorage.setItem('eng_filterStartDate', filterStartDate);
+    sessionStorage.setItem('eng_filterEndDate', filterEndDate);
+    sessionStorage.setItem('eng_searchTicketId', searchTicketId);
+  }, [filterCustomer, filterProduct, filterStatus, filterStartDate, filterEndDate, searchTicketId]);
 
   useEffect(() => {
     const fetchTickets = async () => {

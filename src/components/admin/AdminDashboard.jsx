@@ -39,13 +39,23 @@ export default function AdminDashboard() {
   const [userEmail, setUserEmail] = useState('');
 
   // Filters State
-  const [filterCustomer, setFilterCustomer] = useState('All');
-  const [filterProduct, setFilterProduct] = useState('All');
-  const [filterEngineer, setFilterEngineer] = useState('All');
-  const [filterStatus, setFilterStatus] = useState('All');
-  const [filterStartDate, setFilterStartDate] = useState('');
-  const [filterEndDate, setFilterEndDate] = useState('');
-  const [searchTicketId, setSearchTicketId] = useState('');
+  const [filterCustomer, setFilterCustomer] = useState(() => sessionStorage.getItem('admin_filterCustomer') || 'All');
+  const [filterProduct, setFilterProduct] = useState(() => sessionStorage.getItem('admin_filterProduct') || 'All');
+  const [filterEngineer, setFilterEngineer] = useState(() => sessionStorage.getItem('admin_filterEngineer') || 'All');
+  const [filterStatus, setFilterStatus] = useState(() => sessionStorage.getItem('admin_filterStatus') || 'All');
+  const [filterStartDate, setFilterStartDate] = useState(() => sessionStorage.getItem('admin_filterStartDate') || '');
+  const [filterEndDate, setFilterEndDate] = useState(() => sessionStorage.getItem('admin_filterEndDate') || '');
+  const [searchTicketId, setSearchTicketId] = useState(() => sessionStorage.getItem('admin_searchTicketId') || '');
+
+  useEffect(() => {
+    sessionStorage.setItem('admin_filterCustomer', filterCustomer);
+    sessionStorage.setItem('admin_filterProduct', filterProduct);
+    sessionStorage.setItem('admin_filterEngineer', filterEngineer);
+    sessionStorage.setItem('admin_filterStatus', filterStatus);
+    sessionStorage.setItem('admin_filterStartDate', filterStartDate);
+    sessionStorage.setItem('admin_filterEndDate', filterEndDate);
+    sessionStorage.setItem('admin_searchTicketId', searchTicketId);
+  }, [filterCustomer, filterProduct, filterEngineer, filterStatus, filterStartDate, filterEndDate, searchTicketId]);
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");

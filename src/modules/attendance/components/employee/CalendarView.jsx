@@ -20,13 +20,15 @@ const CalendarView = ({ refreshTrigger }) => {
 
   const loadCalendarData = async () => {
     try {
-      const currentMonth = format(new Date(), 'yyyy-MM');
-      const startOfMonth = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), 'yyyy-MM-dd');
-      const endOfMonth = format(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0), 'yyyy-MM-dd');
+      // Fetch a wider range (3 months back, 2 months forward) to ensure visibility
+      const today = new Date();
+      const start = format(new Date(today.getFullYear(), today.getMonth() - 3, 1), 'yyyy-MM-dd');
+      const end = format(new Date(today.getFullYear(), today.getMonth() + 3, 0), 'yyyy-MM-dd');
+      const currentMonth = format(today, 'yyyy-MM');
 
       const [attendanceRes, worklogsRes] = await Promise.all([
         employeeAPI.getAttendance(currentMonth),
-        employeeAPI.getWorklogsByRange(startOfMonth, endOfMonth),
+        employeeAPI.getWorklogsByRange(start, end),
       ]);
 
       const attendanceEvents = attendanceRes.data.attendance.map((att) => ({
@@ -36,21 +38,33 @@ const CalendarView = ({ refreshTrigger }) => {
         backgroundColor: '#10b981',
         borderColor: '#059669',
         textColor: '#ffffff',
+        display: 'block'
       }));
 
       const monthlyLogs = worklogsRes.data.worklogs;
       setAllMonthlyLogs(monthlyLogs);
-      setDisplayedLogs(monthlyLogs); // Default: show all
+      
+      // If a date was already selected, refresh displayed logs for that date
+      if (selectedDate) {
+        setDisplayedLogs(monthlyLogs.filter(log => log.date === selectedDate));
+      } else {
+        setDisplayedLogs(monthlyLogs);
+      }
 
       const worklogDates = [...new Set(monthlyLogs.map((log) => log.date))];
-      const worklogEvents = worklogDates.map((date) => ({
-        id: `work-${date}`,
-        title: '📝 Worklogs',
-        date: date,
-        backgroundColor: '#3b82f6',
-        borderColor: '#2563eb',
-        textColor: '#ffffff',
-      }));
+      const worklogEvents = worklogDates.map((date) => {
+        const count = monthlyLogs.filter(l => l.date === date).length;
+        return {
+          id: `work-${date}`,
+          title: `📝 ${count} Log${count > 1 ? 's' : ''}`,
+          date: date,
+          backgroundColor: '#3b82f6',
+          borderColor: '#2563eb',
+          textColor: '#ffffff',
+          display: 'block',
+          extendedProps: { type: 'worklog', date }
+        };
+      });
 
       setEvents([...attendanceEvents, ...worklogEvents]);
     } catch (error) {
@@ -61,16 +75,23 @@ const CalendarView = ({ refreshTrigger }) => {
     }
   };
 
-  const handleDateClick = async (info) => {
+  const handleDateClick = (info) => {
     const clickedDate = info.dateStr;
-    
-    // Toggle: if clicking same date, clear selection and show all
-    if (selectedDate === clickedDate) {
+    selectDate(clickedDate);
+  };
+
+  const handleEventClick = (info) => {
+    const date = info.event.startStr;
+    selectDate(date);
+  };
+
+  const selectDate = (date) => {
+    if (selectedDate === date) {
       setSelectedDate(null);
       setDisplayedLogs(allMonthlyLogs);
     } else {
-      setSelectedDate(clickedDate);
-      const dayLogs = allMonthlyLogs.filter(log => log.date === clickedDate);
+      setSelectedDate(date);
+      const dayLogs = allMonthlyLogs.filter(log => log.date === date);
       setDisplayedLogs(dayLogs);
     }
   };
@@ -90,11 +111,25 @@ const CalendarView = ({ refreshTrigger }) => {
       <Card>
         <h2 className="text-2xl font-bold text-dark-900 dark:text-white mb-4">Calendar View</h2>
         <div className="calendar-container">
+          <style>{`
+            .fc-day-selected {
+              background-color: rgba(59, 130, 246, 0.15) !important;
+              transition: all 0.2s ease;
+            }
+            .dark .fc-day-selected {
+              background-color: rgba(99, 102, 241, 0.2) !important;
+            }
+          `}</style>
           <FullCalendar
             plugins={[dayGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
             events={events}
             dateClick={handleDateClick}
+            eventClick={handleEventClick}
+            dayCellClassNames={(arg) => {
+              const dateStr = format(arg.date, 'yyyy-MM-dd');
+              return dateStr === selectedDate ? 'fc-day-selected' : '';
+            }}
             headerToolbar={{
               left: 'prev,next today',
               center: 'title',

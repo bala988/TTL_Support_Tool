@@ -1,24 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from 'react-hot-toast';
+import { 
+  ArrowLeft, Clock, AlertCircle, Paperclip, CheckCircle2, 
+  Edit2, Save, ArrowRightCircle, Building, User, Plus, Minus, ExternalLink,
+  StickyNote, CheckCircle, MessageSquare, Power
+} from "lucide-react";
 import EngineerLayout from "../common/EngineerLayout";
 import { getTimestamp, formatDuration } from "../../utils/time";
-import {
-  ArrowLeft,
-  Edit2,
-  Save,
-  Clock,
-  User,
-  Building,
-  AlertCircle,
-  CheckCircle2,
-  ArrowRightCircle,
-  StickyNote,
-  Paperclip,
-  Plus,
-  Minus,
-  ExternalLink,
-} from "lucide-react";
+import { employeeAPI } from "../../modules/attendance/api/employee";
 
 export default function TicketDetailsView() {
   const navigate = useNavigate();
@@ -42,6 +32,16 @@ export default function TicketDetailsView() {
   const [feedbackFile, setFeedbackFile] = useState(null);
   const [feedbackPreviewUrl, setFeedbackPreviewUrl] = useState(null);
   const [isUploadingFeedback, setIsUploadingFeedback] = useState(false);
+
+  // Add to Worklog Modal State
+  const [showWorklogModal, setShowWorklogModal] = useState(false);
+  const [worklogForm, setWorklogForm] = useState({
+    fromTime: '09:00',
+    toTime: '10:00',
+    activity: '',
+    date: new Date().toISOString().split('T')[0]
+  });
+  const [isSubmittingWorklog, setIsSubmittingWorklog] = useState(false);
   const [isPendingAssignment, setIsPendingAssignment] = useState(false);
 
   const [initialStatus, setInitialStatus] = useState("");
@@ -437,23 +437,31 @@ export default function TicketDetailsView() {
     }
   };
 
-  const handleAddUpdate = async () => {
+  const handleAddUpdate = async (shouldClose = false) => {
     if (!newUpdate.trim()) return;
 
     const now = new Date().toISOString();
 
     const updateEntry = {
       date: now,
-      event: "Comment added",
+      event: shouldClose ? "Ticket Closed with Comment" : "Comment added",
       user: currentUserName,
       type: "update",
-      meta: { text: newUpdate }
+      meta: { 
+        text: newUpdate,
+        isClosing: shouldClose
+      }
     };
 
     const updatedTimeline = [...ticket.timeline, updateEntry];
 
-    // Optimistic update
-    setTicket(prev => ({ ...prev, timeline: updatedTimeline }));
+    // Optimistically update
+    setTicket(prev => ({ 
+      ...prev, 
+      timeline: updatedTimeline,
+      status: shouldClose ? 'Closed' : prev.status,
+      closeDate: shouldClose ? now : prev.closeDate
+    }));
     setNewUpdate("");
 
     try {
@@ -462,7 +470,8 @@ export default function TicketDetailsView() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          status: ticket.status,
+          status: shouldClose ? 'Closed' : ticket.status,
+          close_date: shouldClose ? now : ticket.closeDate,
           severity: ticket.severity,
           issue_subject: ticket.issueSubject,
           issue_description: ticket.issueDescription,
@@ -476,11 +485,54 @@ export default function TicketDetailsView() {
 
       if (!response.ok) {
         toast.error("Failed to save update");
-        // Revert? (Not strictly necessary for this demo, but good practice)
+      } else {
+        if (shouldClose) {
+           toast.success("Ticket closed successfully! ✅");
+        }
       }
     } catch (e) {
       console.error("Error saving update:", e);
       toast.error("Error saving update");
+    }
+  };
+
+  const handleOpenWorklogModal = () => {
+    setWorklogForm(prev => ({
+      ...prev,
+      activity: `Working on Ticket: ${ticket.ticketNumber || ticket.id} - ${ticket.issueSubject}`,
+      date: new Date().toISOString().split('T')[0]
+    }));
+    setShowWorklogModal(true);
+  };
+
+  const handleWorklogSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmittingWorklog(true);
+    try {
+      // Calculate duration in minutes
+      const [h1, m1] = worklogForm.fromTime.split(':').map(Number);
+      const [h2, m2] = worklogForm.toTime.split(':').map(Number);
+      const start = h1 * 60 + m1;
+      const end = h2 * 60 + m2;
+      const duration = end - start;
+
+      if (duration <= 0) {
+        toast.error('End time must be after start time');
+        return;
+      }
+
+      await employeeAPI.createWorklog({
+        ...worklogForm,
+        durationMinutes: duration
+      });
+
+      toast.success('Worklog added successfully!');
+      setShowWorklogModal(false);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to add worklog');
+    } finally {
+      setIsSubmittingWorklog(false);
     }
   };
 
@@ -1183,21 +1235,39 @@ export default function TicketDetailsView() {
                 />
                 <div className="flex justify-end">
                   <button
-                    onClick={handleAddUpdate}
+                    onClick={() => handleAddUpdate(false)}
                     disabled={!newUpdate.trim()}
                     className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
                   >
                     Post Update
                   </button>
+                  <button
+                    onClick={() => handleAddUpdate(true)}
+                    disabled={!newUpdate.trim()}
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+                  >
+                    <Power className="w-4 h-4" />
+                    Comment & Close
+                  </button>
                 </div>
                 <div className="pt-4 border-t border-gray-100 dark:border-slate-700 space-y-3">
                   {(ticket.timeline || []).filter(e => e.type === 'update' && e.meta?.text).map((entry, idx) => (
-                    <div key={idx} className="flex flex-col gap-1 p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg border border-gray-100 dark:border-slate-700/50">
+                    <div 
+                      key={idx} 
+                      className={`flex flex-col gap-1 p-3 rounded-lg border ${
+                        entry.meta?.isClosing 
+                          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                          : 'bg-gray-50 dark:bg-slate-800/50 border-gray-100 dark:border-slate-700/50'
+                      }`}
+                    >
                       <div className="text-sm text-gray-800 dark:text-white whitespace-pre-wrap break-words">
                         {entry.meta?.text || ''}
                       </div>
                       <div className="flex items-center justify-between mt-1 text-[10px] text-gray-500 dark:text-slate-400">
-                        <span>{entry.user}</span>
+                        <span className="flex items-center gap-1">
+                          {entry.user}
+                          {entry.meta?.isClosing && <CheckCircle className="w-3 h-3 text-emerald-600" />}
+                        </span>
                         <span>{formatIST(entry.date)}</span>
                       </div>
                     </div>
@@ -1365,6 +1435,13 @@ export default function TicketDetailsView() {
                 Mark as Resolved
               </button>
               <button
+                onClick={handleOpenWorklogModal}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium shadow-md transition-all active:scale-95"
+              >
+                <Plus className="w-4 h-4" />
+                Add to Worklog
+              </button>
+              <button
                 onClick={() => toast.info("Escalation flow not implemented in this demo")}
                 className="w-full inline-flex items-center justify-center px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium"
               >
@@ -1420,6 +1497,88 @@ export default function TicketDetailsView() {
           </div>
         </div>
       </div>
+
+      {/* Add to Worklog Modal */}
+      {showWorklogModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-servicenow-light rounded-2xl w-full max-w-md shadow-2xl border border-gray-100 dark:border-servicenow-dark overflow-hidden animate-fade-in-up">
+            <div className="bg-primary-600 p-6 flex justify-between items-center text-white">
+               <div>
+                 <h2 className="text-xl font-bold">Add Worklog</h2>
+                 <p className="text-primary-100 text-sm">Log your activity for this ticket</p>
+               </div>
+               <button onClick={() => setShowWorklogModal(false)} className="hover:bg-primary-700 p-2 rounded-full transition-colors">
+                 <Power className="w-5 h-5 rotate-45" />
+               </button>
+            </div>
+            
+            <form onSubmit={handleWorklogSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Date</label>
+                <input
+                  type="date"
+                  required
+                  value={worklogForm.date}
+                  onChange={(e) => setWorklogForm({ ...worklogForm, date: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-servicenow-dark border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none dark:text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">From</label>
+                  <input
+                    type="time"
+                    required
+                    value={worklogForm.fromTime}
+                    onChange={(e) => setWorklogForm({ ...worklogForm, fromTime: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-servicenow-dark border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">To</label>
+                  <input
+                    type="time"
+                    required
+                    value={worklogForm.toTime}
+                    onChange={(e) => setWorklogForm({ ...worklogForm, toTime: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-servicenow-dark border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Activity</label>
+                <textarea
+                  required
+                  rows="4"
+                  value={worklogForm.activity}
+                  onChange={(e) => setWorklogForm({ ...worklogForm, activity: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-servicenow-dark border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none dark:text-white resize-none"
+                  placeholder="Describe what you did..."
+                />
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowWorklogModal(false)}
+                  className="flex-1 px-4 py-3 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingWorklog}
+                  className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 disabled:opacity-50 transition-all font-bold shadow-lg shadow-primary-500/20"
+                >
+                  {isSubmittingWorklog ? 'Saving...' : 'Add Worklog'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </EngineerLayout>
   );
 }
