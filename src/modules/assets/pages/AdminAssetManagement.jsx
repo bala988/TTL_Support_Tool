@@ -49,7 +49,7 @@ export default function AdminAssetManagement() {
         fetch(`${import.meta.env.VITE_API_URL}/api/assets`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch(`${import.meta.env.VITE_API_URL}/api/users`, {
+        fetch(`${import.meta.env.VITE_API_URL}/api/auth/users`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
         fetch(`${import.meta.env.VITE_API_URL}/api/customers`, {

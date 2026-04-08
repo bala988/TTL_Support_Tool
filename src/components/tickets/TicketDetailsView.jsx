@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { 
   ArrowLeft, Clock, AlertCircle, Paperclip, CheckCircle2, 
   Edit2, Save, ArrowRightCircle, Building, User, Plus, Minus, ExternalLink,
-  StickyNote, CheckCircle, MessageSquare, Power
+  StickyNote, CheckCircle, MessageSquare, Power, Trophy
 } from "lucide-react";
 import EngineerLayout from "../common/EngineerLayout";
 import { getTimestamp, formatDuration } from "../../utils/time";
@@ -43,6 +43,7 @@ export default function TicketDetailsView() {
   });
   const [isSubmittingWorklog, setIsSubmittingWorklog] = useState(false);
   const [isPendingAssignment, setIsPendingAssignment] = useState(false);
+  const [showResolveModal, setShowResolveModal] = useState(false);
 
   const [initialStatus, setInitialStatus] = useState("");
   const [openDuration, setOpenDuration] = useState("");
@@ -437,19 +438,22 @@ export default function TicketDetailsView() {
     }
   };
 
-  const handleAddUpdate = async (shouldClose = false) => {
-    if (!newUpdate.trim()) return;
+  const handleAddUpdate = async (isResolution = false) => {
+    if (!newUpdate.trim()) {
+      if (isResolution) toast.error("Please provide a resolution comment first.");
+      return;
+    }
 
     const now = new Date().toISOString();
 
     const updateEntry = {
       date: now,
-      event: shouldClose ? "Ticket Closed with Comment" : "Comment added",
+      event: isResolution ? "Resolution Provided" : "Comment added",
       user: currentUserName,
       type: "update",
       meta: { 
         text: newUpdate,
-        isClosing: shouldClose
+        isClosing: isResolution // Keeping name for compatibility in timeline rendering
       }
     };
 
@@ -458,9 +462,7 @@ export default function TicketDetailsView() {
     // Optimistically update
     setTicket(prev => ({ 
       ...prev, 
-      timeline: updatedTimeline,
-      status: shouldClose ? 'Closed' : prev.status,
-      closeDate: shouldClose ? now : prev.closeDate
+      timeline: updatedTimeline
     }));
     setNewUpdate("");
 
@@ -470,8 +472,7 @@ export default function TicketDetailsView() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          status: shouldClose ? 'Closed' : ticket.status,
-          close_date: shouldClose ? now : ticket.closeDate,
+          status: ticket.status,
           severity: ticket.severity,
           issue_subject: ticket.issueSubject,
           issue_description: ticket.issueDescription,
@@ -486,13 +487,60 @@ export default function TicketDetailsView() {
       if (!response.ok) {
         toast.error("Failed to save update");
       } else {
-        if (shouldClose) {
-           toast.success("Ticket closed successfully! ✅");
+        if (isResolution) {
+           toast.success("Resolution marked! You can now close the ticket from the sidebar.");
         }
       }
     } catch (e) {
       console.error("Error saving update:", e);
       toast.error("Error saving update");
+    }
+  };
+
+  const handleCloseTicket = async () => {
+    const now = new Date().toISOString();
+    
+    // First, check if there's any resolution in timeline (Optional but recommended)
+    const hasResolution = ticket.timeline?.some(e => e.meta?.isClosing === true);
+    if (!hasResolution) {
+      // We'll allow closing anyway, but maybe show a warning?
+      // For now, just follow the user's explicit instructions.
+    }
+
+    // Optimistically update
+    setTicket(prev => ({ 
+      ...prev, 
+      status: 'Closed',
+      closeDate: now
+    }));
+
+    try {
+      const response = await fetch(`${API_URL}/api/tickets/${ticket.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'Closed',
+          close_date: now,
+          severity: ticket.severity,
+          issue_subject: ticket.issueSubject,
+          issue_description: ticket.issueDescription,
+          engineer_remarks: ticket.engineerRemarks,
+          problem_resolution: ticket.problemResolution,
+          rough_notes: ticket.roughNotes,
+          reference_url: ticket.referenceUrl,
+          timeline: ticket.timeline
+        })
+      });
+
+      if (response.ok) {
+        toast.success("Ticket closed successfully! ✅");
+        setSelectedFile(null);
+      } else {
+        toast.error("Failed to close ticket");
+      }
+    } catch (e) {
+      console.error("Error closing ticket:", e);
+      toast.error("Error closing ticket");
     }
   };
 
@@ -1226,52 +1274,77 @@ export default function TicketDetailsView() {
                 Updates & Comments
               </h2>
               <div className="space-y-4">
-                <textarea
-                  value={newUpdate}
-                  onChange={(e) => setNewUpdate(e.target.value)}
-                  placeholder="Add a new update or comment..."
-                  rows={3}
-                  className="input resize-none"
-                />
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => handleAddUpdate(false)}
-                    disabled={!newUpdate.trim()}
-                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
-                  >
-                    Post Update
-                  </button>
-                  <button
-                    onClick={() => handleAddUpdate(true)}
-                    disabled={!newUpdate.trim()}
-                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
-                  >
-                    <Power className="w-4 h-4" />
-                    Comment & Close
-                  </button>
-                </div>
-                <div className="pt-4 border-t border-gray-100 dark:border-slate-700 space-y-3">
-                  {(ticket.timeline || []).filter(e => e.type === 'update' && e.meta?.text).map((entry, idx) => (
-                    <div 
-                      key={idx} 
-                      className={`flex flex-col gap-1 p-3 rounded-lg border ${
-                        entry.meta?.isClosing 
-                          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
-                          : 'bg-gray-50 dark:bg-slate-800/50 border-gray-100 dark:border-slate-700/50'
-                      }`}
-                    >
-                      <div className="text-sm text-gray-800 dark:text-white whitespace-pre-wrap break-words">
-                        {entry.meta?.text || ''}
-                      </div>
-                      <div className="flex items-center justify-between mt-1 text-[10px] text-gray-500 dark:text-slate-400">
-                        <span className="flex items-center gap-1">
-                          {entry.user}
-                          {entry.meta?.isClosing && <CheckCircle className="w-3 h-3 text-emerald-600" />}
-                        </span>
-                        <span>{formatIST(entry.date)}</span>
-                      </div>
+                {ticket.status !== 'Closed' ? (
+                  <>
+                    <textarea
+                      value={newUpdate}
+                      onChange={(e) => setNewUpdate(e.target.value)}
+                      placeholder="Add a new update or comment..."
+                      rows={3}
+                      className="input resize-none"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => handleAddUpdate(false)}
+                        disabled={!newUpdate.trim()}
+                        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+                      >
+                        Post Update
+                      </button>
+                      <button
+                        onClick={() => handleAddUpdate(true)}
+                        disabled={!newUpdate.trim()}
+                        className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        Mark as Resolution
+                      </button>
                     </div>
-                  ))}
+                  </>
+                ) : (
+                  <div className="bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 rounded-xl p-6 text-center">
+                    <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <CheckCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <h3 className="text-emerald-900 dark:text-emerald-300 font-bold">This Ticket is Resolved</h3>
+                    <p className="text-emerald-700 dark:text-emerald-500 text-sm">Case has been settled and finalized. No further comments can be added.</p>
+                  </div>
+                )}
+                <div className="pt-4 border-t border-gray-100 dark:border-slate-700 space-y-4">
+                  {(ticket.timeline || []).filter(e => e.type === 'update' && e.meta?.text).map((entry, idx) => {
+                    const isSolution = entry.meta?.isClosing;
+                    return (
+                      <div 
+                        key={idx} 
+                        className={`flex flex-col gap-1 p-4 rounded-lg border transition-all ${
+                          isSolution 
+                            ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700/50 shadow-sm ring-1 ring-emerald-400/20 shadow-emerald-100/50 dark:shadow-none' 
+                            : 'bg-gray-50 dark:bg-slate-800/50 border-gray-100 dark:border-slate-700/50'
+                        }`}
+                      >
+                        {isSolution && (
+                          <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-black text-[10px] uppercase tracking-[0.1em] mb-2 px-2 py-0.5 bg-emerald-200/50 dark:bg-emerald-800/30 rounded w-fit">
+                            <Trophy className="w-3 h-3" />
+                            Official Resolution
+                          </div>
+                        )}
+                        <div className={`text-sm whitespace-pre-wrap break-words ${
+                          isSolution ? 'text-emerald-900 dark:text-emerald-100 font-medium' : 'text-gray-800 dark:text-white'
+                        }`}>
+                          {entry.meta?.text || ''}
+                        </div>
+                        <div className={`flex items-center justify-between mt-2 text-[10px] ${
+                          isSolution ? 'text-emerald-600 dark:text-emerald-500' : 'text-gray-500 dark:text-slate-400'
+                        }`}>
+                          <span className="flex items-center gap-1 font-semibold">
+                            {entry.user}
+                            {isSolution && <CheckCircle className="w-3 h-3" />}
+                          </span>
+                          <span>{formatIST(entry.date)}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -1428,11 +1501,13 @@ export default function TicketDetailsView() {
                   </button>
                 </div>
               )}
+
               <button
-                onClick={handleQuickResolve}
-                className="w-full inline-flex items-center justify-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium"
+                onClick={() => setShowResolveModal(true)}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 text-sm font-medium shadow-md transition-all active:scale-95"
               >
-                Mark as Resolved
+                <Power className="w-4 h-4" />
+                Close Ticket
               </button>
               <button
                 onClick={handleOpenWorklogModal}
@@ -1440,12 +1515,6 @@ export default function TicketDetailsView() {
               >
                 <Plus className="w-4 h-4" />
                 Add to Worklog
-              </button>
-              <button
-                onClick={() => toast.info("Escalation flow not implemented in this demo")}
-                className="w-full inline-flex items-center justify-center px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium"
-              >
-                Escalate Ticket
               </button>
               <button
                 onClick={() => window.print()}
@@ -1577,6 +1646,50 @@ export default function TicketDetailsView() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+      {/* Resolution Confirmation Modal */}
+      {showResolveModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md transition-all duration-300">
+           <div className="bg-white dark:bg-servicenow-light rounded-2xl w-full max-w-lg shadow-2xl border border-white/20 dark:border-slate-700/50 overflow-hidden transform transition-all animate-bounce-in">
+              <div className="p-8 text-center space-y-6">
+                 <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-emerald-50 dark:border-emerald-900/50">
+                    <CheckCircle className="w-12 h-12 text-emerald-600 dark:text-emerald-400" />
+                 </div>
+                 
+                 <div className="space-y-2">
+                    <h2 className="text-2xl font-black text-gray-900 dark:text-white">Confirm Resolution</h2>
+                    <p className="text-gray-600 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+                       Are you sure you want to mark this ticket as <span className="text-emerald-600 font-bold">Resolved</span>? 
+                       Confirm that you have provided the complete solution in your comment.
+                    </p>
+                 </div>
+
+                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                    <button
+                      onClick={() => setShowResolveModal(false)}
+                      className="flex-1 px-6 py-3.5 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-700 transition-all font-bold text-base"
+                    >
+                      Back to Editing
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowResolveModal(false);
+                        handleCloseTicket();
+                      }}
+                      className="flex-1 px-6 py-3.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-500/30 transition-all font-black text-base active:scale-95"
+                    >
+                      Yes, Close Ticket
+                    </button>
+                 </div>
+              </div>
+              
+              <div className="bg-emerald-50 dark:bg-emerald-900/10 py-3 px-6 border-t border-emerald-100 dark:border-emerald-900/20">
+                 <p className="text-[10px] text-emerald-700 dark:text-emerald-500 font-bold uppercase tracking-widest text-center">
+                    Final Resolution Action • ID: {ticket.ticketNumber || ticket.id}
+                 </p>
+              </div>
+           </div>
         </div>
       )}
     </EngineerLayout>
